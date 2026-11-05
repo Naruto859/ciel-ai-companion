@@ -1,0 +1,3825 @@
+package net.kuafuai.andee.ui
+
+import net.kuafuai.andee.ui.ball.label
+import android.animation.ValueAnimator
+import android.annotation.SuppressLint
+import android.content.Context
+import android.graphics.Color
+import android.graphics.PixelFormat
+import android.graphics.Rect
+import android.graphics.drawable.ColorDrawable
+import android.os.Handler
+import android.os.Looper
+import android.view.Gravity
+import android.view.HapticFeedbackConstants
+import android.view.MotionEvent
+import android.view.View
+import android.view.ViewConfiguration
+import android.view.WindowInsets
+import android.view.WindowManager
+import android.view.animation.DecelerateInterpolator
+import android.view.animation.PathInterpolator
+import android.widget.FrameLayout
+import android.widget.ImageView
+import android.widget.LinearLayout
+import android.widget.TextView
+import androidx.annotation.DrawableRes
+import androidx.core.content.ContextCompat
+import net.kuafuai.andee.R
+import net.kuafuai.andee.audio.Earcon
+import net.kuafuai.andee.config.VoiceConfig
+import net.kuafuai.andee.i18n.AppLocale
+import net.kuafuai.andee.ui.ball.Action
+import net.kuafuai.andee.ui.ball.BallLooks
+import net.kuafuai.andee.ui.ball.EmotionBallTextureView
+import net.kuafuai.andee.ui.ball.Mood
+import net.kuafuai.andee.ui.ball.SPHERE_RADIUS_FRACTION
+import kotlin.math.abs
+import kotlin.math.min
+import kotlin.math.roundToInt
+import kotlin.math.sqrt
+import kotlin.random.Random
+
+/**
+ * The floating window IS the ball. Fullscreen by default.
+ *
+ * Layout (FrameLayout, two stacked areas plus a floating control pill):
+ *   ┌──── ball area (top 40%) ─────────────────┐
+ *   │                          ◈ ✓ ⚙ ✕  │  ← 产物 / self-check / gear / close
+ *   │                                          │
+ *   │           [round ball]                   │  ← tap = talk
+ *   │                                          │  ← double-tap = type
+ *   │                                          │  ← triple-tap = stop
+ *   │                                          │  ← swipe = switch character
+ *   │                                          │  ← long-press = unfold
+ *   │                                          │  ← drag = move (compact only)
+ *   ├──── scrollback (the rest) ───────────────┤
+ *   │   你    · 15:31  帮我看看今天的天气        │
+ *   │   助手  · 15:34  今天多云…                │
+ *   │   ▸ live row: what is happening now      │
+ *   ├──────────────────────────────────────────┤
+ *   │  点小球说话 · 双击打字 · 三连击停止 · 滑动切换性格 │  ← pinned tips
+ *   └──────────────────────────────────────────┘
+ *
+ * One control, three taps, and that is the whole tap vocabulary the user has
+ * to learn — the ball is the only thing on screen in both shapes, so all
+ * three gestures work folded and unfolded alike. See
+ * [BallHostFrame.registerTap]. The swipe is the one gesture that is
+ * full-card-only, which is why the tips line spells it out.
+ *
+ * The first tap carries two verbs and the tips line still says one word for
+ * it, which is not an omission: tapping something busy and having it stop and
+ * listen is one intent, so it is one gesture — see [Listeners.onTalkClick] for
+ * why it isn't left to the user to sequence the stop and the ask themselves.
+ * What the tips line teaches is the vocabulary; what a tap *does* depends on
+ * what is running, which is not something a line of text can say anyway.
+ *
+ * Everything the assistant hears, says, shows or fails at ends up in that one
+ * list, in order. There is no separate subtitle band: [setSubtitle] writes the
+ * list's live last row instead, so the user watches one surface rather than
+ * two, and a sentence cannot appear on both at once (it used to).
+ *
+ * Touch handling:
+ *   - The control pill's buttons are child Views, consume their own taps
+ *   - Ball area (top): circular hit test → tap/drag/long-press
+ *   - Scrollback (bottom): its own touches, so it can scroll
+ *   - Anywhere outside the circle in the ball area: passes through
+ *
+ * Tap opens the mic and nothing else — deliberately not "tap, then unfold to
+ * talk": the corner ball is there so you can ask about what you are looking
+ * at, and covering it again to do so defeats it. Recognition state shows on
+ * the ball itself. Long-press is how the user gets the full card back, which
+ * is also why ⤡ isn't a toggle.
+ *
+ * The card is black glass, not paint: [Glass] gives it a translucent fill over
+ * a real blur of whatever is behind ([applyWindow] asks for it, and only while
+ * the card is unfolded and visible). What it does *not* become is see-through
+ * in any useful sense — 60% black over a defocused app is still a wall — so
+ * the overlay still hides the app underneath from the *camera* as well as the
+ * eye: see [setVisibleForCapture] for why every screenshot has to blank the
+ * window first, and why that blank drops the blur too.
+ *
+ * Two geometries exist. Fullscreen: the assistant card. Compact: a bare ball
+ * in the bottom-right corner, which is what the card becomes — and stays —
+ * whenever the assistant is driving the device underneath (every `screen.*`
+ * command folds the card before it runs), plus whenever the user asks with ⤡.
+ * Both routes reach it through [setCompact]; the way back is a long-press on
+ * the ball ([Listeners.onLongPress]) with exactly one caller that does not
+ * wait for one: the service unfolds once at birth, so a device that just
+ * booted shows the card rather than a corner ball. See
+ * `BodyCoreService.onServiceConnected`.
+ */
+class FloatingWindowUi(
+    private val context: Context,
+    private val listeners: Listeners,
+) {
+
+    enum class State { IDLE, RECORDING, THINKING, SPEAKING, ERROR }
+
+    /**
+     * What is happening right now, as the scrollback's live last row — a partial
+     * transcript, the tool being run, the state a command left behind.
+     * Everything here is superseded by a real entry or cleared; nothing settles
+     * into the log through this path.
+     *
+     * Deliberately *not* the sentence being spoken: that one is already a row in
+     * the log by the time it is read out, and echoing it here put the same words
+     * on screen twice.
+     */
+    enum class SubtitleKind { PARTIAL, FINAL }
+
+    interface Listeners {
+        /**
+         * One tap on the ball — talk, having stopped anything that was running.
+         *
+         * The stop half is deliberately the host's call and not this class's:
+         * only the service can see whether there is a task to interrupt, and
+         * only it owns what stopping one means (the brain's turn, the
+         * dispatcher's glow, the hub's `task.stop`). The window reports the
+         * gesture and nothing about the state behind it — same split as
+         * [onStopClick], which is the other half of that same decision.
+         */
+        fun onTalkClick()
+        fun onSettingsClick()
+
+        /**
+         * ✓ — the self-check card.
+         *
+         * Next to ⚙ because they are the same kind of thing to the user: two
+         * buttons that open our own surfaces rather than acting on the screen,
+         * so they open the same *shape* of surface. It used to open a fullscreen
+         * page — see [net.kuafuai.andee.ui.SelfCheckUi] for why that made two
+         * adjacent buttons behave like two different products, and for what it
+         * costs to have it be a card instead.
+         *
+         * Handed out rather than opened here for the same reason
+         * [onSettingsClick] is: this class draws the card, the service owns what
+         * is behind it and what it is allowed to open.
+         */
+        fun onSelfCheckClick()
+        fun onLongPress()
+
+        /** The 产物 key — the pages the assistant has made. See [ArtifactsUi]. */
+        fun onArtifactsClick()
+
+        /** The speaker key beside the input pill: answers read aloud or not. */
+        fun onMuteToggle() {}
+
+        /**
+         * A community link at the foot of the card (GitHub, Discord). Handed out
+         * rather than opened here for the same reason every outbound trip is:
+         * the card is an overlay and cannot start a browser Activity itself —
+         * the host folds the card and sends it through SelfCheckActivity.
+         */
+        fun onOpenCommunityLink(url: String) {}
+
+        /** The WeChat glyph beside them: Andee's QR code ([WeChatQrUi]). */
+        fun onWeChatClick() {}
+
+        /** 打开 › on a timeline row: the wiki article it names. */
+        fun onWikiOpen(id: String) {}
+
+        /** A button on the stage called `andee.say(text)` from a real tap: the user's words to Andee. */
+        fun onStageSay(text: String) {}
+
+        /** 「现在就让它布置」 on an empty stage. */
+        fun onStageFurnish() {}
+
+        /** The 小本本 key — what it remembers. See [NotebookUi]. */
+        fun onNotebookClick() {}
+
+        /** The 朋友 key — the other Andees this one knows. See [PeersUi]. */
+        fun onFriendsClick() {}
+
+        /** The 情景 key — the scenes it has learned. See [ScenesUi]. */
+        fun onScenesClick()
+
+        /** ✕ on the scene chip — leave the scene the assistant is in. */
+        fun onSceneExitClick()
+
+        /**
+         * `■` is gone from the bar; stop is still here.
+         *
+         * The button was the third of four glyphs crammed into one pill, and it
+         * was the only one of them that duplicated a gesture the ball already
+         * had: triple-tap fires the same [onStopClick], and has since the taps
+         * were reduced to one vocabulary. The tips line at the bottom of the
+         * card has always said so — "三连击停止" — which is what makes deleting
+         * the button a simplification rather than a removal: the user loses a
+         * control they had two of and keeps the one that works folded as well.
+         */
+        fun onStopClick()
+
+        /** ⤡ in the subtitle band — the user asking for the screen back. */
+        fun onMinimizeClick()
+
+        /**
+         * A swipe up from the bottom edge of the full card — the system home
+         * gesture, which a fullscreen touchable overlay would otherwise swallow
+         * before the launcher ever saw it (a touch that has entered this window
+         * cannot be forwarded by returning false from `onTouchEvent`). The
+         * window detects it itself so folding does not need accessibility.
+         * Returning the underlying app to the launcher is best-effort: the host
+         * uses accessibility HOME when available, then a launcher Intent, which
+         * a ROM may restrict from the background.
+         */
+        fun onHomeSwipe()
+
+        /**
+         * Two taps on the ball — the user wants to type instead of talk.
+         *
+         * On the ball rather than as a key in the top bar, because the ball is
+         * the one control that exists in **both** shapes. The bar is `GONE`
+         * while folded, so a bar key could only ever be a way in from the state
+         * the user is already looking at the card in; the ball is there either
+         * way, and the three taps now read as one set: ask, type, stop.
+         *
+         * Handed out rather than opened here for two reasons that are both
+         * about the window system rather than about taste: the field is an
+         * Activity ([TextInputActivity]) because an overlay cannot raise a soft
+         * keyboard, and the card has to get out of its way before it opens
+         * (`setTypingTop`) or it sits on top of it and eats every touch.
+         */
+        fun onTextInputToggle()
+
+        /** The resting pill's camera / album icon: open the field and go straight on to [what]. */
+        fun onTypeThen(what: String) {}
+
+        /**
+         * A page row in the scrollback, tapped to be shown again.
+         *
+         * Handed out rather than opened here because re-showing a page is not
+         * just starting an activity: the card has to fold out of its own way
+         * first, exactly as `ui.show_html` does. That sequencing belongs to
+         * whoever owns the dispatcher, not to the window.
+         */
+        fun onHistoryPageClick(entry: ChatHistory.Entry)
+
+        /**
+         * A message row, double-tapped, to be read fullscreen.
+         *
+         * Handed out for the same reason as [onHistoryPageClick]: the reader is
+         * fullscreen, so the card has to fold out of its way first, and that
+         * sequencing belongs to whoever owns the dispatcher.
+         */
+        fun onTextOpen(entry: ChatHistory.Entry)
+
+        /**
+         * A message row, long-pressed, for the log behind it — see
+         * [net.kuafuai.andee.ui.TracePage].
+         *
+         * Handed out rather than built here for the same reason plus a sharper
+         * one: turning a turn id into a page means reading and parsing the trace
+         * file, which blocks and must not do so on the UI thread. The window
+         * knows how to hold a row; only the service knows how to read a log.
+         *
+         * Never fired for a row whose [ChatHistory.Entry.turn] is null — there
+         * is no log to read, and a gesture that opens an empty page is worse
+         * than one that stays still.
+         */
+        fun onTraceOpen(entry: ChatHistory.Entry)
+
+        /**
+         * A suggestion bubble on a card with no history — the user taking the
+         * assistant up on one of the things it says it can do.
+         *
+         * Handed out rather than sent from here: sending is a turn, and a turn
+         * has exactly one way in (`BodyCoreService.submitUserTurn`), which is
+         * where the log row, the hub event and the glow all hang off. A list
+         * that sent its own would be a second way in, and the hub event is the
+         * half that gets forgotten.
+         *
+         * [name] is the scene's stored key, which is what the service adopts
+         * the scene under — a bubble has to leave the scene in the notebook, or
+         * the model it names is asked about something that does not exist.
+         * [title] is what the user read on the bubble; [example] is the
+         * sentence that is actually sent. All three come from one preset — see
+         * [net.kuafuai.andee.config.ScenePresets.Text] — so a bubble cannot
+         * name one thing and send another.
+         */
+        fun onSuggestionClick(name: String, title: String, example: String)
+
+        /**
+         * 继续话题 on a folded topic's card. Handed out because it starts a turn,
+         * and a turn has one way in — see [onSuggestionClick].
+         */
+        fun onTopicContinue(topic: ChatHistory.Topic)
+
+        /**
+         * 对话记录 on a folded topic's card: the conversation, fullscreen. Handed
+         * out for the same reason as [onTextOpen] — the card folds first.
+         */
+        fun onTopicTranscript(topic: ChatHistory.Topic)
+    }
+
+    private val wm: WindowManager =
+        context.getSystemService(Context.WINDOW_SERVICE) as WindowManager
+    private val ui = Handler(Looper.getMainLooper())
+
+    private var root: BallHostFrame? = null
+    private var params: WindowManager.LayoutParams? = null
+    private var ball: EmotionBallTextureView? = null
+    private var topBarView: View? = null
+    private var historyView: HistoryListView? = null
+
+    /**
+     * The stage: the same slot as [historyView], and shown instead of it unless the user switched to the
+     * conversation ([onStage], kept in `home_view`). See [StageView].
+     */
+    private var stageView: StageView? = null
+    /** 舞台 | 对话: both named, the current one lit, so where you are and where else you can go are both on screen. */
+    private var viewTabs: LinearLayout? = null
+    private var tabStage: TextView? = null
+    private var tabChat: TextView? = null
+    private var onStage = stageWanted()
+
+    /**
+     * Whether the middle of the card should be the stage. The user's own pick when they have made one;
+     * until then, only once the stage has something on it. A new device's stage is empty, and the
+     * conversation's empty state is where a new user is offered a way in (the scene bubbles) — landing
+     * on a board that says "not furnished yet" hid that behind a tab.
+     */
+    private fun stageWanted(): Boolean =
+        when (net.kuafuai.andee.config.VoiceConfig.homeView(context)) {
+            null -> net.kuafuai.andee.config.Stage.current(context) != null
+            else -> net.kuafuai.andee.config.VoiceConfig.homeView(context) != "chat"
+        }
+
+    /**
+     * 「情景 · X ✕」, centred under the ball while a scene is active. Its own
+     * view rather than a row in the control pill, because the pill's bounds are
+     * an input to the card's split ([ballAreaHeight]) and a scene starting
+     * should not move the ball.
+     */
+    private var sceneChip: LinearLayout? = null
+    private var sceneChipText: TextView? = null
+    @Volatile private var sceneTitle: String? = null
+
+    /** The ball's gesture vocabulary, pinned along the bottom of the full card. */
+    /** The bottom block: the input pill above the gesture line. Hidden folded and while the real field is up. */
+    private var tipsView: View? = null
+    private var tipsText: TextView? = null
+    private var muteIcon: ImageView? = null
+    private var inputHint: TextView? = null
+    private var muteKey: View? = null
+    private var inputPill: View? = null
+    private var muteLabel: TextView? = null
+
+    private var mutedNow = false
+
+    /** Reflect the 朗读 / 静音 setting on the speaker key. Any thread. */
+    fun setMuted(on: Boolean) {
+        ui.post { mutedNow = on; paintMute() }
+    }
+
+    private fun paintMute() {
+        muteIcon?.setImageResource(if (mutedNow) R.drawable.ic_volume_off else R.drawable.ic_volume)
+        muteIcon?.setColorFilter(Color.parseColor(Glass.PHOTO_INK))
+        muteLabel?.text = AppLocale.str(context, if (mutedNow) R.string.window_muted else R.string.window_voice_on)
+    }
+
+    /**
+     * One small community glyph (GitHub, Discord) at the foot of the card. A
+     * padded hit target around a 16 dp vector, tinted like the gesture line it
+     * sits after; the tap hands the URL out through
+     * [Listeners.onOpenCommunityLink], which is the host's trip to make.
+     */
+    private fun communityLink(res: Int, url: String, label: String): View =
+        communityGlyph(res, label) { listeners.onOpenCommunityLink(url) }
+
+    private fun communityGlyph(res: Int, label: String, onClick: () -> Unit): View {
+        val icon = ImageView(context).apply {
+            setImageResource(res)
+            setColorFilter(Color.parseColor(Glass.PHOTO_INK))
+            contentDescription = label
+        }
+        return LinearLayout(context).apply {
+            orientation = LinearLayout.HORIZONTAL
+            gravity = Gravity.CENTER
+            setPadding(dp(7), dp(4), dp(7), dp(4))
+            isClickable = true
+            Glass.pressable(this)
+            setOnClickListener { onClick() }
+            addView(icon, LinearLayout.LayoutParams(dp(16), dp(16)))
+        }
+    }
+
+    /**
+     * The top bar's icon views, kept only so a theme change can re-tint them.
+     *
+     * `barButton` bakes its tint into a mutated drawable, so without this the bar
+     * keeps whichever palette the *window* was built in — the whole chrome of the
+     * card is built once and never again. That is how a light-mode grey ended up
+     * sitting on a night-mode well: measured on the tablet as `#7D8592` glyphs on a
+     * `#092E54` pill, which is a day value on a night ground.
+     */
+    private val barIcons = mutableListOf<ImageView>()
+
+    /** How many friends to show on the 朋友 key; 0 hides the count. Main thread only once the bar exists. */
+    private var friendCount = 0
+    private var friendBadge: TextView? = null
+
+    /** The number on the 朋友 key. Safe from any thread; kept for a bar built later. */
+    fun setFriendCount(n: Int) {
+        ui.post {
+            friendCount = n
+            friendBadge?.let { paintBadge(it) }
+        }
+    }
+
+    private fun paintBadge(b: TextView) {
+        b.text = if (friendCount > 99) "99+" else friendCount.toString()
+        b.visibility = if (friendCount > 0) View.VISIBLE else View.GONE
+    }
+
+    /**
+     * 朋友 with its count in the corner, so the user can see at a glance how many Andees this one can ask without
+     * opening anything. The key itself is an ordinary [barButton]; the badge sits on top of it and ignores touches.
+     */
+    private fun friendsKey(): View {
+        val key = barButton(R.drawable.ic_friends, Glass.PHOTO_INK, "朋友") { listeners.onFriendsClick() }
+        val lp = key.layoutParams as LinearLayout.LayoutParams
+        key.layoutParams = FrameLayout.LayoutParams(lp.width, lp.height)
+        val box = FrameLayout(context).apply {
+            layoutParams = LinearLayout.LayoutParams(lp.width, lp.height).apply { leftMargin = lp.leftMargin }
+            clipChildren = false
+        }
+        box.addView(key)
+        val badge = TextView(context).apply {
+            textSize = 9f
+            setTextColor(Color.WHITE)
+            typeface = android.graphics.Typeface.DEFAULT_BOLD
+            gravity = Gravity.CENTER
+            minWidth = dp(15); minHeight = dp(15)
+            setPadding(dp(4), 0, dp(4), 0)
+            background = android.graphics.drawable.GradientDrawable().apply {
+                cornerRadius = dp(8).toFloat()
+                setColor(Color.parseColor(Glass.ACCENT))
+            }
+            isClickable = false
+            importantForAccessibility = View.IMPORTANT_FOR_ACCESSIBILITY_NO
+        }
+        box.addView(badge, FrameLayout.LayoutParams(FrameLayout.LayoutParams.WRAP_CONTENT, dp(15), Gravity.TOP or Gravity.END).apply {
+            topMargin = dp(2); rightMargin = dp(1)
+        })
+        friendBadge = badge
+        paintBadge(badge)
+        return box
+    }
+
+    /** The red dot on 小本本: 守卫 is unwritten. Null until the bar is built. */
+    private var notebookDot: View? = null
+
+    /** 守卫 was saved or the notebook wiped: show or hide the dot on 小本本. Any thread. */
+    fun refreshNotebookDot() {
+        ui.post {
+            notebookDot?.visibility =
+                if (net.kuafuai.andee.config.Notebook.guard(context).isEmpty()) View.VISIBLE else View.GONE
+        }
+    }
+
+    /** 小本本 with a red dot in the corner while 守卫 is unwritten — the same shape as [friendsKey]. */
+    private fun notebookKey(): View {
+        val key = barButton(R.drawable.ic_notebook, Glass.PHOTO_INK, "小本本") { listeners.onNotebookClick() }
+        val lp = key.layoutParams as LinearLayout.LayoutParams
+        key.layoutParams = FrameLayout.LayoutParams(lp.width, lp.height)
+        val box = FrameLayout(context).apply {
+            layoutParams = LinearLayout.LayoutParams(lp.width, lp.height).apply { leftMargin = lp.leftMargin }
+            clipChildren = false
+        }
+        box.addView(key)
+        val dot = RedDot.view(context)
+        box.addView(dot, FrameLayout.LayoutParams(dp(7), dp(7), Gravity.TOP or Gravity.END).apply {
+            topMargin = dp(6); rightMargin = dp(6)
+        })
+        notebookDot = dot
+        refreshNotebookDot()
+        return box
+    }
+
+    /** The scene chip's ✕, for the same reason — its colour is set at build too. */
+    private var sceneChipExit: TextView? = null
+
+    /** The top bar's corner radius. One number: applied at build and on a theme change. */
+    private val topBarRadius = dp(24)
+
+    // Folded into p.alpha / p.flags by [applyWindow]. Main thread only.
+    private var captureHidden = false
+    private var compact = false
+
+    /** The typing field has sent the user to a camera or a photo picker. See [setAway]. */
+    private var away = false
+
+    /** The typing field's top edge, in screen px. 0 = no field is up. */
+    private var typingTop = 0
+
+    /** The window geometry [setTypingTop] borrowed, to be put back. */
+    private var typingGeometry: IntArray? = null
+    private var gesturePassthrough = false
+
+    /** Whether the compositor is blurring behind us. See [Glass.frost]. */
+    private var frosted = false
+
+    /**
+     * The card's own background image, at the bottom of the root's z-order.
+     *
+     * Permanent child, `GONE` while folded: a fullscreen image inside a 168 dp
+     * corner square is a photo with a ball on it, and the fold's whole job is to
+     * get out of the way. See [Backdrop].
+     */
+    private var backdrop: ImageView? = null
+
+    /**
+     * The scrim currently painted over the backdrop, or `null` for none.
+     *
+     * Held so repeated [applyWindow] calls during one card don't rebuild the
+     * drawable and invalidate the window for a value that has not changed.
+     */
+    private var scrimShown: Int? = null
+
+    /** Main thread only: last state handed to [setState], to spot transitions. */
+    private var lastState: State? = null
+
+    /** Geometry to put back when the fold ends — see [enterCompact]. */
+    private var fullGeometry: IntArray? = null
+
+    /** A task is running — the busy face while folded. Main thread only. */
+    private var working = false
+
+    /**
+     * Where the folded ball sits when it is a whole ball (not docked): the last
+     * spot the user dropped it, or the corner a fold lands in. Main thread only.
+     */
+    private var homeX = 0
+    private var homeY = 0
+
+    /**
+     * The folded ball has slid into the right screen edge and only half its face
+     * shows (see [dock]). The window is then the small tab [dockTabW]×[dockTabH],
+     * not the square — that is the point: issue #33 was the square's transparent
+     * band eating taps meant for the app underneath, and the tab is a fraction of
+     * its area. It answers taps exactly as the ball does.
+     *
+     * Main thread only.
+     */
+    private var docked = false
+
+    /** The docked ball's centre, in window `p.y` space; the user moves it along the edge. */
+    private var dockCy = 0
+
+    /** Dock again once the card folds back, because it was docked when it unfolded. */
+    private var dockOnFold = false
+
+    /** A signboard took the ball out of the edge; [hideSignboard] puts it back. */
+    private var signInterruptedDock = false
+
+    private val dockRunnable = Runnable { dock() }
+
+    /** A dock was asked for while the card was folding; [enterCompact] runs it once the ball has landed. */
+    private var dockWhenFolded = false
+    private var dockWhenFoldedAt: Int? = null
+
+    /** After a task: back into the edge at the docked height it had before it came out ([dockCy], unchanged since). */
+    private val dockBackRunnable = Runnable { dock(if (movedWhileWorking) null else restingDockCy()) }
+
+    /** The docked height a ball rests at: where it last docked, or the corner's before it ever has. */
+    private fun restingDockCy(): Int = if (dockCy > 0) dockCy else compactHomeY() + dp(COMPACT_DP) / 2
+
+    /** The user dragged the ball while it worked: it docks back where they left it. Cleared when it comes out. */
+    private var movedWhileWorking = false
+
+    // ---- Idle fidget (see [strollStep]) ----
+    private val strollRunnable = Runnable { strollStep() }
+
+    /** Hops left in the current burst before the next long rest. */
+    private var strollLeft = 0
+
+    private var slide: ValueAnimator? = null
+
+    /**
+     * The fold/unfold animation in flight, or null. Owns the root view's scale
+     * during a zoom between the full card and the corner square — see
+     * [enterCompact] and [exitCompact]. Separate from [slide], which is the
+     * compact ball's dock slide and never overlaps a fold.
+     */
+    private var foldAnim: ValueAnimator? = null
+
+    fun isShown(): Boolean = root != null
+
+    /**
+     * Fullscreen, and not draggable: the drag that moves the folded corner
+     * ball is compact-only — the full card is a surface the user reads, not
+     * a widget they reposition.
+     *
+     * Format stays TRANSLUCENT and the fill is the background colour's job —
+     * see [paintCard]. The ball is a TextureView that blends its GL surface
+     * against whatever the card is filled with, and [setVisibleForCapture]
+     * drives window alpha to 0; both need a window the compositor is willing
+     * to blend, whatever the card's own alpha happens to be.
+     */
+    fun show(): Boolean {
+        if (root != null) return true
+        // Before the ball exists, so the first frame is already the look the
+        // user left it on. A no-op when nothing is saved, and a no-op for a
+        // name that no longer matches a look — which is what makes deleting a
+        // look from [BallLooks.ALL] safe.
+        BallLooks.requestByName(VoiceConfig.ballLook(context))
+        val v = build()
+        val dm = context.resources.displayMetrics
+        val side = dp(COMPACT_DP)
+        val p = WindowManager.LayoutParams(
+            side,
+            side,
+            WindowManager.LayoutParams.TYPE_APPLICATION_OVERLAY,
+            // Kept in step with [applyWindow], which owns these from here on —
+            // FLAG_LAYOUT_IN_SCREEN in particular, or the first measurement of
+            // [winYOrigin] is taken in a frame the window is about to leave.
+            WindowManager.LayoutParams.FLAG_NOT_FOCUSABLE
+                    or WindowManager.LayoutParams.FLAG_LAYOUT_NO_LIMITS
+                    or WindowManager.LayoutParams.FLAG_LAYOUT_IN_SCREEN,
+            PixelFormat.TRANSLUCENT,
+        ).apply {
+            gravity = Gravity.TOP or Gravity.START
+            x = dm.widthPixels - side - dp(COMPACT_MARGIN_DP)
+            y = dm.heightPixels - side - dp(COMPACT_MARGIN_DP)
+            // Truly edge-to-edge. Since API 30 the window fits the system-bar
+            // insets by default (statusBars | navigationBars | captionBar), so a
+            // MATCH_PARENT card stopped below the status bar *and* above the
+            // navigation bar — a band of the user's wallpaper left at the bottom
+            // is exactly the "not fullscreen" look. Fit nothing so the card runs
+            // from the display's top to its bottom; the toolbar steps around the
+            // status bar itself in [insetTopBar].
+            fitInsetsTypes = 0
+            layoutInDisplayCutoutMode =
+                WindowManager.LayoutParams.LAYOUT_IN_DISPLAY_CUTOUT_MODE_ALWAYS
+        }
+        // The folded ball's resting spot. [enterCompact] is the other place this
+        // is set, and it is the one that usually runs — but show() adds the
+        // window already folded and so never passes through it.
+        homeX = p.x
+        homeY = p.y
+        // Keep the restore target, but add the overlay already compact.
+        //
+        // This used to carry a second reason — "no frame in which a newly
+        // enabled service owns a full-screen touchable window", because
+        // returning false from onTouchEvent cannot forward a touch that has
+        // already entered this window. That is no longer the service's
+        // behaviour: it unfolds immediately after [show] (see
+        // `BodyCoreService.onServiceConnected`), so the card is up from the
+        // first frame it is drawn in. What is left is the mechanical reason the
+        // order is still worth keeping: compact is the state [fullGeometry] is
+        // seeded from just below, and [exitCompact] is the single code path
+        // that knows how to turn this window into a card — visibilities, ball
+        // scale, scrollback refresh. Being born fullscreen would mean a second
+        // way to arrive at that state, and the unfold is one `ui.post` away
+        // anyway.
+        compact = true
+        // The restore target itself: skipped below precisely because we never
+        // pass through enterCompact() (setCompact(true) is a no-op from this
+        // state), and without it exitCompact() has nothing to grow back to —
+        // the first unfold, whether that is the service's own at birth or a
+        // long-press, would leave a fullscreen card's content inside a 160dp
+        // corner square forever.
+        fullGeometry = intArrayOf(
+            0, 0,
+            WindowManager.LayoutParams.MATCH_PARENT,
+            WindowManager.LayoutParams.MATCH_PARENT,
+        )
+        return try {
+            v.hideFromAccessibility()
+            wm.addView(v, p)
+            root = v
+            params = p
+            syncCover()
+            applyCompactAppearance()
+            // Only now can [winYOrigin] be measured, and the resting position
+            // depends on it — the y above is a first guess that is correct only
+            // where the offset is 0.
+            ui.post {
+                refreshWinYOrigin()
+                val pp = params ?: return@post
+                if (!docked) {
+                    pp.y = compactHomeY()
+                    homeX = pp.x
+                    homeY = pp.y
+                    runCatching { wm.updateViewLayout(v, pp) }
+                }
+            }
+            retimeStroll()
+            armDock()
+            true
+        } catch (t: Throwable) {
+            android.util.Log.e("Body", "the ball window could not be shown", t)
+            false
+        }
+    }
+
+    /** The signboard content while a card is up. Main thread only. */
+    private var signboard: View? = null
+
+    /**
+     * Who to tell when a fold or unfold forces the signboard down.
+     *
+     * The window cannot be a corner square and host a card-sized pane at the
+     * same time, so [enterCompact] and [exitCompact] evict rather than trying
+     * to carry the signboard across the geometry change. Wired by CardUi, the
+     * only thing that ever puts a signboard up.
+     */
+    var signboardEvictor: (() -> Unit)? = null
+
+    /** True while the window is the folded corner ball. */
+    fun isFolded(): Boolean = compact
+
+    /**
+     * Host a signboard inside this window, above the ball.
+     *
+     * This is the fix for the anchor drift the two-window design could never
+     * quite shake: a separate card window positioned from a *measured* copy of
+     * the ball's position goes stale whenever the ball is mid-slide, the
+     * window origin offset is out of date, or a device's overlay coordinate
+     * space disagrees with `getLocationOnScreen` — and each of those hits a
+     * different subset of devices, which is why "sometimes it's off". Here
+     * the card is a child of the very window the ball lives in. The tail is
+     * centred on the window, the ball is centred in the window, and nothing
+     * short of the layout system itself can put space between them.
+     *
+     * While folded, the window grows: the card rides on top, the ball area
+     * drops to the bottom of the taller window, and `p.x/p.y` are recomputed
+     * so the ball keeps its on-screen spot — the card *appears around* the
+     * ball rather than the ball moving under a card. A docked ball comes out
+     * of the edge first (half a face cannot hold a sign); [hideSignboard] puts
+     * it back, so the place the sign interrupted survives it.
+     *
+     * While fullscreen, the signboard is a centred pane over the scrollback —
+     * same window, so still no coordinate translation.
+     *
+     * Main thread only. One signboard at a time; false when there is no
+     * window to host it (caller falls back to its own overlay).
+     *
+     * [foldedWidth] narrows the window while folded, for a bubble that would
+     * look lost in a card-wide pane. Never narrower than the ball itself, or
+     * the ball area would be clipped by its own window.
+     */
+    fun showSignboard(content: View, foldedWidth: Int? = null): Boolean {
+        val v = root ?: return false
+        val p = params ?: return false
+        if (signboard != null) return false
+        val dm = context.resources.displayMetrics
+        if (!compact) {
+            val w = minOf(dm.widthPixels - dp(48), dp(560))
+            val lp = FrameLayout.LayoutParams(
+                w, FrameLayout.LayoutParams.WRAP_CONTENT, Gravity.CENTER,
+            )
+            v.addView(content, lp)
+            signboard = content
+            return true
+        }
+        val side = dp(COMPACT_DP)
+        ui.removeCallbacks(dockRunnable); ui.removeCallbacks(dockBackRunnable)
+        // The words under the ball give way to the sign; they come back when it is down ([hideSignboard]).
+        setWorkShape(false)
+        // A ball half inside the screen edge cannot hold a sign: come out first,
+        // to the resting X at the same height, and go back in when it is down.
+        slide?.cancel()
+        if (docked) {
+            signInterruptedDock = true
+            undockTo(dm.widthPixels - side - dp(COMPACT_MARGIN_DP), dockCy - side / 2)
+        }
+        // The width the card will get; measured here so the window can grow
+        // by exactly the card's height in the same updateViewLayout.
+        val w = foldedWidth?.coerceIn(side, dm.widthPixels - dp(32))
+            ?: minOf(dm.widthPixels - dp(32), dp(560))
+        content.measure(
+            View.MeasureSpec.makeMeasureSpec(w, View.MeasureSpec.EXACTLY),
+            View.MeasureSpec.makeMeasureSpec(0, View.MeasureSpec.UNSPECIFIED),
+        )
+        // The tail tip reaches into the ball area's transparent padding, down
+        // to where the renderer's raised paws are — that overlap is what makes
+        // the board read as held rather than as hovering a thumb's width
+        // above the head.
+        val overlap = (side * SIGN_OVERLAP_FRACTION).toInt()
+        val h = content.measuredHeight + side - overlap
+        // Ball keeps its spot.
+        val ballY = p.y
+        p.width = w
+        p.height = h
+        p.x = (p.x + side / 2) - w / 2
+        p.y = ballY + side - h
+        // Ball area to the bottom of the taller window, CENTRED horizontally:
+        // the window is card-wide now, not square, and a bottom-right ball
+        // area would put the head off to one side of the tail. Verified on
+        // device — centring is also what keeps the tail (drawn at the card's
+        // centre) on the head after the screen-edge clamp moves the window.
+        root?.ballAreaView?.let { area ->
+            (area.layoutParams as? FrameLayout.LayoutParams)?.let {
+                it.height = side
+                it.gravity = Gravity.BOTTOM or Gravity.CENTER_HORIZONTAL
+                area.layoutParams = it
+            }
+        }
+        v.addView(
+            content,
+            FrameLayout.LayoutParams(
+                FrameLayout.LayoutParams.MATCH_PARENT,
+                FrameLayout.LayoutParams.WRAP_CONTENT,
+                Gravity.TOP,
+            ),
+        )
+        clampHeld(p)
+        runCatching { wm.updateViewLayout(v, p) }
+        signboard = content
+        return true
+    }
+
+    /**
+     * Take the signboard down and shrink back to the bare corner ball,
+     * keeping the ball's on-screen spot — the inverse of [showSignboard].
+     * Goes back into the edge afterwards if the sign had taken it out.
+     *
+     * Main thread only. No-op when nothing is up.
+     */
+    fun hideSignboard() {
+        val v = root ?: return
+        val p = params ?: return
+        val content = signboard ?: return
+        signboard = null
+        runCatching { v.removeView(content) }
+        if (!compact) return
+        val side = dp(COMPACT_DP)
+        // Shrink the window around wherever the ball is *holding the sign*
+        // (bottom of the taller window), so the card goes away without the
+        // ball moving a single pixel; going back into the edge is a slide of
+        // its own, after.
+        refreshWinYOrigin()
+        val holdY = p.y + p.height - side
+        p.x = p.x + p.width / 2 - side / 2
+        p.y = holdY
+        p.width = side
+        p.height = side
+        root?.ballAreaView?.let { area ->
+            (area.layoutParams as? FrameLayout.LayoutParams)?.let {
+                it.height = FrameLayout.LayoutParams.MATCH_PARENT
+                it.gravity = Gravity.TOP or Gravity.START
+                area.layoutParams = it
+            }
+        }
+        runCatching { wm.updateViewLayout(v, p) }
+        homeX = p.x
+        homeY = p.y
+        syncWorking()
+        retimeStroll()
+        if (signInterruptedDock && !working) {
+            signInterruptedDock = false
+            dock()
+        } else {
+            signInterruptedDock = false
+            armDock()
+            applyWorkShape()
+        }
+    }
+
+    /**
+     * Keep a held signboard on screen. Unlike [clampCompact] the whole card
+     * has to stay readable, not just the ball.
+     *
+     * Main thread only.
+     */
+    private fun clampHeld(p: WindowManager.LayoutParams) {
+        val dm = context.resources.displayMetrics
+        val m = dp(8)
+        p.x = p.x.coerceIn(m, (dm.widthPixels - p.width - m).coerceAtLeast(m))
+        p.y = p.y.coerceIn(
+            m - winYOrigin,
+            (bottomEdge() - p.height - m - winYOrigin).coerceAtLeast(m - winYOrigin),
+        )
+    }
+
+    /** A signboard is up — the ball is holding it. */
+    fun isHoldingSign(): Boolean = signboard != null
+
+    /**
+     * Take the signboard down because the window is about to change shape, and
+     * tell [signboardEvictor] afterwards.
+     *
+     * **The view comes off before the notification, and that order is the
+     * fix.** The evictor lands in `CardUi.CardHandle.close`, which calls
+     * [hideSignboard], and that opens with `signboard ?: return`. These two
+     * paths used to clear the field first and notify second, so by the time
+     * `close` got to [hideSignboard] there was nothing to find: the card was
+     * marked finished, `current` was dropped, and the view stayed in the window
+     * with no owner. Its buttons then hit `close`'s `if (finished) return`, and
+     * nothing else could reach it — a question that could neither be answered
+     * nor dismissed, until the accessibility service was toggled and the window
+     * rebuilt.
+     *
+     * Unlike [hideSignboard] this does not reshape the window: both callers
+     * are in the middle of doing that themselves.
+     */
+    private fun evictSignboard() {
+        val content = signboard ?: return
+        signboard = null
+        runCatching { root?.removeView(content) }
+        // [showSignboard] bottom-centres the ball area while folded; left like
+        // that, the unfolded card would seat its ball at the bottom of the screen.
+        root?.ballAreaView?.let { area ->
+            (area.layoutParams as? FrameLayout.LayoutParams)?.let {
+                it.gravity = Gravity.TOP or Gravity.START
+                area.layoutParams = it
+            }
+        }
+        signboardEvictor?.invoke()
+    }
+
+    /**
+     * End the card at this screen line while a typing field is up: `topPx` is
+     * the field's own top edge, and `0` means no field.
+     *
+     * Why the card has to move at all: this window is a fullscreen
+     * `TYPE_APPLICATION_OVERLAY`, and on this platform that type is drawn
+     * **above** `TYPE_INPUT_METHOD` (measured from `dumpsys window`: our
+     * overlays sort above the IME and above every app). So a card left in place
+     * does not merely cover the field — it covers the keyboard too.
+     *
+     * The first cut hid the window instead (alpha 0 + untouchable). That works
+     * and reads badly: what is behind it is whatever app the user was on, so
+     * typing looked like being thrown out of the assistant and then dropped back
+     * into it. Two jumps, no continuity. Ending the card at the field's top edge
+     * keeps it on screen the whole time — the ball and the scrollback stay where
+     * the user left them, and the field slides in underneath, which is what
+     * every chat app does with a keyboard.
+     *
+     * **The number is the field's top, not the space it needs.** It is easy to
+     * get backwards and it was: the first version computed
+     * `displayMetrics.heightPixels - top`, which both used a height that
+     * excludes the navigation bar (2524 here, not 2560) and left a 600 px band
+     * of the user's launcher showing between the card and the field.
+     *
+     * The *shape* is never changed, only the height, and only for as long as the
+     * field is up: [typingGeometry] holds what to put back, and a fold that
+     * happens in the meantime takes precedence over it (see [enterCompact]).
+     *
+     * Main thread only, via the usual post.
+     */
+    fun setTypingTop(topPx: Int) {
+        ui.post {
+            if (typingTop == topPx) return@post
+            typingTop = topPx
+            applyTypingTop()
+        }
+    }
+
+    private fun applyTypingTop() {
+        val v = root ?: return
+        val p = params ?: return
+        if (typingTop > 0) {
+            // Folded, the window is a corner square that is nowhere near the
+            // field; there is nothing to step aside from.
+            if (compact) return
+            if (typingGeometry == null) {
+                typingGeometry = intArrayOf(p.x, p.y, p.width, p.height)
+            }
+            p.height = maxOf(dp(MIN_TYPING_CARD_DP), typingTop)
+            // The real field is up now, right under this edge: the pill would be a second, dead copy of it.
+            inputPill?.visibility = View.INVISIBLE
+            runCatching { wm.updateViewLayout(v, p) }
+        } else if (compact) {
+            // A fold in between owns the geometry now; just forget the snapshot.
+            typingGeometry = null
+        } else {
+            restoreTypingGeometry()
+        }
+        // The flags change with it: see [applyWindow].
+        applyWindow()
+    }
+
+    /** Put back the geometry [setTypingBand] borrowed. */
+    private fun restoreTypingGeometry() {
+        inputPill?.visibility = View.VISIBLE
+        val g = typingGeometry ?: return
+        typingGeometry = null
+        val v = root ?: return
+        val p = params ?: return
+        p.x = g[0]
+        p.y = g[1]
+        p.width = g[2]
+        p.height = g[3]
+        runCatching { wm.updateViewLayout(v, p) }
+    }
+
+    fun hide(): Boolean {
+        val v = root ?: return true
+        return try {
+            ui.removeCallbacks(strollRunnable)
+            ui.removeCallbacks(dockRunnable); ui.removeCallbacks(dockBackRunnable)
+            PhoneWorkLog.removeListener(workListener)
+            workCaption?.stop()
+            workShape = false
+            slide?.cancel()
+            // The next window is built as the square; a docked flag left over
+            // would treat it as the tab.
+            docked = false
+            signInterruptedDock = false
+            ball?.setSideLedge(false)
+            cancelFoldAnimation()
+            parkedFrom = null
+            wm.removeView(v)
+            root = null
+            params = null
+            ball = null
+            syncCover()
+            true
+        } catch (_: Throwable) {
+            false
+        }
+    }
+
+    // ---- State / content ----
+
+    fun setState(s: State) {
+        ui.post {
+            val mood = when (s) {
+                State.IDLE -> Mood.CALM
+                State.RECORDING -> Mood.LISTENING
+                State.THINKING -> Mood.THINKING
+                State.SPEAKING -> Mood.SPEAKING
+                State.ERROR -> Mood.CONCERNED
+            }
+            ball?.setMood(mood)
+            ball?.setListening(s == State.RECORDING)
+            // The model's face belongs to one utterance. Anything that is not
+            // speaking has ended that utterance — including the IDLE the drain
+            // posts — so the channel is dropped here rather than at each of the
+            // places that stop the voice. Missing one of those would leave the
+            // ball wearing an emotion into the next conversation.
+            if (s != State.SPEAKING) ball?.setEmotion(null)
+            // Two transitions are worth a gesture, and only two: the mic
+            // opening is the one moment the user is waiting for an acknowledgement
+            // before speaking, and an error is the one moment a face alone is
+            // easy to miss. Animating every transition makes the ball twitch its
+            // way through a conversation.
+            //
+            // The same two moments get a tone, for the same reason turned up a
+            // notch: a face only lands if the user is looking at it, and having
+            // just spoken to the room is precisely when they are not. Speaking
+            // gets none — it announces itself — and errors get none either, now
+            // that they arrive as a card. See [Earcon].
+            if (s != lastState) {
+                // A haptic for the hand that just touched the ball. Through the
+                // view, not a Vibrator: no permission, it honours the system's
+                // touch-feedback switch, and — unlike a tone — it cannot take
+                // audio focus from a meeting or a call.
+                val haptic = when {
+                    s == State.RECORDING -> HapticFeedbackConstants.CONFIRM
+                    lastState == State.RECORDING -> HapticFeedbackConstants.GESTURE_END
+                    s == State.ERROR -> HapticFeedbackConstants.REJECT
+                    else -> null
+                }
+                if (haptic != null) root?.performHapticFeedback(haptic)
+                when (s) {
+                    State.RECORDING -> {
+                        ball?.trigger(Action.NOD)
+                        Earcon.listening()
+                    }
+                    State.THINKING -> Earcon.thinking()
+                    State.ERROR -> ball?.trigger(Action.SHAKE)
+                    else -> {}
+                }
+                lastState = s
+            }
+            // Real state driving disables demo cycling.
+            ball?.setDemoCycle(false)
+            retimeStroll()
+        }
+    }
+
+    /**
+     * The face the model picked for the reply it is saying right now.
+     *
+     * Posted to the same handler as [setState], which is what keeps the two
+     * ordered: the emotion is applied by [net.kuafuai.andee.tts.TtsController]
+     * immediately after it asks for SPEAKING, and a null arriving from any
+     * other state transition lands after it rather than racing it.
+     */
+    fun setEmotion(m: Mood?) {
+        ui.post { ball?.setEmotion(m) }
+    }
+
+    /**
+     * The agent ran a tool against the device. Shows as a nod plus the
+     * SEARCHING face, which decays on its own — so this is fire-and-forget and
+     * there is no matching "stopped" call to forget to make.
+     */
+    fun pulseTool() {
+        ui.post { ball?.pulseTool() }
+    }
+
+    /** A task ended. A brief pleased or flinching face, then back to normal. */
+    fun signalOutcome(ok: Boolean) {
+        ui.post { ball?.signalOutcome(ok) }
+    }
+
+    /** A bubble went up that nobody asked for: wave once so the eye finds it. See `NudgeUi`. */
+    fun greet() {
+        ui.post { ball?.greet() }
+    }
+
+    /**
+     * The user changed the language in 设置. Re-read everything the window is
+     * showing right now.
+     *
+     * **Why this is needed at all.** The window is a `WindowManager` overlay
+     * owned by the accessibility service, so it outlives any Activity and no
+     * amount of `setApplicationLocales` will rebuild it — Android has no idea
+     * these views exist. Every string in here was resolved once, when the view
+     * was built, and the views are not rebuilt on a language change because the
+     * ball's own state (where it is, whether it is listening, whether the card
+     * is folded) lives in them. So the strings are re-read in place instead.
+     *
+     * Whatever gets added to this window later needs a line here too, or it
+     * will keep speaking the language the device was in when the service
+     * started. That is the whole cost of overlays living outside the Activity
+     * lifecycle.
+     */
+    fun onLocaleChanged() {
+        ui.post {
+            tipsText?.text = AppLocale.str(context, R.string.window_tips)
+            inputHint?.text = AppLocale.str(context, R.string.window_input_hint)
+            paintMute()
+            paintViewKey()
+            historyView?.onLocaleChanged()
+            stageView?.onLocaleChanged()
+            renderSceneChip()
+        }
+    }
+
+    /**
+     * The palette changed under us. See [Theme] for what sets it off and
+     * [net.kuafuai.andee.BodyCoreService] for who calls this.
+     *
+     * A different job from [onLocaleChanged] in exactly one place: **the backdrop is a
+     * decoded image rather than a colour read at build time.** [Backdrop.warm] is
+     * one-shot by design, so the cached decode has to be dropped before the new
+     * palette's file can be read at all — without that the card keeps the white wash
+     * under the dark palette, which is the single most visible way to get a theme
+     * switch wrong. Everything else is the same rebuild a language change is, so it is
+     * the same calls.
+     */
+    fun onThemeChanged() {
+        ui.post {
+            Backdrop.reset()
+            val bg = backdrop
+            if (bg != null) {
+                Backdrop.warm(context) { bmp ->
+                    bg.setImageBitmap(bmp)
+                    applyWindow()
+                }
+            }
+            applyPaletteToChrome()
+            historyView?.onThemeChanged()
+            historyView?.work?.repaintChrome()
+            stageView?.onThemeChanged()
+            renderSceneChip()
+            // The scrim is now the other palette's, and [paintCard] only pushes it when
+            // it differs from what the image already carries.
+            scrimShown = null
+            applyWindow()
+        }
+    }
+
+    /**
+     * Re-colour the chrome that was built once and has no way of hearing about a theme
+     * change on its own.
+     *
+     * **The cards rebuild; this bar does not.** [net.kuafuai.andee.ui.CardUi] and every
+     * card are constructed on demand, so they pick up the new palette by existing.
+     * The window's own chrome — built in [build] and never again — bakes its colours at
+     * construction, which is a silent failure exactly once per control and shows up as
+     * *one* unreadable element rather than as a broken screen. Both of the ones reported
+     * from the tablet were this: a light-mode grey left on a night-mode well, and the
+     * day ink left on the night photograph.
+     *
+     * The rule this is the last word on: **anything whose colour or fill is set at build
+     * time in this class needs a line here.** The top bar's own `background` is the one
+     * that proved it — it was missed twice, and what it looks like when it is missing is
+     * a dark pill under correctly-tinted glyphs, which reads as a design choice rather
+     * than as a stale value. If this list ever grows past a handful, the answer is to
+     * rebuild the chrome rather than to keep enumerating it.
+     */
+    private fun applyPaletteToChrome() {
+        val ink = Color.parseColor(Glass.PHOTO_INK)
+        // The bar's own fill first, then the glyphs that sit on it. Both are colours
+        // read at build; the fill is the one that has no way of looking wrong *and*
+        // being noticed.
+        topBarView?.background = Glass.well(context, topBarRadius)
+        for (v in barIcons) v.setColorFilter(ink)
+        // The tips sit on the photograph itself.
+        tipsText?.setTextColor(ink)
+        inputPill?.background = Glass.well(context, dp(24))
+        paintMute()
+        // The scene chip is a well too, and its two labels are the card's greys.
+        sceneChip?.background = Glass.well(context, dp(22))
+        val soft = Color.parseColor(Glass.SECONDARY)
+        sceneChipText?.setTextColor(soft)
+        sceneChipExit?.setTextColor(soft)
+    }
+
+    /**
+     * The scene the assistant is in, by title, or null for none. Drawn only in
+     * the full card — folded there is no room, and the corner ball is not where
+     * anyone reads a label.
+     */
+    fun setScene(title: String?) {
+        sceneTitle = title
+        ui.post { renderSceneChip() }
+    }
+
+    /** Main thread only. */
+    private fun renderSceneChip() {
+        val chip = sceneChip ?: return
+        val title = sceneTitle
+        sceneChipText?.text = title?.let { AppLocale.str(context, R.string.scenes_chip, it) }.orEmpty()
+        chip.visibility = if (title != null && !compact) View.VISIBLE else View.GONE
+    }
+
+    /**
+     * What is happening *right now*, shown as the live last row of the
+     * scrollback rather than as a band under the ball.
+     *
+     * One place for everything the assistant says or hears, in the order it
+     * happened: the partial transcript turns into the user's row, the tool
+     * names and drafts turn into the assistant's. A separate band meant the
+     * user had to watch two surfaces and meant the same sentence appeared on
+     * both — which it did.
+     */
+    fun setSubtitle(text: String, kind: SubtitleKind = SubtitleKind.PARTIAL) {
+        ui.post {
+            historyView?.setLive(text, kind)
+            stageView?.setLive(text)
+        }
+    }
+
+    fun clearSubtitle() = setSubtitle("")
+
+    /**
+     * Move the ball one look along and say which one it landed on.
+     *
+     * The renderer reads [BallLooks] on its own thread and latches it at the
+     * top of a frame, so all this side has to do is *ask*; there is nothing to
+     * post to the GL thread and nothing to wait for.
+     *
+     * Three things happen together on purpose. The pick is written to prefs
+     * immediately rather than on some later 保存 — the ball changing in front
+     * of the user is the confirmation, and there is no card here to put a
+     * button on. The name is announced, because the looks are close enough
+     * relatives that a user who swiped past one should be told what they now
+     * have. And the ball pops, so the change reads as the ball *doing*
+     * something rather than as a redraw.
+     *
+     * The announcement goes through the transcript's transient line
+     * ([SubtitleKind.FINAL]) rather than being committed as a row: it is a
+     * label on a control, not something anybody said, and it clears itself.
+     */
+    private fun stepBallLook(delta: Int) {
+        val next = BallLooks.step(delta)
+        VoiceConfig.save(context, mapOf("ball" to next.name))
+        ball?.trigger(Action.POP)
+        setSubtitle(next.label(context), SubtitleKind.FINAL)
+    }
+
+    /**
+     * Temporarily make the whole overlay non-touchable so a synthesized
+     * gesture (dispatchGesture) can reach the app underneath. When off, the
+     * overlay is passive: no clicks, no drag. Toggle it back on when done.
+     *
+     * The overlay is still visible either way — only touch is affected.
+     */
+    fun setTouchable(touchable: Boolean) {
+        ui.post {
+            gesturePassthrough = !touchable
+            applyWindow()
+        }
+    }
+
+    /**
+     * Drive the whole window to alpha 0 so an [AccessibilityService.takeScreenshot]
+     * captures what's underneath instead of us.
+     *
+     * Load-bearing since the card went fullscreen: the overlay is composited
+     * into the display capture like any other window, so without this every
+     * screenshot the brain receives is a black rectangle — and, once the card
+     * grew a blur, a *blurred* screen even at alpha 0, which is why
+     * [applyWindow] drops the blur on the same switch.
+     * Window alpha rather than View.INVISIBLE or removeView — it's one field,
+     * and it doesn't tear down the ball's GL context on every capture.
+     *
+     * Touch is unaffected; an invisible window still eats taps, which is fine
+     * for the ~200 ms a capture holds it.
+     */
+    /** Our window's on-screen rectangle right now, or null. Off the main thread only. */
+    fun windowBounds(): Rect? {
+        val latch = java.util.concurrent.CountDownLatch(1)
+        var out: Rect? = null
+        ui.post {
+            root?.let { v ->
+                val loc = IntArray(2)
+                v.getLocationOnScreen(loc)
+                out = Rect(loc[0], loc[1], loc[0] + v.width, loc[1] + v.height)
+            }
+            latch.countDown()
+        }
+        latch.await(200, java.util.concurrent.TimeUnit.MILLISECONDS)
+        return out
+    }
+
+    fun setVisibleForCapture(visible: Boolean) {
+        ui.post {
+            captureHidden = !visible
+            applyWindow()
+        }
+    }
+
+    /** Where the window sat before [parkForGesture] moved it; null when not parked. Main thread only. */
+    private var parkedFrom: IntArray? = null
+
+    /**
+     * Move the folded ball's window off the left edge of the screen so an
+     * injected gesture can pass through where it sat. Blocks the caller (never
+     * the main thread) until the move has been applied and had a frame or two to
+     * reach the compositor, or [PARK_WAIT_MS] has passed.
+     *
+     * Why not just `FLAG_NOT_TOUCHABLE`, which [setTouchable] already sets: a
+     * non-touchable overlay still *obscures*. Measured on a Huawei with Alipay
+     * (2026-10-09), `dispatchGesture` on the bottom tabs reported
+     * `completed:true` for every tap, and the tabs inside the ball window's frame
+     * never switched while the ones outside it did — including 消息, which sits in
+     * the transparent part of the frame, clear of the drawn sphere. The platform
+     * flags a stroke that passes under an untrusted overlay as obscured, and a
+     * payment app is entitled to drop such a stroke without saying so.
+     *
+     * No-op unless folded: the unfolded card is a full-screen surface and moving
+     * it would take the whole card off the display. The dispatcher folds before
+     * every `screen.*` call, so that case is a passive observer, not a driver.
+     */
+    fun parkForGesture() {
+        val latch = java.util.concurrent.CountDownLatch(1)
+        var parked = false
+        ui.post {
+            try {
+                val v = root
+                val p = params
+                if (v != null && p != null && compact && parkedFrom == null) {
+                    // A slide in flight would keep writing p.x/p.y over the parked
+                    // position, and restoring a mid-flight number would strand the
+                    // ball half-way between two resting places.
+                    slide?.end()
+                    parkedFrom = intArrayOf(p.x, p.y, p.width, p.height)
+                    p.x = -p.width - dp(32)
+                    runCatching { wm.updateViewLayout(v, p) }
+                    parked = true
+                }
+            } finally {
+                latch.countDown()
+            }
+        }
+        if (!latch.await(PARK_WAIT_MS, java.util.concurrent.TimeUnit.MILLISECONDS)) return
+        // `updateViewLayout` is posted to the compositor; the same settle the
+        // flag flip in [setTouchable] needs, and for the same reason.
+        if (parked) Thread.sleep(PARK_SETTLE_MS)
+    }
+
+    /**
+     * Put the window back where [parkForGesture] found it. Not blocking: nothing
+     * the caller does next depends on the ball being visible again. Idempotent,
+     * and a no-op when something reshaped the window in the meantime (a fold or
+     * unfold writes its own geometry, and that is the newer fact).
+     */
+    fun unparkForGesture() {
+        ui.post {
+            val from = parkedFrom ?: return@post
+            parkedFrom = null
+            val v = root ?: return@post
+            val p = params ?: return@post
+            if (!compact || p.width != from[2] || p.height != from[3]) return@post
+            p.x = from[0]
+            p.y = from[1]
+            runCatching { wm.updateViewLayout(v, p) }
+            // A countdown that ran out while parked was refused (see [dock]).
+            armDock()
+        }
+    }
+
+    /**
+     * Vanish while the typing field has the user in another app's camera or
+     * photo picker. The card still holds its typing height, which puts it over
+     * the top of that app, and overlays sort above activities; it is already
+     * untouchable while a field is up, so alpha 0 is all that is missing.
+     * Separate from [captureHidden] so a screenshot finishing mid-pick cannot
+     * bring the card back over the picker.
+     */
+    fun setAway(away: Boolean) {
+        ui.post {
+            if (this.away == away) return@post
+            this.away = away
+            applyWindow()
+        }
+    }
+
+    /**
+     * Fold to the corner ball so the user sees — and can touch — the real app
+     * underneath. The card covers the whole screen and is not meaningfully
+     * see-through, so this is the only way anything below it is ever usable.
+     *
+     * Shrinks rather than vanishes. The obvious implementation — window alpha 0
+     * plus FLAG_NOT_TOUCHABLE — was the first cut, and it strands the user: a
+     * fullscreen touchable window swallows every touch, so handing the screen
+     * back means giving up touch, and giving up touch means the ball and the
+     * stop button are both gone for good with no way to ask for the assistant.
+     * Shrinking the window is what breaks the tie: the ball stays visible and
+     * tappable in its own small rectangle while every other pixel belongs to
+     * the user.
+     *
+     * Idempotent, and there is nothing time-based in here — this is a resting
+     * state, not a timed peek. Ending it is the caller's business, since when
+     * to come back isn't ours to decide.
+     */
+    fun setCompact(compact: Boolean) {
+        ui.post {
+            if (this.compact == compact) return@post
+            this.compact = compact
+            syncCover()
+            if (compact) enterCompact() else exitCompact()
+            applyWindow()
+        }
+    }
+
+    /**
+     * Publish "this window is covering the display" for the two readers that
+     * cannot be handed a reference to it — see [FullscreenCard].
+     *
+     * Derived from both facts rather than mirrored off [setCompact], because
+     * [hide] leaves `compact` alone: a card torn down while unfolded would
+     * otherwise keep claiming to cover a screen it is no longer on. Main thread
+     * only, like everything that touches these two fields.
+     */
+    private fun syncCover() {
+        FullscreenCard.covering = root != null && !compact
+    }
+
+    /**
+     * Whether the card is folded, read from outside.
+     *
+     * Only the service asks, and only for one decision: a fold takes the
+     * scrollback with it (`historyView` goes `GONE`), so anything that has to
+     * be readable *now* cannot be put there. See the answer's fallback card in
+     * [net.kuafuai.andee.BodyCoreService].
+     */
+    fun isCompact(): Boolean = compact
+
+    /**
+     * Difference between a window's `p.y` and where it actually lands on
+     * screen, measured rather than assumed.
+     *
+     * `Gravity.TOP` plus `FLAG_LAYOUT_NO_LIMITS` is supposed to make `p.y` a
+     * display coordinate, and on the tablet it is — the offset measures 0. On
+     * an Honor phone it measures the status bar height, so everything computed
+     * against `bottomEdge()` landed that much too low: the ledge the paws hang
+     * on ended up past the bottom of the physical screen, which is why the ball
+     * showed but its hands never did.
+     *
+     * Not worth arguing with. One `getLocationOnScreen` says what the device
+     * actually does, and subtracting it makes the same arithmetic correct on
+     * both.
+     *
+     * **It belongs to the folded geometry and to nothing else** — see
+     * [refreshWinYOrigin], which is the whole reason this is not simply read
+     * whenever it is wanted.
+     */
+    private var winYOrigin = 0
+
+    /**
+     * Re-measure [winYOrigin]. Needs the window laid out and *not* mid-slide,
+     * or `p.y` and the on-screen location come from different frames.
+     *
+     * **Only ever measured while the window is the corner square**, because the
+     * offset is a property of the *geometry* and not of the window type. On this
+     * Honor phone, measured through `BallGeom`: as a `MATCH_PARENT` card the
+     * frame starts at `126` with `p.y = 0`, so the offset reads as the status
+     * bar height; as the 168 dp square it reads `0`, because an explicitly sized
+     * and positioned `FLAG_LAYOUT_NO_LIMITS` window really is placed in display
+     * coordinates. `FLAG_LAYOUT_IN_SCREEN` does not close that gap — a
+     * MATCH_PARENT overlay still resolves against the content frame.
+     *
+     * [enterCompact] used to take the measurement in the card's own frame, one
+     * line before shrinking to the square, and then spend it on the square's
+     * `p.y`. That is the bug behind "球球悬在底部上面": every value here is
+     * subtracted from a screen Y, so a 126 that belonged to the outgoing frame
+     * lifted the folded ball 126 px clear of the edge it was meant to sit on.
+     *
+     * Main thread only.
+     */
+    private fun refreshWinYOrigin() {
+        val v = root ?: return
+        val p = params ?: return
+        if (v.width == 0 || slide?.isRunning == true) return
+        if (p.width == WindowManager.LayoutParams.MATCH_PARENT) return
+        val loc = IntArray(2)
+        v.getLocationOnScreen(loc)
+        winYOrigin = loc[1] - p.y
+    }
+
+    /** Resting compact `p.y`: bottom-right of the *visible* area. Main thread only. */
+    private fun compactHomeY(): Int =
+        bottomEdge() - dp(COMPACT_DP) - dp(COMPACT_MARGIN_DP) - winYOrigin
+
+    /**
+     * The assistant is working: put a busy face on the folded ball and bring it
+     * out of the edge ([comeOut]), where the user can watch it work — the words
+     * under it ([workCaption]) say what it is doing. When the task ends it goes
+     * back into the edge after [DOCK_AFTER_WORK_MS].
+     */
+    fun setWorking(on: Boolean) {
+        ui.post {
+            if (working == on) return@post
+            working = on
+            ui.removeCallbacks(dockRunnable); ui.removeCallbacks(dockBackRunnable)
+            if (on) {
+                movedWhileWorking = false
+                dropSignboardBeforeDock()
+                comeOut()
+            } else if (root != null && compact && !docked) {
+                // Done: a moment for the last line, then back into the edge — at the height it was docked at
+                // before, not the raised one it worked at, or every task would leave it a little higher.
+                ui.postDelayed(dockBackRunnable, DOCK_AFTER_WORK_MS)
+            }
+            syncWorking()
+            retimeStroll()
+        }
+    }
+
+    /**
+     * A page the brain composed (or a trip out of the card) is on screen: go
+     * into the edge, so a ball landing wherever it last was does not stand in
+     * front of the thing that was just drawn. Closing the page leaves it there.
+     */
+    fun setPageShown(on: Boolean) {
+        ui.post {
+            if (!on) return@post
+            dropSignboardBeforeDock()
+            dock()
+        }
+    }
+
+    /**
+     * Tell the ball whether a task is running, for its face. Conditional on
+     * being folded: the unfolded card has never worn the busy face. The ledge
+     * pose ([EmotionBallTextureView.setAtLedge]) is never asked for any more —
+     * the ball no longer hangs off the bottom edge. Main thread only.
+     */
+    private fun syncWorking() {
+        ball?.setWorking(compact && working)
+    }
+
+    /** True while a dock/home slide animation is in flight. Main thread only. */
+    private fun slideRunning(): Boolean = slide?.isRunning == true
+
+    /**
+     * The drawn sphere's on-screen bounding box, for anyone anchoring
+     * something to it — currently CardUi, which holds its signboards above it.
+     *
+     * The *sphere*, not the window. It used to be the window, which was
+     * accidentally right while the only window was the 168dp corner square
+     * (CardUi could reconstruct the ball from it) and badly wrong the moment
+     * the card went fullscreen: the same arithmetic then described a 288px
+     * radius ball floating in the middle of the screen, and every card landed
+     * on top of the real one.
+     *
+     * Measured off the live views rather than computed from `p.x/p.y`, so a
+     * card asked mid-slide or mid-drag still lands where the ball actually is.
+     * Null if the window is gone. Answers on the main thread via the callback.
+     */
+    fun ballRect(cb: (IntArray?) -> Unit) {
+        ui.post {
+            val v = root ?: return@post cb(null)
+            val area: View = v.ballAreaView ?: v
+            val loc = IntArray(2)
+            area.getLocationOnScreen(loc)
+            // The same two numbers the renderer uses: the sphere is a fixed
+            // fraction of the surface's shorter side, times the view scale the
+            // ball is drawn at (1f when folded — see applyCompactAppearance).
+            val scale = if (compact) 1f else BALL_SCALE
+            val r = (min(area.width, area.height) * SPHERE_RADIUS_FRACTION * scale).toInt()
+            val cx = loc[0] + area.width / 2
+            // The sphere may be drawn below the area's centre while it is
+            // dodging the control cluster — see [ballDrop].
+            val cy = loc[1] + area.height / 2 + (ball?.translationY ?: 0f).toInt()
+            cb(intArrayOf(cx - r, cy - r, cx + r, cy + r))
+        }
+    }
+
+    /** While a signboard is up the window is card-sized, so a dock slide would drag the whole card into the edge. */
+    private fun dropSignboardBeforeDock() {
+        if (!compact || signboard == null) return
+        signboardEvictor?.invoke()
+        if (signboard != null) hideSignboard()
+    }
+
+    /** A signboard is up — the ball waits, attending, instead of idling. */
+    fun setHolding(on: Boolean) {
+        ui.post {
+            ball?.setHolding(on)
+            if (on) {
+                // Stand still while asking: a ball that fidgets through its own
+                // question doesn't look like it cares about the answer.
+                ui.removeCallbacks(strollRunnable)
+            } else {
+                retimeStroll()
+            }
+        }
+    }
+
+    // ---- Docking into the right edge ----
+    //
+    // The folded ball used to be a 136 dp square that also hung off the bottom
+    // edge by its paws while a task ran. Issue #33: the square's transparent band
+    // took taps meant for the app underneath (a touch that enters this window is
+    // ours; returning false does not hand it on). So the ball is smaller, and when
+    // it has been left alone for [DOCK_AFTER_MS] — or a task starts, or a page
+    // goes up, or it is dropped against the right edge — it slides into the right
+    // edge until half its face shows, and the window shrinks to just that.
+    //
+    // Docked, the ball keeps its whole vocabulary: tap talks, double-tap types,
+    // long-press opens the card. A drag along the edge moves it up and down; a
+    // pull away from the edge brings the whole ball out under the finger.
+    //
+    // The tab is the same picture as the square slid half off-screen: the ball
+    // area keeps the square's size (so the GL surface never resizes) and is
+    // translated inside the smaller window, sphere centre on the window's right
+    // edge, which is the screen's.
+
+    /** Width of the docked tab: the part of the clinging ball that leans out past the edge. */
+    private fun dockTabW(): Int = (dp(COMPACT_DP) * DOCK_SCALE * DOCK_TAB_W_FRACTION).toInt()
+
+    /** How much of the docked tab is above the ball's centre: the tallest ears of any look. */
+    private fun dockTabUp(): Int = (dp(COMPACT_DP) * DOCK_SCALE * DOCK_TAB_UP_FRACTION).toInt()
+
+    /** And below it: the lower paw, plus room for the slip. */
+    private fun dockTabDown(): Int = (dp(COMPACT_DP) * DOCK_SCALE * DOCK_TAB_DOWN_FRACTION).toInt()
+
+    private fun dockTabH(): Int = dockTabUp() + dockTabDown()
+
+    /** Start (or restart) the idle countdown to docking. Main thread only. */
+    private fun armDock() {
+        ui.removeCallbacks(dockRunnable); ui.removeCallbacks(dockBackRunnable)
+        // Not while working: the ball is out on purpose then (see [setWorking]).
+        if (root != null && compact && !docked && signboard == null && !working) {
+            ui.postDelayed(dockRunnable, DOCK_AFTER_MS)
+        }
+    }
+
+    /**
+     * Slide into the right edge at the ball's current height (or at [atCy], a
+     * docked centre to return to), then become the tab. No-op unless folded,
+     * whole, and holding no sign. Main thread only.
+     */
+    private fun dock(atCy: Int? = null) {
+        ui.removeCallbacks(dockRunnable); ui.removeCallbacks(dockBackRunnable)
+        val p = params ?: return
+        if (root == null || !compact || docked || signboard != null || parkedFrom != null) return
+        // Mid-fold the window is still the full card (p.y = 0) and the fold's end resets the ball's scale: docking
+        // now picked the top of the screen and left a full-size ball in a small tab. Wait for the fold to land.
+        if (foldAnim?.isRunning == true) {
+            dockWhenFolded = true
+            if (atCy != null) dockWhenFoldedAt = atCy
+            return
+        }
+        setWorkShape(false)
+        refreshWinYOrigin()
+        val side = dp(COMPACT_DP)
+        val cy = clampDockCy(atCy ?: (p.y + side / 2))
+        ui.removeCallbacks(strollRunnable)
+        // Shrinks on the way, so the swap to the tab at the end shows nothing new.
+        ball?.animate()?.scaleX(DOCK_SCALE)?.scaleY(DOCK_SCALE)?.setDuration(DOCK_SLIDE_MS)?.start()
+        slideTo(rightEdge() - side / 2, cy - side / 2, DOCK_SLIDE_MS) {
+            if (compact && signboard == null && !docked) {
+                dockCy = cy
+                docked = true
+                // The shrink may have been cancelled on the way (a fold, a rebuild): the tab is sized for this scale.
+                ball?.animate()?.cancel()
+                ball?.scaleX = DOCK_SCALE
+                ball?.scaleY = DOCK_SCALE
+                applyDockedGeometry()
+                // Only now, with the window at the edge: grabbing it mid-slide
+                // would be paws on nothing.
+                ball?.setSideLedge(true)
+            }
+        }
+    }
+
+    /**
+     * Put the window in the tab shape at [dockCy]. Visually a no-op against a
+     * square whose sphere centre is already on the edge — only the off-screen
+     * half and the transparent band go. Main thread only.
+     */
+    private fun applyDockedGeometry() {
+        val v = root ?: return
+        val p = params ?: return
+        val area = v.ballAreaView ?: return
+        val side = dp(COMPACT_DP)
+        val w = dockTabW()
+        val h = dockTabH()
+        val x = rightEdge() - w
+        val y = dockCy - dockTabUp()
+        p.width = w
+        p.height = h
+        val parked = parkedFrom
+        if (parked != null) {
+            // Off screen for an injected gesture: the new shape is where it comes back to (see [unparkForGesture]).
+            parkedFrom = intArrayOf(x, y, w, h)
+        } else {
+            p.x = x
+            p.y = y
+        }
+        (area.layoutParams as? FrameLayout.LayoutParams)?.let {
+            it.width = side
+            it.height = side
+            it.gravity = Gravity.TOP or Gravity.START
+            area.layoutParams = it
+        }
+        area.translationX = (w - side / 2).toFloat()
+        area.translationY = (dockTabUp() - side / 2).toFloat()
+        // The right edge is where the system's back gesture starts; without this
+        // a drag on the tab would be taken as "back".
+        v.systemGestureExclusionRects = listOf(Rect(0, 0, w, h))
+        runCatching { wm.updateViewLayout(v, p) }
+    }
+
+    // ---- The work caption under the folded ball ----
+    //
+    // While a turn works the ball is out of the edge ([setWorking] → [comeOut]) and a few lines of tiny type hang
+    // under it ([workCaption]): the status and the newest two lines of what it is thinking and doing. The window
+    // grows to hold them — wider than the ball, down by [WORK_CAPTION_H_DP] — with the ball kept at its top right,
+    // so the ball does not move on screen when the words come or go. Same window, no new overlay.
+
+    /** The caption is wanted now. Main thread only. */
+    private fun captionWanted(): Boolean =
+        root != null && compact && !docked && signboard == null && PhoneWorkLog.active &&
+            !slideRunning() && foldAnim?.isRunning != true
+
+    /** Shown under the ball while a turn works ([PhoneWorkLog]). Built with the window. */
+    private var workCaption: WorkCardView.Tiny? = null
+
+    /** The window is in the caption shape now. Main thread only. */
+    private var workShape = false
+
+    /** How far the window's left edge sits left of the ball's, in the caption shape (0 otherwise): the ball is centred. */
+    private fun workShapeOffset(): Int = if (workShape) ((params?.width ?: 0) - dp(COMPACT_DP)) / 2 else 0
+
+    /** A turn's work changed: take or leave the caption shape, or just repaint the words. */
+    private val workListener: () -> Unit = { applyWorkShape() }
+
+    private fun applyWorkShape() {
+        val want = captionWanted()
+        if (want == workShape) {
+            if (want) workCaption?.repaint()
+            return
+        }
+        setWorkShape(want)
+    }
+
+    /**
+     * Into or out of the caption shape, keeping the ball where it is on screen. While parked off screen for an
+     * injected gesture the new geometry is written into [parkedFrom], the place it comes back to. Main thread only.
+     */
+    private fun setWorkShape(on: Boolean) {
+        if (on == workShape) return
+        val v = root ?: return
+        val p = params ?: return
+        val area = v.ballAreaView ?: return
+        val side = dp(COMPACT_DP)
+        val parked = parkedFrom
+        val oldX = parked?.get(0) ?: p.x
+        val oldY = parked?.get(1) ?: p.y
+        val oldW = parked?.get(2) ?: p.width
+        val ballX = oldX + (if (workShape) (oldW - side) / 2 else 0)
+        workShape = on
+        val dm = context.resources.displayMetrics
+        val w = if (on) maxOf(side, dp(WORK_CAPTION_W_DP)).coerceAtMost(dm.widthPixels) else side
+        // The words start inside the ball area's empty lower band, just under the drawn sphere.
+        val h = if (on) side + dp(WORK_CAPTION_H_DP) - dp(WORK_CAPTION_TUCK_DP) else side
+        // Ball centred over its words; kept on screen if that would push the window past an edge.
+        val x = (ballX - (w - side) / 2).coerceIn(0, (dm.widthPixels - w).coerceAtLeast(0))
+        // Low on the screen the words would run off the bottom: lift the ball just enough to fit them.
+        val y = if (on) minOf(oldY, bottomEdge() - winYOrigin - h - dp(4)) else oldY
+        (area.layoutParams as? FrameLayout.LayoutParams)?.let {
+            it.width = if (on) side else FrameLayout.LayoutParams.MATCH_PARENT
+            it.height = if (on) side else FrameLayout.LayoutParams.MATCH_PARENT
+            it.gravity = if (on) Gravity.TOP or Gravity.CENTER_HORIZONTAL else Gravity.TOP or Gravity.START
+            area.layoutParams = it
+        }
+        workCaption?.let { c ->
+            c.visibility = if (on) View.VISIBLE else View.GONE
+            if (on) c.repaint() else c.stop()
+        }
+        p.width = w
+        p.height = h
+        if (parked != null) {
+            parkedFrom = intArrayOf(x, y, w, h)
+        } else {
+            p.x = x
+            p.y = y
+        }
+        runCatching { wm.updateViewLayout(v, p) }
+    }
+
+    /**
+     * A turn started: if the ball is in the edge, it comes out — the whole ball, at the same height, a thumb's
+     * width in from the edge — and the caption hangs under it once it has arrived.
+     */
+    private fun comeOut() {
+        if (root == null || !compact) return
+        if (!docked) { applyWorkShape(); return }
+        val side = dp(COMPACT_DP)
+        val y0 = dockCy - side / 2
+        val (x, y) = workSpot()
+        // The square with the sphere still on the edge, where the tab showed it, then out.
+        undockTo(rightEdge() - side / 2, y0)
+        slideTo(x, y, DOCK_SLIDE_MS) {
+            homeX = params?.x ?: homeX
+            homeY = y
+            applyWorkShape()
+        }
+    }
+
+    /**
+     * Where a working ball sits, as the square's window (x, y): in from the right edge by [COME_OUT_IN_DP] and up by
+     * [COME_OUT_UP_DP] from the height it docks at (the corner's, before it ever has), never past the top of the
+     * visible area. The one answer for both ways into a working ball — out of the edge ([comeOut]) and a fold
+     * while a task runs ([enterCompact]). Main thread only.
+     */
+    private fun workSpot(): IntArray {
+        val side = dp(COMPACT_DP)
+        val base = restingDockCy() - side / 2
+        val y = maxOf(base - dp(COME_OUT_UP_DP), topEdge() - winYOrigin + dp(8))
+        return intArrayOf(rightEdge() - side - dp(COME_OUT_IN_DP), y)
+    }
+
+    /**
+     * Leave the edge: the square again, placed at ([x], [y]) at once. The caller
+     * slides it on from there if it wants to. Main thread only.
+     */
+    private fun undockTo(x: Int, y: Int) {
+        val v = root ?: return
+        val p = params ?: return
+        docked = false
+        squareBallArea()
+        // Lets go of the edge and grows back; the cling stands the body up as it eases off.
+        ball?.setSideLedge(false)
+        ball?.animate()?.scaleX(1f)?.scaleY(1f)?.setDuration(DOCK_SLIDE_MS)?.start()
+        val side = dp(COMPACT_DP)
+        p.width = side
+        p.height = side
+        p.x = x
+        p.y = y
+        runCatching { wm.updateViewLayout(v, p) }
+    }
+
+    /** The ball area back to filling the window, untranslated. Main thread only. */
+    private fun squareBallArea() {
+        val v = root ?: return
+        val area = v.ballAreaView ?: return
+        (area.layoutParams as? FrameLayout.LayoutParams)?.let {
+            it.width = FrameLayout.LayoutParams.MATCH_PARENT
+            it.height = FrameLayout.LayoutParams.MATCH_PARENT
+            it.gravity = Gravity.TOP or Gravity.START
+            area.layoutParams = it
+        }
+        area.translationX = 0f
+        area.translationY = 0f
+        v.systemGestureExclusionRects = emptyList()
+
+    }
+
+    /** A docked centre kept clear of the status bar and the bottom edge. */
+    private fun clampDockCy(cy: Int): Int {
+        val top = topEdge() + dockTabUp() + dp(8) - winYOrigin
+        val bottom = bottomEdge() - dockTabDown() - dp(8) - winYOrigin
+        return cy.coerceIn(top, bottom.coerceAtLeast(top))
+    }
+
+    /**
+     * Transparent margin between the compact window's edge and the drawn
+     * sphere, px. The sphere is [SPHERE_RADIUS_FRACTION] of the side and centred,
+     * so most of the window is empty air — which is why clamping the *window* to
+     * the screen would strand the ball a thumb's width short of every edge.
+     * Clamp against this instead and the ball can sit flush.
+     */
+    private fun spherePad(): Int {
+        val side = dp(COMPACT_DP)
+        return side / 2 - (side * SPHERE_RADIUS_FRACTION).toInt()
+    }
+
+    /**
+     * Keep a dragged ball reachable: the sphere may go flush with any edge but
+     * not past it. A ball dragged off the side of the screen used to be simply
+     * gone, and it is the only way to reach the assistant once folded.
+     *
+     * Main thread only.
+     */
+    private fun clampCompact(p: WindowManager.LayoutParams) {
+        val side = dp(COMPACT_DP)
+        val pad = spherePad()
+        val dm = context.resources.displayMetrics
+        // In the work-caption shape the ball is at the window's top right; clamp the ball, and keep the words on screen.
+        val off = workShapeOffset()
+        p.x = p.x.coerceIn(-pad - off, dm.widthPixels - side + pad - off)
+        if (signboard != null) {
+            clampHeld(p)
+        } else {
+            val extra = if (workShape) dp(WORK_CAPTION_H_DP) - dp(WORK_CAPTION_TUCK_DP) else 0
+            p.y = p.y.coerceIn(-pad - winYOrigin, bottomEdge() - side - extra + pad - winYOrigin)
+        }
+    }
+
+    /**
+     * End of a drag of the whole ball: dropped against the right edge, it goes
+     * in; anywhere else, that is its new spot and the idle countdown starts.
+     *
+     * Main thread only.
+     */
+    private fun settleAfterDrag() {
+        val v = root ?: return
+        val p = params ?: return
+        if (!compact) return
+        clampCompact(p)
+        runCatching { wm.updateViewLayout(v, p) }
+        homeX = p.x
+        homeY = p.y
+        if (working) movedWhileWorking = true
+        val side = dp(COMPACT_DP)
+        val sphereRight = p.x + workShapeOffset() + side / 2 + (side * SPHERE_RADIUS_FRACTION).toInt()
+        if (signboard == null && sphereRight >= rightEdge() - dp(SNAP_GRACE_DP)) {
+            dock()
+        } else {
+            armDock()
+        }
+    }
+
+    /**
+     * Y of the bottom of the area a user can actually see, which is not the
+     * bottom of the display: the navigation bar owns the bottom band and is
+     * layered *above* TYPE_APPLICATION_OVERLAY, while `FLAG_LAYOUT_NO_LIMITS`
+     * lets us lay out underneath it.
+     */
+    private fun bottomEdge(): Int {
+        val m = wm.currentWindowMetrics
+        val inset = m.windowInsets
+            .getInsetsIgnoringVisibility(
+                WindowInsets.Type.systemBars() or WindowInsets.Type.displayCutout(),
+            ).bottom
+        return m.bounds.bottom - inset
+    }
+
+    /** Y of the top of the visible area: below the status bar and any cutout. */
+    private fun topEdge(): Int {
+        val m = wm.currentWindowMetrics
+        val inset = m.windowInsets
+            .getInsetsIgnoringVisibility(
+                WindowInsets.Type.systemBars() or WindowInsets.Type.displayCutout(),
+            ).top
+        return m.bounds.top + inset
+    }
+
+    /** X of the right edge of the visible area — where the ball docks. */
+    private fun rightEdge(): Int {
+        val m = wm.currentWindowMetrics
+        val inset = m.windowInsets
+            .getInsetsIgnoringVisibility(
+                WindowInsets.Type.systemBars() or WindowInsets.Type.displayCutout(),
+            ).right
+        return m.bounds.right - inset
+    }
+
+    /**
+     * Animated rather than teleported: a ball that jumps has not said anything
+     * the user can follow. [then] runs when the slide reaches its target, and
+     * not when it is cancelled (a finger landing on the ball, a fold).
+     *
+     * Main thread only.
+     */
+    private fun slideTo(targetX: Int, targetY: Int, ms: Long = DOCK_SLIDE_MS, then: (() -> Unit)? = null) {
+        val v = root ?: return
+        val p = params ?: return
+        slide?.cancel()
+        if (p.x == targetX && p.y == targetY) {
+            then?.invoke()
+            return
+        }
+        val fromX = p.x
+        val fromY = p.y
+        val dx = targetX - fromX
+        val dy = targetY - fromY
+        slide = ValueAnimator.ofFloat(0f, 1f).apply {
+            duration = ms
+            interpolator = DecelerateInterpolator()
+            addUpdateListener { a ->
+                val t = a.animatedValue as Float
+                p.x = fromX + (dx * t).roundToInt()
+                p.y = fromY + (dy * t).roundToInt()
+                runCatching { wm.updateViewLayout(v, p) }
+            }
+            addListener(object : android.animation.AnimatorListenerAdapter() {
+                private var cancelled = false
+                override fun onAnimationCancel(animation: android.animation.Animator) {
+                    cancelled = true
+                }
+                override fun onAnimationEnd(animation: android.animation.Animator) {
+                    if (!cancelled) then?.invoke()
+                }
+            })
+            start()
+        }
+    }
+
+    // ---- Idle fidget ----
+
+    /**
+     * Hop on the spot, every so often, when there is nothing else going on.
+     *
+     * A corner ball that holds one pixel for an hour reads as a decal. A few
+     * hops every half-minute is the cheapest way to say there is something alive
+     * in there — and because the ball *is* the only way to reach the assistant
+     * once the card is folded, looking alive is also the thing that makes it
+     * look tappable.
+     *
+     * On the spot, not travelling: the window stays exactly where the user put
+     * it. A ball that wanders has to be re-found every time it is wanted, which
+     * costs more than the liveliness is worth.
+     *
+     * Main thread only.
+     */
+    private fun strollStep() {
+        if (!strollWanted()) {
+            retimeStroll()
+            return
+        }
+        ball?.trigger(Action.HOP)
+
+        strollLeft--
+        // Two to four hops, then stand still for a while. A ball that hopped on
+        // a fixed tick would be a metronome; the point is to look idle, not
+        // scheduled.
+        val delay = if (strollLeft > 0) {
+            STROLL_HOP_MS
+        } else {
+            strollLeft = 2 + Random.nextInt(3)
+            STROLL_REST_MS + Random.nextInt(STROLL_REST_JITTER_MS).toLong()
+        }
+        ui.postDelayed(strollRunnable, delay)
+    }
+
+    /**
+     * Only when folded, idle, and awake.
+     *
+     * Not while docked — half a face bouncing against the screen edge reads as
+     * a glitch, not a hop. Not while dozing either: the point of SLEEPING is that the device reads as off, and
+     * a ball twitching in its sleep undoes that on its own.
+     *
+     * Main thread only.
+     */
+    private fun strollWanted(): Boolean =
+        root != null && compact && !docked && !slideRunning() && signboard == null &&
+                lastState.let { it == null || it == State.IDLE } &&
+                ball?.isDozing() != true
+
+    /** Push the next hop out to a full rest. Main thread only. */
+    private fun retimeStroll() {
+        ui.removeCallbacks(strollRunnable)
+        strollLeft = 2 + Random.nextInt(3)
+        ui.postDelayed(
+            strollRunnable,
+            STROLL_REST_MS + Random.nextInt(STROLL_REST_JITTER_MS).toLong(),
+        )
+    }
+
+    /**
+     * Bare ball, bottom-right, on nothing at all. The toolbar is ~10 buttons
+     * wide and the subtitle band is 200dp tall — neither survives the shrink,
+     * so both go rather than getting squeezed into something illegible.
+     *
+     * The window background goes with them, and the ball carries its own dark
+     * fill instead (`EmotionBallRenderer.drawBody`). A background can only be a
+     * rectangle or an oval filling the window, which is bigger than the sphere:
+     * the two then read as one ball inside another, and the outer one wins —
+     * larger, harder-edged, and unable to squash or hop with the ball it is
+     * supposed to be part of.
+     *
+     * Ball at view scale 1: [BALL_SCALE] is the full card's magnification, and
+     * a corner square has nothing to magnify into.
+     *
+     * Main thread only.
+     */
+    private fun applyCompactAppearance() {
+        root?.background = null
+        backdrop?.visibility = View.GONE
+        topBarView?.visibility = View.GONE
+        sceneChip?.visibility = View.GONE
+        muteKey?.visibility = View.GONE
+        viewTabs?.visibility = View.GONE
+        stageView?.visibility = View.GONE
+        // Not just invisible — GONE, so the ball area has the whole window to
+        // itself. A scrollback left in the layout would cover most of a 168dp
+        // square and there would be nothing left to see the ball in.
+        historyView?.visibility = View.GONE
+        tipsView?.visibility = View.GONE
+        // The whole square is the ball's, so the sphere is centred in it and
+        // sized against it.
+        setBallAreaHeight(FrameLayout.LayoutParams.MATCH_PARENT)
+        ball?.animate()?.cancel()
+        ball?.scaleX = 1f
+        ball?.scaleY = 1f
+        // The corner square has no cluster to dodge, so the ball sits dead
+        // centre again — and the fold animation lands from wherever it was.
+        ball?.translationY = 0f
+    }
+
+    /**
+     * The card's two stacked areas: the ball rests in the top
+     * [BALL_AREA_FRACTION] of it, the scrollback fills the rest.
+     *
+     * The ball area is also the hit-test bound: [BallHostFrame.onTouchEvent]
+     * drops anything below `ballAreaView.height` so the list keeps its own
+     * touches, and the list is a ScrollView that needs every one of them.
+     *
+     * Main thread only.
+     */
+    /**
+     * Re-derive the card's two stacked areas, and where the ball sits in the top
+     * one, from the card's current height.
+     *
+     * Called from the ball host's size change and from the cluster's own layout,
+     * because the cluster's height is one of the inputs and it moves: the
+     * status-bar inset lands after the first layout. Listening to the cluster
+     * rather than hooking that call site keeps it to one place that can be
+     * forgotten.
+     *
+     * Main thread only.
+     */
+    private fun refitCardAreas() {
+        val r = root ?: return
+        if (compact) return
+        val h = r.height
+        if (h <= 0) return
+        // While a field is up this window is shorter than the card it is
+        // showing, and the band the ball lives in is measured against the
+        // **card**, not the window: the sphere keeps the size and the place the
+        // user left it in, and the top of the card stays the same picture it was
+        // before the keyboard came up. Only the scrollback takes the difference
+        // — and it has to, being the part that scrolls. Measured: with the band
+        // taken from the window instead, the ball dropped from a 344 px radius
+        // to 213 and every pixel of the card's upper half moved.
+        val bandH = if (typingTop > 0) wm.currentWindowMetrics.bounds.height() else h
+        val ballH = (bandH * BALL_AREA_FRACTION).toInt()
+        setBallAreaHeight(ballH)
+        // The tips bar is measured, not reserved by a guessed constant: it is one
+        // line of text, so its height follows the display's font scale, and a
+        // fixed dp would either clip the line on a large-text device or leave a
+        // gap on a small one. Zero while it is hidden, which is what keeps the
+        // folded corner square from carrying 40 dp of nothing.
+        val tipsH = tipsHeight()
+        setHistoryHeight(maxOf(0, h - ballH - tipsH))
+        setHistoryBottomMargin(tipsH)
+        val ty = ballDrop(bandH) + dp(BALL_NUDGE_DP)
+        ball?.translationY = ty.toFloat()
+        placeSceneChip(ballH, ty)
+        placeMuteKey(ballH, ty)
+    }
+
+    /** The speaker key just off the sphere's lower right, on the same radius [placeSceneChip] uses. */
+    private fun placeMuteKey(ballH: Int, ty: Int) {
+        val key = muteKey ?: return
+        val w = root?.width ?: return
+        val lp = key.layoutParams as? FrameLayout.LayoutParams ?: return
+        val r = SPHERE_RADIUS_FRACTION * ballH * BALL_SCALE
+        if (key.width == 0) key.measure(View.MeasureSpec.UNSPECIFIED, View.MeasureSpec.UNSPECIFIED)
+        val kw = if (key.width > 0) key.width else key.measuredWidth
+        val kh = if (key.height > 0) key.height else key.measuredHeight
+        // Just outside the sphere at its lower right (45°): it reads as the ball's own, without sitting on it.
+        val d = r + kw / 2f
+        val cx = w / 2f + d * 0.707f + dp(16)
+        val cy = ballH / 2f + ty + d * 0.707f
+        val left = (cx - kw / 2f).toInt()
+        val top = (cy - kh / 2f).toInt()
+        if (!(lp.leftMargin == left && lp.topMargin == top)) {
+            lp.leftMargin = minOf(left, w - kw - dp(8)); lp.topMargin = top
+            key.layoutParams = lp
+        }
+        placeTabs(cy, r, w)
+    }
+
+    /**
+     * 舞台 | 对话 beside the ball at its lower left — the mirror of 朗读 — so it takes no height from the
+     * middle (a strip of its own between the ball and the stage was in the way on a phone's screen).
+     */
+    private fun placeTabs(cyBall: Float, r: Float, w: Int) {
+        val v = viewTabs ?: return
+        val lp = v.layoutParams as? FrameLayout.LayoutParams ?: return
+        if (v.width == 0) v.measure(View.MeasureSpec.UNSPECIFIED, View.MeasureSpec.UNSPECIFIED)
+        val vw = if (v.width > 0) v.width else v.measuredWidth
+        val vh = if (v.height > 0) v.height else v.measuredHeight
+        // Wider than 朗读, so it is placed by its right edge, just clear of the sphere at 45°, not by its centre.
+        val right = w / 2f - r * 0.707f - dp(10)
+        val left = maxOf((right - vw).toInt(), dp(8))
+        val top = (cyBall - vh / 2f).toInt()
+        if (lp.leftMargin == left && lp.topMargin == top) return
+        lp.leftMargin = left; lp.topMargin = top
+        v.layoutParams = lp
+    }
+
+    /** The newest message of the conversation, whole: the stage's live line reads it a sentence at a time. */
+    private fun lastSaid(): String =
+        ChatHistory.snapshot().lastOrNull { it.role == ChatHistory.Role.ASSISTANT || it.role == ChatHistory.Role.USER }
+            ?.text?.take(LAST_SAID_MAX).orEmpty()
+
+    /**
+     * Centre the scene chip just under the sphere's lower edge — the same
+     * radius [ballDrop] uses, so it follows the ball when the card is resized
+     * or the ball is nudged down. Under the ball rather than in a top corner,
+     * because both top corners belong to the control pill's line.
+     *
+     * Main thread only.
+     */
+    private fun placeSceneChip(ballH: Int, ty: Int) {
+        val chip = sceneChip ?: return
+        val lp = chip.layoutParams as? FrameLayout.LayoutParams ?: return
+        val r = SPHERE_RADIUS_FRACTION * ballH * BALL_SCALE
+        val want = (ballH / 2f + ty + r).toInt() + dp(6)
+        if (lp.topMargin == want) return
+        lp.topMargin = want
+        chip.layoutParams = lp
+    }
+
+    /**
+     * The tips bar's real height, measured on demand.
+     *
+     * On demand rather than stored because it is a function of the font scale
+     * and the window width, and both can change between two calls. The measure
+     * pass is only ever needed before the first layout of a fresh unfold — after
+     * that the view answers for itself.
+     *
+     * Main thread only.
+     */
+    private fun tipsHeight(): Int {
+        val v = tipsView ?: return 0
+        if (v.visibility != View.VISIBLE) return 0
+        if (v.height > 0) return v.height
+        val w = root?.width ?: return 0
+        if (w <= 0) return 0
+        v.measure(
+            View.MeasureSpec.makeMeasureSpec(w, View.MeasureSpec.EXACTLY),
+            View.MeasureSpec.makeMeasureSpec(0, View.MeasureSpec.UNSPECIFIED),
+        )
+        return v.measuredHeight
+    }
+
+    /**
+     * How far the ball has to drop to clear the control cluster, in px. Zero on
+     * any device where the sphere cannot reach the cluster in the first place —
+     * which is every device wide enough that the cluster's left edge sits past
+     * the sphere's.
+     *
+     * The ball is centred in its band, so its top edge sits
+     * `(0.5 − SPHERE_RADIUS_FRACTION × BALL_SCALE)` of the band's height below
+     * the band's top. The cluster is a fixed 44 dp pushed down by the status bar
+     * / cutout inset (see [insetTopBar]), so whether the two meet is a property
+     * of the device. Measured against the real numbers: on a 711×1138 dp tablet
+     * they never meet; on a 393 dp phone they cleared each other by 0.7 dp; on a
+     * 411 dp phone with a taller status bar they overlapped by 4 dp.
+     *
+     * The first fix here grew the band until the sphere's top edge was pushed
+     * below the cluster. That works, and it hides its cost: the band's bottom
+     * edge *is* the scrollback's top edge, so buying clearance that way shoves
+     * the chat down and shortens it — a corner collision paid for with the whole
+     * card's split. It was 60 dp of chat on a phone, and that is exactly what the
+     * user came back with ("the chat area doesn't need to be that far down").
+     *
+     * Dropping the ball instead touches one thing: it slides the sphere down
+     * inside its own band, into the empty space that already sits between the
+     * ball and the list. Same band, same split, same sphere size, still centred —
+     * only its y moves, by roughly the 12-17 dp it takes.
+     *
+     * Main thread only.
+     */
+    private fun ballDrop(h: Int): Int {
+        val bar = topBarView ?: return 0
+        val w = root?.width ?: return 0
+        if (bar.height <= 0 || w <= 0) return 0   // not measured yet; the layout hook comes back
+        val bandH = h * BALL_AREA_FRACTION
+        val r = SPHERE_RADIUS_FRACTION * bandH * BALL_SCALE
+        // Horizontal reach, measured from the sphere's centre to the cluster's
+        // left edge. Past the radius, the cluster is not in the sphere's column
+        // at all and no drop is needed.
+        val dx = bar.left - w / 2f
+        if (abs(dx) >= r) return 0
+        val topEdge = bandH / 2f - sqrt(r * r - dx * dx)
+        return maxOf(0f, bar.bottom + dp(BALL_TOP_GAP_DP) - topEdge).toInt()
+    }
+
+    private fun setBallAreaHeight(px: Int) {
+        val area = root?.ballAreaView ?: return
+        val lp = area.layoutParams ?: return
+        lp.height = px
+        area.layoutParams = lp
+    }
+
+    private fun setHistoryHeight(px: Int) {
+        for (v in listOfNotNull<View>(historyView, stageView)) {
+            val lp = v.layoutParams ?: continue
+            if (lp.height == px) continue
+            lp.height = px
+            v.layoutParams = lp
+        }
+    }
+
+    /**
+     * Lift the scrollback clear of the tips bar.
+     *
+     * The list is bottom-anchored, so its height alone would still put its last
+     * rows underneath the bar — the two are stacked at the same edge.
+     */
+    private fun setHistoryBottomMargin(px: Int) {
+        for (v in listOfNotNull<View>(historyView, stageView)) {
+            val lp = v.layoutParams as? FrameLayout.LayoutParams ?: continue
+            if (lp.bottomMargin == px) continue
+            lp.bottomMargin = px
+            v.layoutParams = lp
+        }
+    }
+
+    private fun enterCompact() {
+        val p = params ?: return
+        slide?.cancel()
+        cancelFoldAnimation()
+        // A signboard cannot survive the fold — the window shrinks to a corner
+        // square smaller than the pane. Evict through [signboardEvictor] so
+        // CardUi's own callbacks fire (timeout semantics, holding state).
+        evictSignboard()
+        // A typing band shrinks the window, and this line is what a later unfold
+        // would grow back to — so the real geometry has to be back in place
+        // *before* it is snapshotted, or the card unfolds into a card with a
+        // keyboard-sized hole in the bottom of it.
+        restoreTypingGeometry()
+        fullGeometry = intArrayOf(p.x, p.y, p.width, p.height)
+        val side = dp(COMPACT_DP)
+        val dm = context.resources.displayMetrics
+        // The corner the card is shrinking into, a thumb's width in. From there
+        // it goes into the edge at once if it was docked when the card opened or
+        // a task is running (the fold is usually the task's first screen call),
+        // and after the idle countdown otherwise.
+        // A fold while a task works lands where a working ball comes out of the edge ([workSpot]), so the two ways
+        // into a working ball end in the same place.
+        val spot = if (working) workSpot() else null
+        val cx = spot?.get(0) ?: (dm.widthPixels - side - dp(COMPACT_MARGIN_DP))
+        val cy = spot?.get(1) ?: compactHomeY()
+        homeX = cx
+        homeY = cy
+        docked = false
+        val dockNow = dockOnFold && !working
+        // Back to the height it was docked at, not the corner's.
+        val dockAt = if (dockOnFold) dockCy else null
+        dockOnFold = false
+        val v = root
+        if (v == null) {
+            // Nothing on screen yet — land the geometry outright.
+            p.x = cx; p.y = cy; p.width = side; p.height = side
+            applyCompactAppearance()
+            syncWorking()
+            retimeStroll()
+            ui.post {
+                reseatCompact()
+                // A dock asked for while the fold ran (a page going up) is honoured now that the ball has landed.
+                val late = dockWhenFolded && !working
+                val lateAt = dockWhenFoldedAt
+                dockWhenFolded = false; dockWhenFoldedAt = null
+                if (dockNow) dock(dockAt) else if (late) dock(lateAt) else { armDock(); applyWorkShape() }
+            }
+            return
+        }
+        // A short retreat replaces the old half-size zoom. Keep the current
+        // transform when reversing an opening animation, rather than snapping.
+        animateCard(v, p, opening = false) {
+            p.x = cx; p.y = cy; p.width = side; p.height = side
+            resetCardTransform(v)
+            applyCompactAppearance()
+            syncWorking()
+            retimeStroll()
+            ui.post {
+                reseatCompact()
+                // A dock asked for while the fold ran (a page going up) is honoured now that the ball has landed.
+                val late = dockWhenFolded && !working
+                val lateAt = dockWhenFoldedAt
+                dockWhenFolded = false; dockWhenFoldedAt = null
+                if (dockNow) dock(dockAt) else if (late) dock(lateAt) else { armDock(); applyWorkShape() }
+            }
+        }
+    }
+
+    /**
+     * Re-place the folded ball against a freshly measured [winYOrigin].
+     *
+     * A no-op unless the number actually moved, which is every fold but the
+     * first on a device whose folded frame is offset from the display — and on
+     * the ones where it is not offset at all, every fold. It exists so that
+     * [enterCompact] does not have to depend on a measurement having been taken
+     * earlier: [show] takes one, but it bails on a view that is not laid out
+     * yet, and the first fold arrives moments later.
+     *
+     * Main thread only.
+     */
+    private fun reseatCompact() {
+        val v = root ?: return
+        val p = params ?: return
+        if (!compact || signboard != null || docked || p.width != dp(COMPACT_DP)) return
+        val before = winYOrigin
+        refreshWinYOrigin()
+        if (winYOrigin == before) return
+        homeY = compactHomeY()
+        p.y = homeY
+        runCatching { wm.updateViewLayout(v, p) }
+    }
+
+    /** Main thread only. */
+    private fun exitCompact() {
+        val p = params ?: return
+        val reversing = foldAnim != null
+        slide?.cancel()
+        cancelFoldAnimation()
+        ui.removeCallbacks(dockRunnable); ui.removeCallbacks(dockBackRunnable)
+        dockWhenFolded = false; dockWhenFoldedAt = null
+        setWorkShape(false)
+        // A dock or undock shrink still running would override the card's scale.
+        ball?.animate()?.cancel()
+        // Docked (or only out of the edge for a sign) when the card opened:
+        // go back in when it folds again.
+        dockOnFold = docked || signInterruptedDock
+        signInterruptedDock = false
+        if (docked) {
+            docked = false
+            squareBallArea()
+            ball?.setSideLedge(false)
+        }
+        // Same eviction as the fold, in the other direction: the card grows
+        // and the signboard's compact geometry (ball at the window's bottom)
+        // is meaningless inside it.
+        evictSignboard()
+        // The restore target is always the full card: [enterCompact] snapshots
+        // `fullGeometry` only after the typing band is put back, so it is the
+        // edge-to-edge rectangle. Belt-and-braces against a stale compact-sized
+        // value (service killed while folded, then restored): never grow to
+        // anything smaller than about a third of the screen.
+        val dm = context.resources.displayMetrics
+        val g = fullGeometry ?: intArrayOf(
+            0, 0,
+            WindowManager.LayoutParams.MATCH_PARENT,
+            WindowManager.LayoutParams.MATCH_PARENT,
+        )
+        val whole = g[2] >= dm.widthPixels / 3 && g[3] >= dm.heightPixels / 3
+        val fx = if (whole) g[0] else 0
+        val fy = if (whole) g[1] else 0
+        val fw = if (whole) g[2] else WindowManager.LayoutParams.MATCH_PARENT
+        val fh = if (whole) g[3] else WindowManager.LayoutParams.MATCH_PARENT
+        fullGeometry = null
+        val v = root
+        if (v == null) {
+            p.x = fx; p.y = fy; p.width = fw; p.height = fh
+            showCardChrome()
+            ball?.scaleX = BALL_SCALE
+            ball?.scaleY = BALL_SCALE
+            syncWorking()
+            retimeStroll()
+            return
+        }
+        // The chrome comes up immediately so it is there to grow into, and the
+        // ball takes its full-card scale now. The real ball area height is set
+        // by [BallHostFrame.onSizeChanged] once the window is laid out full.
+        showCardChrome()
+        ball?.scaleX = BALL_SCALE
+        ball?.scaleY = BALL_SCALE
+        // Set the initial opacity and transform BEFORE resizing the window:
+        // resizing an opaque compact window first flashes a fullscreen frame.
+        p.x = fx; p.y = fy; p.width = fw; p.height = fh
+        if (!reversing) {
+            v.scaleX = CARD_OPEN_SCALE
+            v.scaleY = CARD_OPEN_SCALE
+            v.translationY = dp(CARD_TRAVEL_DP).toFloat()
+            p.alpha = 0f
+        }
+        animateCard(v, p, opening = true) {
+            resetCardTransform(v)
+            syncWorking()
+            retimeStroll()
+        }
+    }
+
+    /** Cancel without running the old animation's geometry-changing end callback. */
+    private fun cancelFoldAnimation() {
+        foldAnim?.let {
+            it.removeAllListeners()
+            it.removeAllUpdateListeners()
+            it.cancel()
+        }
+        foldAnim = null
+    }
+
+    private fun resetCardTransform(v: View) {
+        v.scaleX = 1f
+        v.scaleY = 1f
+        v.translationY = 0f
+    }
+
+    /** Window alpha includes the TextureView ball, which view alpha cannot reliably fade. */
+    private fun animateCard(
+        v: View,
+        p: WindowManager.LayoutParams,
+        opening: Boolean,
+        finished: () -> Unit,
+    ) {
+        val dm = context.resources.displayMetrics
+        v.pivotX = dm.widthPixels / 2f
+        v.pivotY = dm.heightPixels / 2f
+        val fromScale = v.scaleX
+        val fromY = v.translationY
+        val fromAlpha = p.alpha
+        val toScale = if (opening) 1f else CARD_CLOSE_SCALE
+        val toY = if (opening) 0f else dp(CARD_TRAVEL_DP).toFloat()
+        val toAlpha = if (opening) 1f else 0f
+        foldAnim = ValueAnimator.ofFloat(0f, 1f).apply {
+            duration = if (opening) CARD_OPEN_MS else CARD_CLOSE_MS
+            interpolator = if (opening) PathInterpolator(0.16f, 1f, 0.3f, 1f)
+                else PathInterpolator(0.4f, 0f, 1f, 1f)
+            addUpdateListener { a ->
+                val t = a.animatedValue as Float
+                val scale = fromScale + (toScale - fromScale) * t
+                v.scaleX = scale
+                v.scaleY = scale
+                v.translationY = fromY + (toY - fromY) * t
+                p.alpha = if (captureHidden || away) 0f
+                    else fromAlpha + (toAlpha - fromAlpha) * t
+                runCatching { wm.updateViewLayout(v, p) }
+            }
+            addListener(object : android.animation.AnimatorListenerAdapter() {
+                override fun onAnimationEnd(animation: android.animation.Animator) {
+                    foldAnim = null
+                    finished()
+                    p.alpha = if (captureHidden || away) 0f else 1f
+                    runCatching { wm.updateViewLayout(v, p) }
+                }
+            })
+        }
+        foldAnim?.start()
+    }
+
+    /**
+     * Bring back the pieces of the card that the fold hid. Called at the start
+     * of an unfold, so the chrome is already there while the card grows into it.
+     *
+     * The two areas' heights are deliberately not set here: the window is still
+     * the corner square, and the real height only exists after the layout pass
+     * the geometry change is about to trigger — see [BallHostFrame.onSizeChanged].
+     */
+    private fun showCardChrome() {
+        topBarView?.visibility = View.VISIBLE
+        sceneChip?.visibility = if (sceneTitle != null) View.VISIBLE else View.GONE
+        muteKey?.visibility = View.VISIBLE
+        applyHomeView()
+        tipsView?.visibility = View.VISIBLE
+        backdrop?.visibility = View.VISIBLE
+        // Anything that arrived while folded — which is most of it, since the
+        // card is folded for the whole time the assistant is working — has only
+        // ever been appended to a list that wasn't being laid out.
+        historyView?.refresh()
+        stageView?.refresh()
+    }
+
+    /** Stage or conversation in the middle, and the keys that belong to each. Main thread, card unfolded. */
+    private fun applyHomeView() {
+        stageView?.visibility = if (onStage) View.VISIBLE else View.GONE
+        historyView?.visibility = if (onStage) View.GONE else View.VISIBLE
+        viewTabs?.visibility = View.VISIBLE
+        paintViewKey()
+    }
+
+    /** Light the tab for where the user is; both keep their names. */
+    private fun paintViewKey() {
+        val st = tabStage ?: return
+        val ch = tabChat ?: return
+        st.text = AppLocale.str(context, R.string.stage_tab_stage)
+        ch.text = AppLocale.str(context, R.string.stage_tab_chat)
+        for ((tab, on) in listOf(st to onStage, ch to !onStage)) {
+            tab.background = if (on) Glass.thumb(context, dp(12)) else null
+            tab.setTextColor(Color.parseColor(if (on) Glass.TITLE else Glass.SECONDARY))
+            tab.setTypeface(null, if (on) android.graphics.Typeface.BOLD else android.graphics.Typeface.NORMAL)
+            tab.isSelected = on
+        }
+    }
+
+    /** The 全部 / 只看对话 preference changed in Settings: show the conversation that way. */
+    fun onTimelineSettingChanged() {
+        ui.post { historyView?.showEvents = net.kuafuai.andee.config.VoiceConfig.timelineEvents(context) }
+    }
+
+    /** Switch the middle of the card; remembered, so the card reopens the way it was left. */
+    fun showStage(on: Boolean) {
+        ui.post {
+            net.kuafuai.andee.config.VoiceConfig.setHomeView(context, if (on) "stage" else "chat")
+            followStage(on)
+        }
+    }
+
+    /** Put the stage or the conversation in the middle, without recording it as the user's pick. Main thread only. */
+    private fun followStage(on: Boolean) {
+        if (onStage == on) return
+        onStage = on
+        if (root != null && !isCompact()) {
+            applyHomeView()
+            if (on) stageView?.refresh() else historyView?.refresh()
+            root?.requestLayout()
+        }
+    }
+
+    /**
+     * Alpha, touchability and the blur each have more than one reason to be
+     * off, and the callers overlap in time (a capture while folded). Kept as
+     * separate booleans folded here rather than written directly, or whichever
+     * caller finishes last wins and clobbers the other's intent.
+     *
+     * Main thread only.
+     */
+    private fun applyWindow() {
+        val v = root ?: return
+        val p = params ?: return
+        // A fold/unfold fade owns the window alpha while it runs — it writes
+        // `p.alpha` on every frame, so this must not stamp 1f back over the
+        // start value (which for an unfold is 0f). Outside that, capture and
+        // away are the only reasons the whole window goes transparent.
+        p.alpha = if (captureHidden || away) 0f
+            else if (foldAnim?.isRunning == true) p.alpha else 1f
+        // FLAG_LAYOUT_IN_SCREEN is what makes the unfolded card actually
+        // fullscreen. Without it the window's frame is the *content* area —
+        // the display minus the status and navigation bars — so a MATCH_PARENT
+        // card stopped 126 px short of the top on this phone and left the
+        // status bar sitting on a band of the user's wallpaper. Measured, not
+        // assumed: with the flag the window's top is the display's top and
+        // [winYOrigin] measures 0 by itself.
+        val base = WindowManager.LayoutParams.FLAG_NOT_FOCUSABLE or
+            WindowManager.LayoutParams.FLAG_LAYOUT_NO_LIMITS or
+            WindowManager.LayoutParams.FLAG_LAYOUT_IN_SCREEN
+        // Untouchable while a typing field is up, even though the window no
+        // longer overlaps it: the field's top edge is *derived* from the
+        // keyboard's height, which changes as the IME animates and as 搜狗's
+        // toolbar row comes and goes. Being a few pixels late would put this
+        // window over the top row of the field and eat the taps aimed at it —
+        // and the card has nothing to offer during a typing session anyway.
+        p.flags = if (gesturePassthrough || typingTop > 0) {
+            base or WindowManager.LayoutParams.FLAG_NOT_TOUCHABLE
+        } else {
+            base
+        }
+        // Blur behind only while the card is actually a card. Folded, the
+        // window is a 168 dp square around the ball and blurring behind *that*
+        // is a smudge following the ball around; hidden for a capture, the
+        // window is at alpha 0 but the compositor would still be asked to
+        // defocus what is behind it — and what is behind it is exactly the
+        // screenshot the brain is about to read. The 80 ms settle in
+        // `blankedForCapture` covers this params change along with the alpha.
+        // ...and not while the backdrop is up. The card used to be a window onto
+        // the user's home screen, which is what the blur was for; the backdrop
+        // now covers the whole window, so the compositor would be defocusing a
+        // full screen of pixels nobody can see. Turning it off here is also what
+        // makes the card look the same on a device where cross-window blur is
+        // unavailable, which is most of them.
+        val wantFrost = !compact && !captureHidden && !away && !backdropUp()
+        frosted = Glass.frost(context, wm, p, want = wantFrost)
+        paintCard()
+        // The card now runs under the status bar ([FLAG_LAYOUT_IN_SCREEN]), so
+        // the control cluster has to step around it — otherwise the clock and
+        // the battery icon sit on top of `◈` and `✕`, and those are the two
+        // controls the user cannot do without.
+        insetTopBar()
+        runCatching { wm.updateViewLayout(v, p) }
+    }
+
+    /**
+     * Push the toolbar below the status bar / cutout. No-op on every call but
+     * the first two, since writing `layoutParams` asks for a layout pass and
+     * this runs on every state change.
+     *
+     * **The inset has to come from the view, not from the display.**
+     * `WindowManager.currentWindowMetrics` describes the *display*, so its top
+     * inset is the status bar's height whether or not this window is underneath
+     * it — and on this ROM it is not: measured, the window frame already starts
+     * at the status bar's bottom edge, so adding the height again put the pill
+     * a second status bar below where it belonged (126 px + 126 px + dp(10),
+     * against the dp(10) the code reads as asking for). `rootWindowInsets` is
+     * the same question asked relative to *this* window, so it answers 0 where
+     * the system has already moved us clear and the full height where it has
+     * not — which is what makes the same line correct on a ROM that honours
+     * [FLAG_LAYOUT_IN_SCREEN] for overlays and one that doesn't.
+     *
+     * Main thread only.
+     */
+    private fun insetTopBar() {
+        val bar = topBarView ?: return
+        val lp = bar.layoutParams as? FrameLayout.LayoutParams ?: return
+        val insets = bar.rootWindowInsets ?: return
+        val want = dp(10) + insets.getInsetsIgnoringVisibility(
+            WindowInsets.Type.systemBars() or WindowInsets.Type.displayCutout(),
+        ).top
+        if (lp.topMargin == want) return
+        lp.topMargin = want
+        bar.layoutParams = lp
+    }
+
+    /**
+     * The card's fill, which is a question only [applyWindow] can answer:
+     * translucent when something is blurring behind it, nearly opaque when
+     * nothing is. Folded there is no card at all — the window is the ball's
+     * own square and anything painted in it is a box drawn around her.
+     *
+     * Main thread only.
+     */
+    private fun paintCard() {
+        val v = root ?: return
+        val bg = backdrop
+        // Keep the card's existing scrim until its closing fade has finished.
+        if (compact && foldAnim?.isRunning == true) return
+        if (compact) {
+            v.background = null
+            clearScrim(bg)
+            return
+        }
+        // Three answers, in order: with a backdrop the fill is a scrim over it
+        // and the question [frosted] was answering ("is anything behind this
+        // card?") no longer applies — the answer is our own image, so the same
+        // film goes on regardless of what the compositor said. Without one the
+        // card falls back to exactly what it did before.
+        if (backdropUp()) {
+            // **The scrim goes on the image's foreground, not the root's
+            // background.** They look interchangeable and are not: the backdrop
+            // is a *child* of the root, so a root background is behind the very
+            // thing it is supposed to darken. The first version did that, and
+            // the card came out as the raw photo at full brightness — measured
+            // on the tablet at mean luma 0.40 where the design says 0.13, with
+            // the pale ball barely legible on top of it.
+            v.background = null
+            val s = Backdrop.scrim()
+            if (scrimShown != s) {
+                bg!!.foreground = ColorDrawable(s)
+                scrimShown = s
+            }
+            return
+        }
+        clearScrim(bg)
+        v.setBackgroundColor(
+            Color.parseColor(if (frosted) Glass.CARD_FROSTED else Glass.CARD_SOLID),
+        )
+    }
+
+    /** Main thread only. */
+    private fun clearScrim(bg: ImageView?) {
+        if (scrimShown == null && bg?.foreground == null) return
+        bg?.foreground = null
+        scrimShown = null
+    }
+
+    /**
+     * Whether the backdrop is both ready and showing. Not just "not folded":
+     * the blur is done on a worker at build time, and a card that unfolds during
+     * the first few hundred milliseconds of the process's life has to render as
+     * it did before rather than as a card with a transparent hole in it.
+     *
+     * Main thread only.
+     */
+    private fun backdropUp(): Boolean =
+        !compact && Backdrop.ready() && backdrop?.visibility == View.VISIBLE
+
+    // ---- Build ----
+
+    @SuppressLint("ClickableViewAccessibility")
+    private fun build(): BallHostFrame {
+        val root = BallHostFrame(context)
+
+        // ---- Backdrop (the bottom of the stack) ----
+        //
+        // First child, so everything else draws on top of it and nothing has to
+        // know it is there. CENTER_CROP and not FIT_CENTER: the brief was 铺满,
+        // and letterboxing a photo behind a fullscreen card would leave two
+        // bands of whatever the card's fill is at the top and bottom.
+        //
+        // Sized against the **display**, not the window, and pinned to the top.
+        // The card is not always fullscreen — a typing session ends it at the
+        // field's top edge — and a MATCH_PARENT backdrop re-scales and re-crops
+        // with it, so the wallpaper visibly jumped and brightened as the
+        // keyboard came up: measured on one screen point, `10,34,60` fullscreen
+        // → `65,85,106` while typing, and it is not the app behind (swapping the
+        // app behind moves these pixels by 0.9/255). Fixed to the display the
+        // backdrop is merely *clipped* by the shorter window, so the top of the
+        // card is pixel-for-pixel the same in both states.
+        //
+        // The decode and the blur are kicked off here rather than lazily on the
+        // first unfold. The window is built folded, so the work happens while
+        // this view is still GONE and the answer is normally in hand long before
+        // the user can long-press the ball.
+        val bg = ImageView(context).apply {
+            scaleType = ImageView.ScaleType.CENTER_CROP
+            visibility = View.GONE
+        }
+        root.addView(
+            bg,
+            0,
+            FrameLayout.LayoutParams(
+                FrameLayout.LayoutParams.MATCH_PARENT,
+                wm.currentWindowMetrics.bounds.height(),
+                Gravity.TOP,
+            ),
+        )
+        backdrop = bg
+        Backdrop.warm(context) { bmp ->
+            bg.setImageBitmap(bmp)
+            // The fill and the blur flag are both this call's to decide, and the
+            // answer just changed underneath them.
+            applyWindow()
+        }
+
+        // ---- Ball area (top of the card) ----
+        //
+        // Stacked in a FrameLayout rather than a column with weights: the
+        // areas' heights are driven from [BallHostFrame.onSizeChanged] against
+        // the card's real height, which is the only place it is known, and the
+        // ball has to keep its whole area when the card folds to the corner.
+        val ballArea = FrameLayout(context)
+        val b = EmotionBallTextureView(context).apply {
+            // No demo cycling from birth. It used to read "cycle moods until
+            // real state driving takes over" — but real driving only begins
+            // with the first setState, and a device idling at a desk never
+            // sends one. The ball then cycled all fourteen moods every 5.5 s
+            // forever: wearing SPEAKING (mouth sine and all) with no sound,
+            // and resetting the CALM→SLEEP accumulator so it could never
+            // doze either. CALM says "I am here, not busy" all by itself.
+            // Scaled rather than sized down: the sphere's diameter is a fixed
+            // fraction of the surface's shorter side, so a fixed dp size would
+            // need a matching floor on the window's own minimum or the ball
+            // gets cropped when the card is resized small. A view scale tracks
+            // whatever geometry the card ends up with. Pivot defaults to the
+            // view's center, which is where the sphere already is.
+            scaleX = BALL_SCALE
+            scaleY = BALL_SCALE
+        }
+        ball = b
+        ballArea.addView(
+            b,
+            FrameLayout.LayoutParams(
+                FrameLayout.LayoutParams.MATCH_PARENT,
+                FrameLayout.LayoutParams.MATCH_PARENT,
+            ),
+        )
+
+        root.addView(
+            ballArea,
+            FrameLayout.LayoutParams(
+                FrameLayout.LayoutParams.MATCH_PARENT,
+                FrameLayout.LayoutParams.MATCH_PARENT,
+            ),
+        )
+        root.ballAreaView = ballArea
+        // The caption under the ball while a turn works: bottom right of the window, hidden otherwise.
+        val caption = WorkCardView.Tiny(context).apply { visibility = View.GONE }
+        root.addView(
+            caption,
+            FrameLayout.LayoutParams(dp(WORK_CAPTION_W_DP) - dp(8), dp(WORK_CAPTION_H_DP), Gravity.BOTTOM or Gravity.CENTER_HORIZONTAL)
+                .apply { bottomMargin = dp(2) },
+        )
+        workCaption = caption
+        PhoneWorkLog.removeListener(workListener)
+        PhoneWorkLog.addListener(workListener)
+
+        // ---- Scrollback, straight under the ball ----
+        val history = HistoryListView(context).apply {
+            onPageClick = { listeners.onHistoryPageClick(it) }
+            onTextOpen = { listeners.onTextOpen(it) }
+            onTraceOpen = { listeners.onTraceOpen(it) }
+            onSuggestionClick = { name, title, example ->
+                listeners.onSuggestionClick(name, title, example)
+            }
+            onTopicContinue = { listeners.onTopicContinue(it) }
+            onTopicTranscript = { listeners.onTopicTranscript(it) }
+            onWikiOpen = { listeners.onWikiOpen(it) }
+            showEvents = net.kuafuai.andee.config.VoiceConfig.timelineEvents(context)
+        }
+        historyView = history
+        root.addView(
+            history,
+            FrameLayout.LayoutParams(
+                FrameLayout.LayoutParams.MATCH_PARENT,
+                FrameLayout.LayoutParams.MATCH_PARENT,
+                Gravity.BOTTOM,
+            ),
+        )
+        ChatHistory.setListener {
+            ui.post {
+                historyView?.refresh()
+                stageView?.setLastLine(lastSaid())
+            }
+        }
+        history.refresh()
+
+        // ---- The stage, in the same slot: Andee's own ----
+        val stage = StageView(context).apply {
+            onSay = { listeners.onStageSay(it) }
+            onFurnish = { listeners.onStageFurnish() }
+            onOpenChat = { showStage(false) }
+            setLastLine(lastSaid())
+        }
+        stageView = stage
+        root.addView(
+            stage,
+            FrameLayout.LayoutParams(
+                FrameLayout.LayoutParams.MATCH_PARENT,
+                FrameLayout.LayoutParams.MATCH_PARENT,
+                Gravity.BOTTOM,
+            ),
+        )
+        net.kuafuai.andee.config.Stage.setListener {
+            ui.post {
+                stageView?.refresh()
+                // For a user who never picked: the first furnishing puts the stage in the middle,
+                // and a wipe that empties it gives the middle back to the conversation.
+                if (net.kuafuai.andee.config.VoiceConfig.homeView(context) == null) followStage(stageWanted())
+            }
+        }
+        stage.visibility = if (onStage) View.VISIBLE else View.GONE
+        history.visibility = if (onStage) View.GONE else View.VISIBLE
+
+        // ---- Bottom tips ----
+        //
+        // The ball's whole vocabulary, where the user's eye already is at the
+        // end of a conversation. Pinned rather than appended to the scrollback:
+        // it was the list's last row before, which meant it scrolled away —
+        // and the one time it is needed is the one time the user has scrolled
+        // up to read what happened.
+        //
+        // Only in the full card. Folded, the window is a 168 dp square and the
+        // tips have nowhere to be; the gestures they describe work there anyway.
+        val tipsLine = TextView(context).apply {
+            text = AppLocale.str(context, R.string.window_tips)
+            textSize = Glass.Type.CAPTION
+            // PHOTO_INK, not MUTED: this line sits on the photograph itself, and a
+            // mid-grey has no contrast against a mid-tone ground — measured at roughly
+            // 1:1, which is why it disappeared. See [Glass.PHOTO_INK].
+            setTextColor(Color.parseColor(Glass.PHOTO_INK))
+            gravity = Gravity.CENTER
+        }
+        tipsText = tipsLine
+        // GitHub and Discord, small glyphs after the gesture line — the project's
+        // home, where a person looking for "about this thing" expects it, not a
+        // knob buried in 设置. The bottom padding (clearing the gesture bar, the
+        // same 30 dp the scrollback's last row used to reserve) moves onto this
+        // row so the glyphs share the line's edge.
+        val communityRow = LinearLayout(context).apply {
+            orientation = LinearLayout.HORIZONTAL
+            gravity = Gravity.CENTER
+            setPadding(dp(14), dp(6), dp(14), dp(30))
+        }
+        communityRow.addView(tipsLine)
+        communityRow.addView(communityLink(R.drawable.ic_github, GITHUB_URL, "GitHub"))
+        communityRow.addView(communityLink(R.drawable.ic_discord, DISCORD_URL, "Discord"))
+        // WeChat is not a link: it opens Andee's QR code, to add it as a friend.
+        communityRow.addView(communityGlyph(R.drawable.ic_wechat, "WeChat") { listeners.onWeChatClick() })
+        // The input pill, always there on the full card like the Mac's composer. It is not a field: an overlay
+        // cannot raise the keyboard on this ROM, so a tap opens the real one ([TextInputActivity]) in its place.
+        val inputRow = LinearLayout(context).apply {
+            orientation = LinearLayout.HORIZONTAL
+            gravity = Gravity.CENTER_VERTICAL
+            setPadding(dp(16), dp(4), dp(16), 0)
+        }
+        val hint = TextView(context).apply {
+            text = AppLocale.str(context, R.string.window_input_hint)
+            textSize = Glass.Type.BODY
+            // SECONDARY, not MUTED: the well is translucent over the photograph, and MUTED vanished into it.
+            setTextColor(Color.parseColor(Glass.SECONDARY))
+            gravity = Gravity.CENTER_VERTICAL
+            minHeight = dp(40)
+            isClickable = true
+            setOnClickListener { listeners.onTextInputToggle() }
+        }
+        // The same pill the open field draws ([InputPill]); here every part opens the field.
+        val pill = InputPill.build(
+            context, hint,
+            onCamera = { listeners.onTypeThen("camera") },
+            onAlbum = { listeners.onTypeThen("album") },
+            onSend = { listeners.onTextInputToggle() },
+        ).apply { setOnClickListener { listeners.onTextInputToggle() } }
+        inputHint = hint; inputPill = pill
+        inputRow.addView(pill, LinearLayout.LayoutParams(0, LinearLayout.LayoutParams.WRAP_CONTENT, 1f))
+        val tips = LinearLayout(context).apply {
+            orientation = LinearLayout.VERTICAL
+            visibility = View.GONE
+            addView(inputRow, LinearLayout.LayoutParams(LinearLayout.LayoutParams.MATCH_PARENT, LinearLayout.LayoutParams.WRAP_CONTENT))
+            addView(communityRow, LinearLayout.LayoutParams(LinearLayout.LayoutParams.MATCH_PARENT, LinearLayout.LayoutParams.WRAP_CONTENT))
+        }
+        tipsView = tips
+        root.addView(
+            tips,
+            FrameLayout.LayoutParams(
+                FrameLayout.LayoutParams.MATCH_PARENT,
+                FrameLayout.LayoutParams.WRAP_CONTENT,
+                Gravity.BOTTOM,
+            ),
+        )
+
+        // ---- 朗读 / 静音, at the ball's lower right ----
+        // Beside the ball because it is about the ball's voice. Placed by [placeMuteKey], like the scene chip.
+        val mute = LinearLayout(context).apply {
+            orientation = LinearLayout.VERTICAL
+            gravity = Gravity.CENTER
+            // No fill: a bare glyph beside the ball, like the ball's own horns — a pill read as a stray button.
+            setPadding(dp(6), dp(6), dp(6), dp(6))
+            isClickable = true
+            Glass.pressable(this)
+            setOnClickListener { listeners.onMuteToggle() }
+            visibility = View.GONE
+        }
+        val icon = ImageView(context)
+        mute.addView(icon, LinearLayout.LayoutParams(dp(22), dp(22)))
+        muteIcon = icon; muteKey = mute
+        mute.contentDescription = "朗读"
+        paintMute()
+        root.addView(mute, FrameLayout.LayoutParams(FrameLayout.LayoutParams.WRAP_CONTENT, FrameLayout.LayoutParams.WRAP_CONTENT, Gravity.TOP or Gravity.START))
+
+        // ---- 舞台 | 对话: a small segmented pill at the ball's lower left, both names always showing ----
+        fun tab(toStage: Boolean) = TextView(context).apply {
+            textSize = Glass.Type.MICRO
+            gravity = Gravity.CENTER
+            setPadding(dp(10), dp(4), dp(10), dp(4))
+            isClickable = true
+            Glass.pressable(this)
+            setOnClickListener { showStage(toStage) }
+        }
+        val ts = tab(true).also { tabStage = it }
+        val tc = tab(false).also { tabChat = it }
+        val tabs = LinearLayout(context).apply {
+            orientation = LinearLayout.HORIZONTAL
+            setPadding(dp(2), dp(2), dp(2), dp(2))
+            background = Glass.well(context, dp(14))
+            visibility = View.GONE
+            addView(ts)
+            addView(tc)
+        }
+        viewTabs = tabs
+        paintViewKey()
+        root.addView(tabs, FrameLayout.LayoutParams(FrameLayout.LayoutParams.WRAP_CONTENT, FrameLayout.LayoutParams.WRAP_CONTENT, Gravity.TOP or Gravity.START))
+
+        // ---- Top-right controls ----
+        //
+        // Added last so it is on top of both.
+        val topBar = buildTopBar()
+        root.addView(
+            topBar,
+            FrameLayout.LayoutParams(
+                FrameLayout.LayoutParams.WRAP_CONTENT,
+                FrameLayout.LayoutParams.WRAP_CONTENT,
+                Gravity.TOP or Gravity.END,
+            ).apply {
+                topMargin = dp(10); rightMargin = dp(10)
+            },
+        )
+        topBarView = topBar
+
+        // ---- Under the ball: the scene chip ----
+        // Placed by [placeSceneChip] once the card's split is known.
+        val chipText = TextView(context).apply {
+            textSize = Glass.Type.CAPTION
+            setTextColor(Color.parseColor(Glass.LABEL))
+            maxLines = 1
+            ellipsize = android.text.TextUtils.TruncateAt.END
+            maxWidth = dp(220)
+        }
+        val chip = LinearLayout(context).apply {
+            orientation = LinearLayout.HORIZONTAL
+            gravity = Gravity.CENTER_VERTICAL
+            setPadding(dp(14), dp(4), dp(4), dp(4))
+            background = Glass.well(context, dp(22))
+            visibility = View.GONE
+            addView(chipText)
+            addView(TextView(context).apply {
+                text = "✕"
+                textSize = Glass.Type.CAPTION
+                setTextColor(Color.parseColor(Glass.SECONDARY))
+                gravity = Gravity.CENTER
+                contentDescription = "退出情景"
+                isClickable = true
+                Glass.pressable(this)
+                setOnClickListener { listeners.onSceneExitClick() }
+                layoutParams = LinearLayout.LayoutParams(dp(36), dp(36)).apply { leftMargin = dp(2) }
+                // Kept for the same reason the bar's glyphs are: its colour is set right
+                // here and nowhere else, so a theme change would otherwise leave it.
+                sceneChipExit = this
+            })
+        }
+        sceneChip = chip
+        sceneChipText = chipText
+        root.addView(
+            chip,
+            FrameLayout.LayoutParams(
+                FrameLayout.LayoutParams.WRAP_CONTENT,
+                FrameLayout.LayoutParams.WRAP_CONTENT,
+                Gravity.TOP or Gravity.CENTER_HORIZONTAL,
+            ),
+        )
+        renderSceneChip()
+        // The cluster's own bounds are an input to the card's split — see
+        // [ballAreaHeight]. Watching it here means the status-bar inset lands
+        // without this having to know it is responsible for the split.
+        topBar.addOnLayoutChangeListener { _, _, top, _, bottom, _, oldTop, _, oldBottom ->
+            // Also the only place the inset is guaranteed to be *available*:
+            // `rootWindowInsets` is null until the view is attached, so the
+            // first `applyWindow` can run before there is an answer. A laid-out
+            // view is an attached one. Self-guarded, so the extra layout pass
+            // this asks for on the first call no-ops on the second.
+            insetTopBar()
+            if (top != oldTop || bottom != oldBottom) refitCardAreas()
+        }
+
+        return root
+    }
+
+    /**
+     * The control cluster: one pill holding the four things the user actually
+     * reaches for.
+     *
+     * Three and not four since typing moved onto the ball's double-tap — see
+     * [Listeners.onTextInputToggle] for why it belongs there rather than here.
+     * And the same three since the stop button left: `✓` took its place rather
+     * than being added beside it, because stop was the one key in this bar the
+     * ball can already perform — see [Listeners.onStopClick]. So the count has
+     * not changed twice over; only one of the three is different, and it is the
+     * one that was not earning its slot.
+     *
+     * The bar now reads `◈ ✓ ⚙ ✕`. `◈` used to be `⋯`, and behind it were ten
+     * developer instruments — swipe four ways, back, home, dump the tree, grab a
+     * screenshot — as a second row of monochrome glyphs. That row is gone
+     * outright, not folded somewhere else: every one of those actions is one the
+     * brain performs on its own (`screen.*`, all of it reachable by talking),
+     * and a hand-driven toolbar sitting over the app being driven was a second,
+     * competing way to operate the same device. What took the slot is 产物 — the
+     * pages the assistant has made, which is the one thing in this bar the user
+     * cannot get at by talking.
+     *
+     * 情景 sits beside it for a weaker version of the same reason: scenes *can*
+     * be managed by talking, but "what has it learned to do with me" is a
+     * question a list answers better than a conversation. Five keys now.
+     *
+     * The glyphs take [Glass.PHOTO_INK], not one of the card's inks. They sit on
+     * [Glass.well] over the photograph, which is the same ground the tips sit on, and a
+     * colour chosen against a card has no contrast there: [Glass.MUTED] was what they
+     * had, and on the light pill it came out around 1.4:1 — reported from the tablet as
+     * "看不清", and it is arithmetic rather than taste.
+     */
+    @SuppressLint("SetTextI18n")
+    private fun buildTopBar(): View {
+        val bar = LinearLayout(context).apply {
+            orientation = LinearLayout.VERTICAL
+            gravity = Gravity.END
+            setPadding(dp(4), dp(4), dp(4), dp(4))
+            // A recessed well rather than a panel: this pill floats over a card
+            // that is itself translucent, so its base has to be darker than
+            // what it sits on or the glyphs read against the user's app.
+            background = Glass.well(context, topBarRadius)
+        }
+
+        val keys = LinearLayout(context).apply {
+            orientation = LinearLayout.HORIZONTAL
+            gravity = Gravity.CENTER_VERTICAL
+        }
+
+        keys.addView(
+            barButton(R.drawable.ic_artifacts, Glass.PHOTO_INK, "产物") { listeners.onArtifactsClick() }
+        )
+        // 产物 · 小本本 · 情景 · 朋友 · 自检 · 设置 — the Mac's sidebar has the same doors in the same order.
+        keys.addView(notebookKey())
+        keys.addView(barButton(R.drawable.ic_scene, Glass.PHOTO_INK, "情景") { listeners.onScenesClick() })
+        keys.addView(friendsKey())
+        // ✓ and not ■: the stop button used to sit here, and stop is the one
+        // action in this bar the ball can already perform — see onStopClick.
+        keys.addView(barButton(R.drawable.ic_check, Glass.PHOTO_INK, "自检") { listeners.onSelfCheckClick() })
+        // No ⌨ here. Typing moved onto the ball's double-tap, and the bar is
+        // the wrong place for it twice over: it only exists while the card is
+        // unfolded (so the way to type vanished with the fold — the same fault
+        // that made "点右上角的 ⌨" a lie in a failure message), and it put a
+        // second meaning on the one control the user already had to learn.
+        keys.addView(barButton(R.drawable.ic_settings, Glass.PHOTO_INK, "设置") { listeners.onSettingsClick() })
+        // Reads as close, not as resize: the card is a thing you dismiss, and the
+        // corner ball it folds into stays on screen either way.
+        keys.addView(barButton(R.drawable.ic_close, Glass.PHOTO_INK, "收起") { listeners.onMinimizeClick() })
+
+        bar.addView(keys)
+        return bar
+    }
+
+    /**
+     * One of the four permanent keys: a vector icon, tinted, centred in a 36 dp
+     * square with 6 dp of air on each side.
+     *
+     * These were Unicode glyphs (`⋯ ✓ ⚙ ✕`) drawn by a custom View that measured
+     * each character's ink to centre it. That worked around one problem — every
+     * glyph sits at a different height in its font's line box — and could not
+     * work around the other: the weight, size and shape of `⚙` is whatever the
+     * ROM's font says it is, so the bar looked different on every tablet and
+     * never quite matched itself. Vectors are drawn the same everywhere.
+     *
+     * `mutate()` before `setTint`, because drawables from one resource share
+     * constant state and this bar is rebuilt with the card.
+     *
+     * A bare View draws an image without telling anyone it is there, so the
+     * description is not optional: without it the whole control bar drops out
+     * of `get_screen_element` and out of TalkBack alike. Deliberately not
+     * localised — rebuilding the bar on a language change for four content
+     * descriptions nobody reads is the wrong trade.
+     */
+    private fun barButton(
+        @DrawableRes icon: Int,
+        color: String,
+        description: String,
+        onClick: () -> Unit,
+    ): View {
+        // The 36 dp target stays; only the glyph shrinks, to 20 dp.
+        val pad = dp(8)
+        return ImageView(context).apply {
+            setImageDrawable(
+                ContextCompat.getDrawable(context, icon)?.mutate()?.apply {
+                    setTint(Color.parseColor(color))
+                }
+            )
+            // Kept so [applyPaletteToChrome] can re-tint it: the tint above is baked
+            // into a mutated drawable at build time and nothing tells this view about a
+            // theme change.
+            barIcons += this
+            scaleType = ImageView.ScaleType.FIT_CENTER
+            setPadding(pad, pad, pad, pad)
+            contentDescription = description
+            isClickable = true
+            isFocusable = true
+            Glass.pressable(this)
+            setOnClickListener { onClick() }
+            layoutParams = LinearLayout.LayoutParams(dp(36), dp(36)).apply {
+                leftMargin = dp(2)
+            }
+        }
+    }
+
+    // ---- Tap / drag / long-press on the ball ----
+
+    private inner class BallHostFrame(ctx: Context) : FrameLayout(ctx) {
+        /** Set by [build]; used to constrain touch hit-testing to the ball area. */
+        var ballAreaView: View? = null
+
+        /**
+         * The card is two stacked areas — ball on top, scrollback under it —
+         * and the split is only computable here, where the card's real height
+         * exists. Driving it from the fold transitions instead would read
+         * `params.height` while it is still MATCH_PARENT or still the corner
+         * square; this fires after every geometry change, including the unfold
+         * and a rotation, and needs no special case for either.
+         */
+        override fun onSizeChanged(w: Int, h: Int, oldW: Int, oldH: Int) {
+            super.onSizeChanged(w, h, oldW, oldH)
+            if (compact || h <= 0) return
+            // Posted, not immediate: this runs inside the layout pass, and a
+            // child's requestLayout from there is swallowed — the ball area
+            // stayed MATCH_PARENT and the ball sat in the middle of the card
+            // instead of the middle of its own area.
+            // Posted, not immediate: this runs inside the layout pass, and a
+            // child's requestLayout from there is swallowed — the ball area
+            // stayed MATCH_PARENT and the ball sat in the middle of the card
+            // instead of the middle of its own area.
+            post { if (!compact) refitCardAreas() }
+        }
+
+        private val slop = ViewConfiguration.get(ctx).scaledTouchSlop
+        private val longPressMs = ViewConfiguration.getLongPressTimeout().toLong()
+
+        /**
+         * How long to wait for another tap before acting on the ones so far.
+         *
+         * The platform's own double-tap timeout, so a double-tap here takes
+         * exactly as long to register as one anywhere else on the device.
+         */
+        private val multiTapMs = ViewConfiguration.getDoubleTapTimeout().toLong()
+
+        /** Taps of the current run, reset by [tapRunnable] when the window closes. */
+        private var tapCount = 0
+
+        /**
+         * One tap of a possible run of three.
+         *
+         * The three gestures share one control, so a tap can no longer act on
+         * its own — it has to wait out the multi-tap window to find out whether
+         * it was a single one. That is the entire cost of this design: talking
+         * now starts ~300 ms after the tap instead of on it. What it buys is the
+         * other two, which were previously unreachable from the folded ball.
+         *
+         * Three is terminal and fires **immediately**. Stop is the urgent one —
+         * the device may be tapping its way through somebody else's app — and a
+         * fourth tap means nothing, so there is no window left to wait out.
+         */
+        private fun registerTap() {
+            tapCount++
+            ui.removeCallbacks(tapRunnable)
+            if (tapCount >= TAPS_FOR_STOP) {
+                tapCount = 0
+                performHapticFeedback(HapticFeedbackConstants.LONG_PRESS)
+                listeners.onStopClick()
+                return
+            }
+            // Felt on the touch, not ~300 ms later when the run resolves: the
+            // multi-tap wait is otherwise a tap that seemed not to land.
+            performHapticFeedback(HapticFeedbackConstants.CLOCK_TICK)
+            ui.postDelayed(tapRunnable, multiTapMs)
+        }
+
+        /** Whatever the run turned out to be. Runs on the UI thread. */
+        private val tapRunnable = Runnable {
+            when (tapCount) {
+                1 -> listeners.onTalkClick()
+                2 -> listeners.onTextInputToggle()
+            }
+            tapCount = 0
+        }
+        private var startX = 0f
+        private var startY = 0f
+        private var startParamsX = 0
+        private var startParamsY = 0
+        /** The docked centre at the DOWN; a drag along the edge moves it. */
+        private var startDockCy = 0
+        private var tracking = false
+        private var moved = false
+        private var longPressed = false
+
+        /**
+         * This drag is a sideways flick across the ball, i.e. a look change —
+         * decided once, at the moment the slop is crossed, and never revisited.
+         *
+         * Deciding once is the point. A gesture that re-chose its meaning every
+         * frame would drag the window a little before committing to a swipe,
+         * which is a card that jumps and then snaps back for every look change.
+         * The 1.4 bias is what keeps a hand that is trying to *move* the card
+         * from being read as a swipe: a drag has to be clearly sideways, not
+         * merely sideways-ish.
+         *
+         * Full card only. The folded ball is dragged around the screen and
+         * docks into the right edge, so a horizontal flick there is a move, and
+         * taking it away would cost the user the one thing they do with the
+         * corner ball most. In the other direction, the full card's ball
+         * never drags the window either — see the move branch.
+         */
+        private var swiping = false
+        private val longPressRunnable = Runnable {
+            if (tracking && !moved) {
+                longPressed = true
+                performHapticFeedback(HapticFeedbackConstants.LONG_PRESS)
+                listeners.onLongPress()
+            }
+        }
+
+        private fun isOnBall(x: Float, y: Float, ballH: Int): Boolean {
+            // The ball area's own centre: it is the window's except in the work-caption shape, where the window
+            // is wider than the ball and the ball sits at its top right.
+            val cx = ballAreaView?.let { it.left + it.width / 2f } ?: (width / 2f)
+            // The ball area may sit at the bottom of a taller window (a
+            // signboard above it), so its centre is not `ballH / 2` from the
+            // window's top — read it from the area's real position.
+            val cy = (ballAreaView?.top ?: 0) + ballH / 2f + (ball?.translationY ?: 0f)
+            // Matches the visible sphere: camera z=4.9 + fov=42 makes the ball
+            // fill ~55% of the shorter dimension, times whatever view scale the
+            // ball is drawn at. Add a small margin so grazing taps still count.
+            // Compact mode differs only in that scale (1f, no subtitle to make
+            // room for) — it used to claim the whole window because a disc was
+            // painted there, and without the disc that would be an invisible
+            // square in the corner eating the user's taps.
+            val scale = if (compact) 1f else BALL_SCALE
+            val r = min(width, ballH) * 0.32f * scale
+            val dx = x - cx
+            val dy = y - cy
+            return dx * dx + dy * dy <= r * r
+        }
+
+        // ---- Home-swipe gesture (full card only) ----
+        //
+        // A swipe up from the bottom strip is the system home gesture, which
+        // this fullscreen touchable overlay would otherwise swallow before the
+        // launcher could act (a touch that has entered this window cannot be
+        // forwarded by returning false from [onTouchEvent]). Detected here, in
+        // [dispatchTouchEvent] and therefore on *every* event whether or not a
+        // child owns the touch. [onInterceptTouchEvent] is only re-consulted on
+        // MOVE once a child has claimed the DOWN, and the bottom strip is the
+        // one place nothing does — the community row's gesture-bar padding is a
+        // dead zone, so a DOWN there reaches no child and the intercept never
+        // sees the MOVE that is the whole gesture. This is the one path to
+        // "home folds the card" that does not need the accessibility service,
+        // which this ROM is entitled to revoke.
+        private var homeSwipeTracking = false
+        private var homeSwipeStartX = 0f
+        private var homeSwipeStartY = 0f
+        private var homeSwipeCommitted = false
+
+        override fun dispatchTouchEvent(e: MotionEvent): Boolean {
+            if (e.actionMasked == MotionEvent.ACTION_DOWN) {
+                // Use display coordinates: a resized card's bottom can sit
+                // beside the input field, far above the phone's navigation edge.
+                val screenBottom = wm.maximumWindowMetrics.bounds.bottom
+                homeSwipeTracking = !compact && signboard == null && typingTop == 0 &&
+                    foldAnim?.isRunning != true &&
+                    HomeSwipeRegion.contains(e.rawY, screenBottom, dp(HOME_SWIPE_STRIP_DP))
+                homeSwipeStartX = e.x
+                homeSwipeStartY = e.y
+                homeSwipeCommitted = false
+            }
+            if (homeSwipeTracking && e.actionMasked == MotionEvent.ACTION_MOVE &&
+                !homeSwipeCommitted
+            ) {
+                val up = homeSwipeStartY - e.y
+                if (up >= dp(HOME_SWIPE_TRIGGER_DP) &&
+                    up > kotlin.math.abs(e.x - homeSwipeStartX)
+                ) {
+                    // Cancel a child's pending click/scroll before taking the gesture.
+                    val cancel = MotionEvent.obtain(e)
+                    cancel.action = MotionEvent.ACTION_CANCEL
+                    super.dispatchTouchEvent(cancel)
+                    cancel.recycle()
+                    homeSwipeCommitted = true
+                    android.util.Log.i("AndeeNavigation", "home swipe startY=$homeSwipeStartY rawY=${e.rawY} screenBottom=${wm.maximumWindowMetrics.bounds.bottom}")
+                    listeners.onHomeSwipe()
+                }
+            }
+            val owned = homeSwipeTracking
+            val handled = if (homeSwipeCommitted) true else super.dispatchTouchEvent(e)
+            if (e.actionMasked == MotionEvent.ACTION_UP ||
+                e.actionMasked == MotionEvent.ACTION_CANCEL
+            ) {
+                homeSwipeTracking = false
+                homeSwipeCommitted = false
+            }
+            // Accept DOWN even over empty bottom padding. Returning false here
+            // would prevent this window from receiving the rest of the swipe.
+            return owned || handled
+        }
+
+        override fun onTouchEvent(e: MotionEvent): Boolean {
+            val p = params ?: return false
+            val ballH = ballAreaView?.height ?: return false
+            val areaTop = ballAreaView?.top ?: 0
+            when (e.action) {
+                MotionEvent.ACTION_DOWN -> {
+                    // A signboard is hosted: its own buttons handle taps in the
+                    // pane; the ball stays draggable by its circle, wherever the
+                    // taller window put it.
+                    if (signboard != null) {
+                        if (e.y < areaTop) return false   // the pane's own touch
+                        if (!isOnBall(e.x, e.y, ballH)) return false
+                    } else if (compact && docked) {
+                        // The tab is the ball's visible half and nothing else:
+                        // the whole window is the target.
+                    } else if (compact) {
+                        // Bare folded ball: circle test only, the whole window
+                        // is the area.
+                        if (!isOnBall(e.x, e.y, ballH)) return false
+                    } else {
+                        // Full card: ignore anything below the ball area (the
+                        // scrollback handles its own touches); then the circle.
+                        if (e.y > ballH) return false
+                        if (!isOnBall(e.x, e.y, ballH)) return false
+                    }
+                    // Don't let it bounce under a finger that is already on it.
+                    ui.removeCallbacks(strollRunnable)
+                    ui.removeCallbacks(dockRunnable); ui.removeCallbacks(dockBackRunnable)
+                    if (!docked && slideRunning()) {
+                        // Caught on its way into the edge: stays a whole ball.
+                        ball?.animate()?.scaleX(1f)?.scaleY(1f)?.setDuration(DOCK_SLIDE_MS)?.start()
+                    }
+                    slide?.cancel()
+                    startX = e.rawX; startY = e.rawY
+                    startParamsX = p.x; startParamsY = p.y
+                    startDockCy = dockCy
+                    tracking = true
+                    moved = false
+                    swiping = false
+                    longPressed = false
+                    ui.postDelayed(longPressRunnable, longPressMs)
+                    return true
+                }
+
+                MotionEvent.ACTION_MOVE -> {
+                    if (!tracking) return false
+                    if (!moved) {
+                        val dx = abs(e.rawX - startX)
+                        val dy = abs(e.rawY - startY)
+                        if (dx > slop || dy > slop) {
+                            moved = true
+                            swiping = !compact && dx > dy * SWIPE_BIAS
+                            ui.removeCallbacks(longPressRunnable)
+                        }
+                    }
+                    // Compact only. The full card is a surface, not a widget:
+                    // it has no edge to dock into and no corner to sit in, and a
+                    // diagonal drag on its ball used to carry the whole
+                    // window off-screen — no clamp while it went, no magnet
+                    // to bring it back.
+                    if (moved && !swiping && compact && docked) {
+                        // Pulled away from the edge: the whole ball comes out
+                        // under the finger and the rest of the drag moves it.
+                        // Otherwise the drag slides the tab along the edge.
+                        if (startX - e.rawX > dp(DOCK_PULL_DP)) {
+                            val side = dp(COMPACT_DP)
+                            undockTo(e.rawX.toInt() - side / 2, e.rawY.toInt() - winYOrigin - side / 2)
+                            clampCompact(p)
+                            runCatching { wm.updateViewLayout(this, p) }
+                            startX = e.rawX; startY = e.rawY
+                            startParamsX = p.x; startParamsY = p.y
+                        } else {
+                            dockCy = clampDockCy(startDockCy + (e.rawY - startY).toInt())
+                            p.y = dockCy - dockTabUp()
+                            runCatching { wm.updateViewLayout(this, p) }
+                        }
+                    } else if (moved && !swiping && compact) {
+                        p.x = startParamsX + (e.rawX - startX).toInt()
+                        p.y = startParamsY + (e.rawY - startY).toInt()
+                        clampCompact(p)
+                        runCatching { wm.updateViewLayout(this, p) }
+                    }
+                    return true
+                }
+
+                MotionEvent.ACTION_UP -> {
+                    if (!tracking) return false
+                    ui.removeCallbacks(longPressRunnable)
+                    val wasTap = !moved && !longPressed
+                    // Only a compact drag moved the window, so only it has
+                    // anything to settle — a swipe switched looks, and a
+                    // full-card touch never moved the window at all.
+                    val wasDrag = moved && !swiping && compact && !docked
+                    val flick = if (swiping) e.rawX - startX else 0f
+                    tracking = false
+                    moved = false
+                    swiping = false
+                    if (wasDrag) settleAfterDrag() else armDock()
+                    retimeStroll()
+                    if (wasTap) registerTap()
+                    // Right means forward, the way a stack of cards is dealt.
+                    if (abs(flick) > slop * SWIPE_COMMIT) {
+                        stepBallLook(if (flick > 0) 1 else -1)
+                    }
+                    return true
+                }
+
+                MotionEvent.ACTION_CANCEL -> {
+                    if (!tracking) return false
+                    ui.removeCallbacks(longPressRunnable)
+                    val wasDrag = moved && !swiping && compact && !docked
+                    tracking = false
+                    moved = false
+                    swiping = false
+                    if (wasDrag) settleAfterDrag() else armDock()
+                    retimeStroll()
+                    return true
+                }
+            }
+            return false
+        }
+    }
+
+    // ---- Colors / units ----
+
+    private fun dp(v: Int): Int =
+        (v * context.resources.displayMetrics.density).toInt()
+
+    /** The window's own height, or the ball's side when it is not laid out. */
+    private fun windowH(): Int {
+        val v = root ?: return dp(COMPACT_DP)
+        return if (v.height > 0) v.height else dp(COMPACT_DP)
+    }
+
+    companion object {
+        /** How much of the last message the stage's live line cycles through. */
+        private const val LAST_SAID_MAX = 600
+
+        /** The project's public home, opened from the foot of the card. */
+        private const val GITHUB_URL = "https://github.com/kuafuai/andee"
+        private const val DISCORD_URL = "https://discord.gg/PYujCQyqu"
+
+        /**
+         * Taps in a row that mean "stop". The ball's whole vocabulary, in one
+         * place: one tap asks, two type, three stop. Long-press is not part of
+         * it — that one predates the other two and is about the card's size
+         * rather than about the assistant.
+         */
+        private const val TAPS_FOR_STOP = 3
+
+        /**
+         * How much of its area the ball is drawn at in the full card.
+         *
+         * Was 0.5f, which — after a fixed 200dp band and a 1 : 1.15 split with
+         * the list had taken their cut — drew a ball *smaller* than the folded
+         * corner one. Neither the band nor the split exists any more.
+         *
+         * Then 1.4f against a half-screen area, which overshot the other way:
+         * `min(area) × 0.48 × scale` came to ~800px on a 1200px-wide screen, two
+         * thirds of the width, and a face that size reads as a cartoon rather
+         * than as a presence.
+         *
+         * Read together with [BALL_AREA_FRACTION], which is the other half of
+         * the same number: the two were cut back together so the ball would
+         * shrink without leaving a band of dead space where it used to be. As
+         * set they draw ~510px, about twice the folded corner ball.
+         */
+        // 0.8 since 2026-10-23: the user asked for a smaller ball on both shapes of the card.
+        private const val BALL_SCALE = 0.8f
+
+        /**
+         * How much more sideways than vertical a drag on the ball must be
+         * before it counts as a look-change swipe rather than a drag of the
+         * card. See [BallHostFrame.swiping].
+         */
+        private const val SWIPE_BIAS = 1.4f
+
+        /**
+         * Distance, in slops, a swipe must actually cover to change anything.
+         *
+         * Three rather than one: crossing the slop only means the gesture
+         * stopped being a tap, and a look change is not something to do to
+         * somebody by accident. Short of this the swipe is simply dropped —
+         * nothing moved, so there is nothing to undo.
+         */
+        private const val SWIPE_COMMIT = 3f
+
+        /** Only the physical navigation edge may start a home gesture. */
+        private const val HOME_SWIPE_STRIP_DP = 24
+
+        /**
+         * How far the finger must climb from its down position, inside the home
+         * strip, before the swipe is committed as home. Several times the touch
+         * slop, so a tap on the community row's glyphs never reads as a swipe.
+         */
+        private const val HOME_SWIPE_TRIGGER_DP = 48
+
+        /**
+         * Where the card splits: ball above, scrollback below. Also the touch
+         * boundary between them (see [BallHostFrame.onSizeChanged]) — the list
+         * is a ScrollView and needs every touch that lands in its half.
+         *
+         * This is the answer, not a starting point: the sphere's clearance from
+         * the control cluster in the top-right corner is bought by dropping the
+         * ball *inside* this band, never by moving the band's bottom edge — that
+         * edge is where the scrollback begins, and moving it is a change to the
+         * card, not to the ball. See [ballDrop].
+         *
+         * Note the area's *height* is what sizes the ball once it drops below
+         * the screen width, since the sphere is a fraction of the shorter side.
+         * Below about 0.40 the ball starts shrinking faster than the room it
+         * gains the list is worth.
+         */
+        private const val BALL_AREA_FRACTION = 0.34f
+
+        /**
+         * Clearance between the sphere's top edge and the bottom of the control
+         * cluster.
+         *
+         * Twelve dp is about the cluster's own inner padding, so the ball clears
+         * the pill by the same margin the pill's glyphs clear the pill's edge —
+         * enough to read as two things, not as one collision.
+         */
+        private const val BALL_TOP_GAP_DP = 12
+
+        /**
+         * How far below the band's centre the ball rests, before the cluster
+         * clearance is added on top.
+         *
+         * Taste, not geometry, and the distinction is worth keeping: [ballDrop]
+         * answers "how far must it move to clear the controls", this answers
+         * "where does it look right". Centred is where the arithmetic says it
+         * goes and it reads slightly high, because the band starts under the
+         * status bar — the empty space below the sphere is taller than the empty
+         * space above it, so the eye puts the sphere above the middle. The user
+         * asked for "a little lower" and this is that; it moves the ball and
+         * nothing else (the band, the split, the sphere's size and the
+         * scrollback are all untouched).
+         *
+         * On the phone this stacks with a ~12 dp cluster clearance, on a wide
+         * tablet it is the whole offset.
+         */
+        private const val BALL_NUDGE_DP = 26
+
+        /**
+         * Floor for the card's height while a typing field is up — see
+         * [setTypingTop].
+         *
+         * Reached only on a device whose keyboard eats most of the screen: the
+         * card is meant to keep its ball and some of its scrollback visible
+         * above the field, and a card clipped to nothing would be the "it
+         * vanished" behaviour this replaced.
+         */
+        private const val MIN_TYPING_CARD_DP = 240
+
+        /**
+         * Compact window side and its inset from the screen corner. The sphere
+         * is a fixed fraction of the surface's shorter side, so this is the
+         * only knob for how big the corner ball reads — the rendered ball is
+         * roughly three fifths of it, and the circular hit test tracks it too.
+         *
+         * 104 since 2026-11-03 (was 136): the user asked for a smaller ball, and
+         * the floor that held it at 136 — paws gripping the bottom edge reached
+         * 47.8 dp from the centre — went with the ledge.
+         */
+        private const val COMPACT_DP = 104
+        private const val COMPACT_MARGIN_DP = 16
+
+        /** How long [parkForGesture] waits for the main-thread move to run. */
+        private const val PARK_WAIT_MS = 200L
+
+        /** Compositor settle after [parkForGesture]'s window move. */
+        private const val PARK_SETTLE_MS = 50L
+
+        /**
+         * How much of the ball area's padding a held signboard's tail reaches
+         * into, as a fraction of the compact side. The sphere occupies ~64% of
+         * the area, centred, so the padding above the head is ~18% of the side.
+         *
+         * Calibrated on device, not by eye: 0.30 measured a 9px overlap with
+         * the head ("戳到脑袋"), 0.14 read as detached. Each 0.01 of the
+         * fraction is ~3.8px on the test phone, so 0.235 targets a ~14px
+         * clearance — the tail tip visibly *near* the head without touching,
+         * which is what "举着" reads as.
+         */
+        private const val SIGN_OVERLAP_FRACTION = 0.235f
+
+        private const val DOCK_SLIDE_MS = 240L
+
+        /** Left alone this long, the folded ball goes into the right edge. */
+        private const val DOCK_AFTER_MS = 10_000L
+
+        /** How far a finger must pull the docked ball away from the edge to bring it out. */
+        private const val DOCK_PULL_DP = 24
+
+        /**
+         * Docked, the ball is drawn at this scale of its folded size: it is
+         * clinging to the edge, not sitting on the app, and should take less.
+         */
+        private const val DOCK_SCALE = 0.70f
+
+        /**
+         * The docked tab as fractions of the scaled side. Measured off the
+         * clinging pose (`BallLab --ez side true`): the body leans out ~0.46 of
+         * the side past the edge, horns included, and reaches ~0.29 below the
+         * centre to the lower paw. Above the centre is sized for the rabbit's
+         * ears, the tallest of any look at ~0.38 (Andee's horns stop at ~0.27,
+         * and a tab sized for them cut the ears off flat).
+         */
+        private const val DOCK_TAB_W_FRACTION = 0.48f
+
+        /**
+         * The caption under the folded ball while a turn works: three lines of [WorkCardView.TEXT_SP] type (status
+         * and the newest two), centred under the ball. The window grows to this while it shows.
+         */
+        private const val WORK_CAPTION_W_DP = 160
+        private const val WORK_CAPTION_H_DP = 40
+
+        /** How far the words tuck up into the transparent band under the sphere, so they read as the ball's. */
+        private const val WORK_CAPTION_TUCK_DP = 16
+
+        /** Where a working ball comes out to: this far in from the right edge and up from where it was docked. */
+        private const val COME_OUT_IN_DP = 72
+        private const val COME_OUT_UP_DP = 140
+
+        /** After a turn, how long the ball stays out before it goes back into the edge. */
+        private const val DOCK_AFTER_WORK_MS = 3_000L
+        private const val DOCK_TAB_UP_FRACTION = 0.44f
+        private const val DOCK_TAB_DOWN_FRACTION = 0.34f
+
+        private const val CARD_OPEN_MS = 280L
+        private const val CARD_CLOSE_MS = 190L
+        private const val CARD_OPEN_SCALE = 0.94f
+        private const val CARD_CLOSE_SCALE = 0.90f
+        private const val CARD_TRAVEL_DP = 18
+
+        /**
+         * How far short of the right edge a dropped ball still counts as
+         * touching it and goes in, dp. See [settleAfterDrag].
+         */
+        private const val SNAP_GRACE_DP = 18
+
+        /** Gap between hops within one burst. */
+        private const val STROLL_HOP_MS = 640L
+
+        /** Standing still between bursts, plus up to [STROLL_REST_JITTER_MS]. */
+        private const val STROLL_REST_MS = 6_000L
+        private const val STROLL_REST_JITTER_MS = 14_000
+    }
+}

@@ -1,0 +1,573 @@
+package net.kuafuai.andee.desktop
+
+import androidx.compose.foundation.layout.Box
+
+import androidx.compose.foundation.layout.heightIn
+
+import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
+import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.verticalScroll
+import androidx.compose.material.Text
+import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateMapOf
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
+import androidx.compose.ui.Alignment
+import androidx.compose.ui.Modifier
+import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
+import net.kuafuai.andee.config.BrainConfig
+
+/** A string from the phone's own resources (generated into strings_*.properties), so the wording is the phone's. */
+private fun st(key: String, vararg a: Any): String = Strings.get("s_$key").let { if (a.isEmpty()) it else String.format(Strings.locale(), it, *a) }
+
+/**
+ * The settings card, laid out as the phone's: 后端 (with the voice provider inside it), 外观, 小本本,
+ * 消息提醒, 保险箱, 单次任务最多步数, and a 高级 fold carrying 显示云端选项, 诊断 and the destructive
+ * buttons. Wording comes from the phone's string resources, so a label cannot drift from its twin.
+ *
+ * What differs is only what the Mac is: a 命令行 and SSH keys section (the Mac has a shell), no wake
+ * word, no typing-IME row (neither exists here), and no 形象与表情 / 自检 doors, which the sidebar
+ * already is.
+ */
+@Composable
+fun SettingsScreen(
+    onDone: () -> Unit,
+    onOpenGear: () -> Unit = {},
+    onOpenVault: () -> Unit = {},
+    onOpenExpressions: () -> Unit = {},
+) {
+    val zh = Strings.lang() == "zh"
+    fun t(a: String, b: String) = if (zh) a else b
+    val v = remember { mutableStateMapOf<String, String>().apply {
+        putAll(Settings.all())
+        // The key in effect is shown, typed or the build's; saving it back unchanged stores nothing (below).
+        put("codeflying_key", Assistant.codeFlyingKey())
+    } }
+    // How the user wants notifications handled (NotifyRule): set by telling Andee, shown and editable here.
+    var notifyRule by remember { mutableStateOf(DesktopNotebook.book.notifyRule.text()) }
+    var fullOpenAsk by remember { mutableStateOf(false) }
+    var advanced by remember { mutableStateOf(false) }
+    var confirm by remember { mutableStateOf("") }   // "", "chat", "notes", "factory"
+    // The tab shown: nothing saved is CodeFlying, the default tab for a new install.
+    val brain = v["brain"].orEmpty().ifEmpty { "codeflying" }.let { if (it == "hub" && v["show_hub"] != "on") "codeflying" else it }
+
+    // The voice provider the card shows is the one in force: a saved pick, else by language.
+    val provider = when (v["voice_provider"].orEmpty().trim().lowercase()) {
+        "google" -> "google"
+        "huoshan" -> "huoshan"
+        else -> if (Strings.lang() == "en") "google" else "huoshan"
+    }
+    val en = Strings.lang() == "en"
+    val llmModelHint = if (en) "gpt-4o-mini" else "deepseek-flash"
+    val llmUrlHint = if (en) "https://api.openai.com/v1" else "https://api.deepseek.com"
+
+    Column(Modifier.fillMaxSize().verticalScroll(rememberScrollState()).padding(20.dp)) {
+        GlassHeader(st("settings_title"), subtitle = t("所有设置都存在本机", "Everything stays on this Mac"), onClose = onDone, trailing = { LangToggle() })
+
+        // ---- 后端 ----
+        Section(st("settings_section_brain"), note = st("settings_brain_panel_note")) {
+            SegmentedPicker(
+                buildList {
+                    add("codeflying" to st("settings_brain_codeflying"))
+                    add("local" to st("settings_brain_local"))
+                    if (v["show_hub"] == "on") add("hub" to st("settings_brain_cloud"))
+                },
+                brain,
+            ) { v["brain"] = it }
+            when (brain) {
+                "hub" -> {
+                    GlassField(st("settings_hub_url"), v["hub_url"].orEmpty(), { v["hub_url"] = it }, hint = st("settings_hub_url_hint"))
+                    GlassField(st("settings_device_name"), v["device_name"].orEmpty(), { v["device_name"] = it }, hint = st("settings_device_name_hint"))
+                    Note(st("settings_brain_cloud_note"))
+                }
+                // The server comes from the build (CodeFlyingBuild), as on the phone; only the key is typed here.
+                "codeflying" -> {
+                    val keyed = Assistant.codeFlyingKey().isNotEmpty()
+                    // Same words and link whether or not a key is set; the key box below is the state.
+                    Note(st("settings_brain_codeflying_note"))
+                    Note(st("settings_codeflying_get_key"))
+                    Text(
+                        st("settings_codeflying_open_site"), color = Palette.accent, fontSize = 12.sp,
+                        modifier = Modifier.padding(top = 6.dp).clickable {
+                            runCatching { java.awt.Desktop.getDesktop().browse(java.net.URI(st("codeflying_url"))) }
+                        },
+                    )
+                    // Always drawn, connected or not: it is where a key from the link above goes.
+                    GlassField(
+                        st("settings_codeflying_key"), v["codeflying_key"].orEmpty(), { v["codeflying_key"] = it },
+                        secret = true, hint = "kft_…", copyValue = { Assistant.codeFlyingKey() },
+                    )
+                }
+                else -> {
+                    GlassField(st("settings_llm_api_key"), v["llm_api_key"].orEmpty(), { v["llm_api_key"] = it }, secret = true, hint = "sk-…")
+                    NoKeyHint { v["brain"] = "codeflying" }
+                    GlassField(st("settings_llm_model"), v["llm_model"].orEmpty(), { v["llm_model"] = it }, hint = llmModelHint)
+                    GlassField(st("settings_llm_base_url"), v["llm_base_url"].orEmpty(), { v["llm_base_url"] = it }, hint = llmUrlHint)
+                    RowLabel(st("settings_llm_thinking"))
+                    val thinking = v["llm_thinking"].orEmpty().ifEmpty { "enabled" }
+                    SegmentedPicker(listOf("enabled" to st("common_on"), "disabled" to st("common_off")), thinking) { v["llm_thinking"] = it }
+                    if (thinking != "disabled") {
+                        RowLabel(st("settings_llm_effort"))
+                        SegmentedPicker(
+                            listOf("high" to st("common_high"), "medium" to st("common_medium"), "low" to st("common_low")),
+                            v["llm_reasoning_effort"].orEmpty().ifEmpty { "high" },
+                        ) { v["llm_reasoning_effort"] = it }
+                    }
+                    Note(st("settings_brain_local_note"))
+                }
+            }
+
+            // ---- who hears and speaks (not drawn under CodeFlying, which brings its own voice) ----
+            if (brain != "codeflying") {
+                RowLabel(st("settings_voice_provider"))
+                SegmentedPicker(
+                    listOf("huoshan" to st("settings_voice_provider_huoshan"), "google" to st("settings_voice_provider_google")),
+                    provider,
+                ) { v["voice_provider"] = it }
+                if (provider == "google") {
+                    GlassField(st("settings_google_api_key"), v["google_api_key"].orEmpty(), { v["google_api_key"] = it }, secret = true, hint = st("settings_google_api_key_hint"))
+                    NoKeyHint { v["brain"] = "codeflying" }
+                    GlassField(st("settings_google_project"), v["google_project"].orEmpty(), { v["google_project"] = it }, hint = st("settings_google_project_hint"))
+                    GlassField(st("settings_google_location"), v["google_location"].orEmpty(), { v["google_location"] = it }, hint = "asia-northeast1")
+                    GlassField(st("settings_google_asr_model"), v["google_asr_model"].orEmpty(), { v["google_asr_model"] = it }, hint = "gemini-2.5-flash-native-audio-latest")
+                    GlassField(st("settings_google_tts_model"), v["google_tts_model"].orEmpty(), { v["google_tts_model"] = it }, hint = "gemini-3.8-flash-tts")
+                    GlassField(st("settings_google_base_url"), v["google_base_url"].orEmpty(), { v["google_base_url"] = it }, hint = "https://generativelanguage.googleapis.com")
+                    GlassField(st("settings_google_language"), v["google_language"].orEmpty(), { v["google_language"] = it }, hint = st("settings_google_language_hint"))
+                    Note(st("settings_voice_google_note"))
+                } else {
+                    GlassField(st("settings_voice_api_key"), v["api_key"].orEmpty(), { v["api_key"] = it }, secret = true, hint = st("settings_voice_api_key_hint"))
+                    NoKeyHint { v["brain"] = "codeflying" }
+                    GlassField(st("settings_voice_asr_endpoint"), v["asr_endpoint"].orEmpty(), { v["asr_endpoint"] = it }, hint = "wss://openspeech.bytedance.com/api/v3/sauc/bigmodel_async")
+                    GlassField(st("settings_voice_asr_resource_id"), v["asr_resource_id"].orEmpty(), { v["asr_resource_id"] = it }, hint = "volc.bigasr.sauc.duration")
+                    GlassField(st("settings_voice_tts_endpoint"), v["tts_endpoint"].orEmpty(), { v["tts_endpoint"] = it }, hint = "wss://openspeech.bytedance.com/api/v3/tts/bidirection")
+                    GlassField(st("settings_voice_tts_resource_id"), v["tts_resource_id"].orEmpty(), { v["tts_resource_id"] = it }, hint = "seed-tts-2.0")
+                    GlassField(st("settings_voice_tts_sample_rate"), v["tts_sample_rate"].orEmpty(), { v["tts_sample_rate"] = it }, hint = "24000")
+                }
+            }
+
+        }
+        // ---- 外观: eager, the redraw is the confirmation ----
+        Section(st("settings_section_theme"), note = st("settings_theme_note")) {
+            SegmentedPicker(
+                listOf("day" to st("settings_theme_day"), "night" to st("settings_theme_night")),
+                if (Palette.night) "night" else "day",
+            ) { Palette.setNight(it == "night") }
+
+        }
+        // ---- 形象与表情: a door, like the phone's — the card is where looks are tried and picked ----
+        Section(st("settings_section_expr")) {
+            Note(st("settings_expr_note"))
+            Row(Modifier.padding(top = 8.dp)) { Pill(st("settings_expr_open")) { onOpenExpressions() } }
+
+        }
+        // ---- 复盘: the review switch (the notebook itself is the sidebar card) ----
+        Section(st("settings_section_notebook")) {
+            SegmentedPicker(listOf("on" to st("common_on"), "off" to st("common_off")), v["sweep"].orEmpty().ifEmpty { "on" }) { v["sweep"] = it }
+            Note(st("settings_notebook_sweep_note"))
+            GlassField(st("settings_notebook_quiet_minutes"), v["sweep_quiet_minutes"].orEmpty(), { v["sweep_quiet_minutes"] = it }, hint = "20")
+            GlassField(st("settings_notebook_daily_cap"), v["sweep_daily_cap"].orEmpty(), { v["sweep_daily_cap"] = it }, hint = "12")
+            Note(
+                st("settings_notebook_today") + "：" + st(
+                    "settings_notebook_stats", Sweep.countToday(), Sweep.tokensToday(),
+                    DesktopNotebook.book.memories().size, DesktopNotebook.book.todos("pending").size,
+                ),
+            )
+
+        }
+        // ---- 装备: a summary here, the card is where it is read and edited ----
+        Section(st("settings_section_gear")) {
+            val gearShelf = remember { Assistant.gear.gear }
+            val installed = remember { gearShelf.forCard() }
+            val learned = installed.count { (i, _) -> i.does.isNotBlank() }
+            Note(
+                if (installed.isEmpty()) st("settings_gear_empty_note")
+                else st("settings_gear_count_note", installed.size, learned),
+            )
+            Row(Modifier.padding(top = 8.dp)) { Pill(st("settings_gear_manage")) { onOpenGear() } }
+
+        }
+        // ---- 消息提醒 ----
+        Section(st("settings_section_notify")) {
+            SegmentedPicker(
+                listOf("off" to st("common_off"), "chat" to st("settings_notify_chat"), "all" to st("settings_notify_all")),
+                v["notify"].orEmpty().ifEmpty { "off" },
+            ) { v["notify"] = it }
+            Note(st("settings_notify_note"))
+            Text(t("怎么处理消息", "How to handle messages"), color = Palette.secondary, fontSize = 12.sp, modifier = Modifier.padding(top = 10.dp))
+            androidx.compose.foundation.text.BasicTextField(
+                value = notifyRule,
+                onValueChange = { notifyRule = it.take(net.kuafuai.andee.config.NotifyRule.MAX_CHARS) },
+                textStyle = androidx.compose.ui.text.TextStyle(color = Palette.label, fontSize = 14.sp, lineHeight = 20.sp),
+                cursorBrush = androidx.compose.ui.graphics.SolidColor(Palette.accent),
+                modifier = Modifier.fillMaxWidth().padding(top = 4.dp).heightIn(min = 56.dp).glassWell(12).padding(12.dp),
+                decorationBox = { inner ->
+                    Box {
+                        if (notifyRule.isEmpty()) Text(t("没有设。跟 Andee 说一句就行，比如「消息都帮我处理一下」。", "Not set. Just tell Andee, e.g. \"handle all my messages\"."), color = Palette.muted, fontSize = 14.sp)
+                        inner()
+                    }
+                },
+            )
+            Note(t("每条消息进来时都会按这段话判断要不要处理。清空就恢复默认（多数消息不打扰你）。", "Every incoming message is judged by this. Clear it to go back to the default (most messages left alone)."))
+            if (net.kuafuai.andee.desktop.mac.MacNotifications.state == net.kuafuai.andee.desktop.mac.MacNotifications.State.NO_ACCESS) {
+                Text(
+                    t("读不到通知：在 系统设置 → 隐私与安全性 → 完全磁盘访问权限 里加上 Andee。",
+                        "Can't read notifications: add Andee under System Settings → Privacy & Security → Full Disk Access."),
+                    color = Palette.warn, fontSize = 12.sp, modifier = Modifier.padding(top = 4.dp),
+                )
+            }
+            if (net.kuafuai.andee.desktop.mac.MacNotifications.state == net.kuafuai.andee.desktop.mac.MacNotifications.State.NOT_FOUND) {
+                Text(
+                    t("这台 Mac 上找不到通知数据库，暂时读不了通知。这不是权限问题，开完全磁盘访问也没用。",
+                        "No notification store found on this Mac, so notifications cannot be read yet. This is not a permission problem; Full Disk Access will not help."),
+                    color = Palette.warn, fontSize = 12.sp, modifier = Modifier.padding(top = 4.dp),
+                )
+            }
+
+        }
+        // ---- 主动招呼: how often a bubble may go up beside the ball. 关 leftmost, as everywhere ----
+        Section(st("settings_section_nudge")) {
+            SegmentedPicker(
+                listOf("off" to st("common_off"), "few" to st("settings_nudge_few"), "normal" to st("settings_nudge_normal")),
+                Nudges.level().key.let { saved -> v["nudge"].orEmpty().ifEmpty { saved } },
+            ) { v["nudge"] = it }
+            Note(st("settings_nudge_note"))
+            // The way back from a long-press, which mutes with no confirmation. Written at once.
+            var muted by remember { mutableStateOf(Nudges.muted()) }
+            if (muted.isNotEmpty()) {
+                Note(st("settings_nudge_muted", muted.sorted().joinToString(if (zh) "、" else ", ")))
+                Row(Modifier.padding(top = 8.dp)) { Pill(st("settings_nudge_unmute")) {
+                    // `v` holds the list as it was when the card opened, and Save writes all of `v` back.
+                    Nudges.unmuteAll(); v["nudge_muted"] = ""; muted = emptySet()
+                } }
+            }
+        }
+        // ---- 自己动起来: the heartbeat and the work turns it starts. 关 leftmost; unset reads as 开 ----
+        Section(st("settings_section_drive")) {
+            SegmentedPicker(
+                listOf("off" to st("common_off"), "on" to st("common_on")),
+                v["drive"].orEmpty().ifEmpty { if (DesktopNotebook.driveEnabled()) "on" else "off" },
+            ) { v["drive"] = it }
+            Note(st("settings_drive_note"))
+        }
+        // ---- 对话里显示: everything, or only what was said. A preference, not a control you reach for, so it
+        // left the chat header for here — the phone moved it the same way. 全部 leftmost; unset reads as 全部. ----
+        Section(st("settings_section_timeline")) {
+            SegmentedPicker(
+                listOf("on" to st("tl_show_all"), "off" to st("tl_show_talk")),
+                v["timeline_events"].orEmpty().ifEmpty { if (Settings.get("timeline_events") == "off") "off" else "on" },
+            ) { v["timeline_events"] = it }
+        }
+        // ---- 保险箱: a summary here, and the door to the card ----
+        Section(st("settings_section_vault")) {
+            val vaultN = remember { runCatching { net.kuafuai.andee.desktop.mac.MacVault.entries().size }.getOrDefault(0) }
+            Note(if (vaultN == 0) st("settings_vault_empty_note") else st("settings_vault_count_note", vaultN))
+            Row(Modifier.padding(top = 8.dp)) { Pill(st("settings_vault_manage")) { onOpenVault() } }
+
+        }
+        // ---- 单次任务最多步数 ----
+        Section(st("settings_max_steps"), note = st("settings_max_steps_note")) {
+            GlassField(st("settings_max_steps"), v["max_steps"].orEmpty(), { v["max_steps"] = it }, hint = "40")
+
+        }
+        // ---- Mac only: the shell ----
+        Section(t("命令行", "Commands")) {
+            SegmentedPicker(
+                listOf("ask" to t("问我", "Ask me"), "auto" to t("自动", "Automatic"), "read_only" to t("只读", "Read-only"), "full" to t("完全开放", "Full")),
+                v["shell_mode"].orEmpty().ifEmpty { "ask" },
+            ) { picked ->
+                if (picked == "full" && v["shell_mode"] != "full") fullOpenAsk = true else v["shell_mode"] = picked
+            }
+            Note(
+                when (v["shell_mode"].orEmpty().ifEmpty { "ask" }) {
+                    "auto" -> t("在沙箱里，普通命令直接跑；删大量文件、强推这类仍先问你。", "Ordinary commands run in the sandbox; destructive ones still ask first.")
+                    "read_only" -> t("只允许查看类命令，其它一律拒绝。", "Only read-only commands are allowed.")
+                    "full" -> t("不进沙箱、不问：Andee 能改动这台 Mac 上的任何文件。", "No sandbox, no asking: Andee can change any file.")
+                    else -> t("只读命令直接跑，其它每条先问你。", "Read-only commands run; everything else asks first.")
+                },
+            )
+            GlassField(t("工作文件夹（逗号分隔，留空用 ~/Andee）", "Work folders (comma-separated; blank = ~/Andee)"), v["shell_workdirs"].orEmpty(), { v["shell_workdirs"] = it })
+            if (fullOpenAsk) {
+                FullOpenConfirm(zh, onYes = { v["shell_mode"] = "full"; fullOpenAsk = false }, onNo = { fullOpenAsk = false })
+            }
+        }
+        Section(t("SSH 钥匙", "SSH keys")) {
+            SshKeys(zh)
+        }
+        // ---- 高级: folded, with the note saying what is behind it ----
+        Section(st("settings_section_advanced")) {
+            Row(
+                Modifier.fillMaxWidth().clickable { advanced = !advanced },
+                verticalAlignment = Alignment.CenterVertically,
+            ) {
+                Text(st("settings_advanced_note"), color = Palette.secondary, fontSize = 12.sp, modifier = Modifier.weight(1f))
+                Text(if (advanced) "⌃" else "⌄", color = Palette.secondary, fontSize = 16.sp)
+            }
+        }
+        if (advanced) {
+            Section(st("settings_show_hub"), note = st("settings_show_hub_note")) {
+                SegmentedPicker(listOf("off" to st("common_off"), "on" to st("common_on")), v["show_hub"].orEmpty().ifEmpty { "off" }) { v["show_hub"] = it }
+            }
+            Section(st("settings_section_diagnostics")) {
+                RowLabel(st("settings_grounding"))
+                SegmentedPicker(listOf("off" to st("common_off"), "on" to st("common_on")), v["grounding"].orEmpty().ifEmpty { "off" }) { v["grounding"] = it }
+                Note(st("settings_grounding_note"))
+                Note(st("settings_device_id") + "：" + Settings.uid())
+            }
+            Spacer(Modifier.height(16.dp))
+            when (confirm) {
+                "chat" -> ConfirmBlock(st("settings_clear_chat_confirm_title"), st("settings_clear_chat_confirm_body"), st("settings_clear_chat_confirm"),
+                    onNo = { confirm = "" }) { Assistant.clearConversation(); confirm = "" }
+                "notes" -> ConfirmBlock(st("settings_clear_notes_confirm_title"), st("settings_clear_notes_confirm_body"), st("settings_clear_notes_confirm"),
+                    onNo = { confirm = "" }) { DesktopNotebook.book.wipe(); DesktopScheduler.catchUp(); confirm = "" }
+                "factory" -> ConfirmBlock(
+                    st("settings_factory_reset_confirm_title"),
+                    st("settings_factory_reset_list_intro") + "\n" + factoryItems(zh).joinToString("\n") { "· $it" } + "\n" + st("settings_factory_reset_after"),
+                    st("settings_factory_reset_confirm"), onNo = { confirm = "" },
+                ) { factoryReset(); confirm = ""; onDone() }
+                else -> Column(verticalArrangement = Arrangement.spacedBy(10.dp)) {
+                    DangerButton(st("settings_clear_chat")) { confirm = "chat" }
+                    DangerButton(st("settings_clear_notes")) { confirm = "notes" }
+                    DangerButton(st("settings_factory_reset")) { confirm = "factory" }
+                }
+            }
+        }
+
+        Spacer(Modifier.height(20.dp))
+        // Equal halves, cancel on the left and the main action on the right.
+        Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(10.dp)) {
+            SecondaryButton(st("common_cancel"), Modifier.weight(1f)) { onDone() }
+            PrimaryButton(st("common_save"), Modifier.weight(1f)) {
+                // "lang" is written the instant the header toggle is tapped; the copy held here is from when the card opened.
+                Settings.save(v.toMap().minus("lang") + ("codeflying_key" to v["codeflying_key"].orEmpty().trim().takeIf { it != CodeFlyingBuild.key }.orEmpty()))
+                DesktopNotebook.book.notifyRule.set(notifyRule)
+                v["ball"]?.let { MacBall.pickLook(it) }
+                Thread { Assistant.ensure() }.start()
+                onDone()
+            }
+        }
+        Spacer(Modifier.height(12.dp))
+        Text(
+            t("数据保存在 ~/Library/Application Support/Andee，笔记本的密钥在钥匙串里。", "Data lives in ~/Library/Application Support/Andee; the notebook key is in your Keychain."),
+            color = Palette.secondary, fontSize = 12.sp,
+        )
+    }
+}
+
+/**
+ * 它的打算 (`Plans`, design doc §5.5) — drawn in the notebook's 打算 tab, not in Settings: it is part of its life,
+ * and the two places used to show the same plan differently. Removing and pausing are done by the device at once, not asked of the
+ * model, and the timers follow in the same click. Anything subtler goes through the box at the bottom as an
+ * ordinary message, and the model changes the plan itself.
+ */
+@Composable
+internal fun PlanSection(zh: Boolean) {
+    var rev by remember { mutableStateOf(0) }
+    val plans = DesktopNotebook.plans
+    val day = remember(rev) { plans.day(plans.today()) }
+    val dirs = remember(rev) { plans.directions().filter { it.status != "dropped" && it.status != "done" } }
+    fun kind(k: String) = st("settings_plan_kind_" + if (k in setOf("ask", "prepare", "follow_up")) k else "remind")
+    fun status(s: String) = st("settings_plan_st_" + if (s in setOf("done", "declined", "ignored", "missed", "skipped", "moved", "dropped")) s else "planned")
+
+    Text(st("settings_plan_today"), color = Palette.secondary, fontSize = 12.sp, modifier = Modifier.padding(top = 4.dp))
+    if (day == null) {
+        Note(st("settings_plan_none_today"))
+    } else {
+        Text(day.intent, color = Palette.text, fontSize = 14.sp, modifier = Modifier.padding(top = 6.dp))
+        for (it in day.items.sortedBy { i -> i.time.ifEmpty { "99" } }) {
+            val live = it.status == "planned"
+            Row(Modifier.fillMaxWidth().padding(top = 6.dp), verticalAlignment = Alignment.CenterVertically) {
+                Text(
+                    "${it.time.ifEmpty { it.slot }.ifEmpty { "·" }}  ${kind(it.kind)}  ${it.what}",
+                    color = if (live) Palette.label else Palette.secondary, fontSize = 13.sp,
+                    modifier = Modifier.weight(1f),
+                )
+                Text(status(it.status), color = Palette.muted, fontSize = 12.sp, modifier = Modifier.padding(horizontal = 8.dp))
+                if (live) {
+                    Text("✕", color = Palette.accent, fontSize = 13.sp, modifier = Modifier.clickable {
+                        plans.dropItemByUser(day.date, it.id)
+                        DesktopScheduler.syncPlan()
+                        rev++
+                    }.padding(4.dp))
+                }
+            }
+        }
+        if (day.quiet.isNotEmpty()) Note(st("settings_plan_quiet", day.quiet.joinToString(if (zh) "；" else "; ") { it.trim().trimEnd('。', '.', '；', ';') }))
+    }
+    Text(st("settings_plan_directions"), color = Palette.secondary, fontSize = 12.sp, modifier = Modifier.padding(top = 14.dp))
+    if (dirs.isEmpty()) Note(st("settings_plan_none_directions"))
+    for (d in dirs) {
+        val paused = d.status == "paused"
+        Row(Modifier.fillMaxWidth().padding(top = 6.dp), verticalAlignment = Alignment.CenterVertically) {
+            Text(
+                d.title + if (d.howIHelp.isNotEmpty()) " — ${d.howIHelp}" else "",
+                color = if (paused) Palette.secondary else Palette.label, fontSize = 13.sp, modifier = Modifier.weight(1f),
+            )
+            Text(st(if (paused) "settings_plan_resume" else "settings_plan_pause"), color = Palette.accent, fontSize = 12.sp,
+                modifier = Modifier.clickable { plans.setDirectionByUser(d.id, if (paused) "active" else "paused"); rev++ }.padding(6.dp))
+            Text(st("settings_plan_remove"), color = Palette.accent, fontSize = 12.sp,
+                modifier = Modifier.clickable { plans.setDirectionByUser(d.id, "dropped"); rev++ }.padding(6.dp))
+        }
+    }
+    var line by remember { mutableStateOf("") }
+    var sent by remember { mutableStateOf(false) }
+    GlassField(st("settings_plan_tell"), line, { line = it; sent = false }, hint = st("settings_plan_tell_hint"))
+    Row(Modifier.padding(top = 8.dp), verticalAlignment = Alignment.CenterVertically) {
+        Pill(st("settings_plan_send")) {
+            val text = line.trim()
+            if (text.isNotEmpty()) { Assistant.say(text); line = ""; sent = true }
+        }
+        if (sent) Text(st("settings_plan_sent"), color = Palette.secondary, fontSize = 12.sp, modifier = Modifier.padding(start = 10.dp))
+    }
+}
+
+@Composable
+private fun Note(text: String) {
+    Text(text, color = Palette.secondary, fontSize = 12.sp, modifier = Modifier.padding(top = 6.dp))
+}
+
+@Composable
+private fun RowLabel(text: String) {
+    Text(text, color = Palette.secondary, fontSize = 12.sp, modifier = Modifier.padding(top = 12.dp, bottom = 4.dp))
+}
+
+/**
+ * The way out of a key row, sitting under that row: whoever has no key is
+ * reading the row, not the picker at the top of the card. One tap, written into
+ * the form's own map — so 保存 is still what commits it, like every row here.
+ */
+@Composable
+private fun NoKeyHint(onPick: () -> Unit) {
+    Text(
+        st("settings_no_key_use_codeflying"),
+        color = Palette.accent, fontSize = 12.sp,
+        modifier = Modifier.padding(top = 6.dp).clickable { onPick() },
+    )
+}
+
+@Composable
+private fun DangerButton(label: String, modifier: Modifier = Modifier, onClick: () -> Unit) {
+    Text(
+        label, color = Palette.danger, fontSize = 14.sp, fontWeight = androidx.compose.ui.text.font.FontWeight.Medium,
+        textAlign = androidx.compose.ui.text.style.TextAlign.Center,
+        // Like SecondaryButton, the caller owns the width: both fill, so in a Row each needs its own weight or the
+        // second one takes everything and the first is squeezed to a sliver (cancel read vertically, 2026-10-28).
+        modifier = modifier.fillMaxWidth().glassPanel(14).clickable { onClick() }.padding(vertical = 11.dp),
+    )
+}
+
+@Composable
+internal fun ConfirmBlock(title: String, body: String, confirmLabel: String, onNo: () -> Unit, onYes: () -> Unit) {
+    Column(Modifier.fillMaxWidth().glassPanel(12).padding(12.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
+        Text(title, color = Palette.danger, fontSize = 14.sp)
+        Text(body, color = Palette.label, fontSize = 13.sp)
+        Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+            SecondaryButton(st("common_cancel"), Modifier.weight(1f)) { onNo() }
+            DangerButton(confirmLabel, Modifier.weight(1f), onYes)
+        }
+    }
+}
+
+/** What 恢复出厂设置 removes on the Mac, in the order the confirmation lists it. */
+private fun factoryItems(zh: Boolean): List<String> =
+    if (zh) listOf("所有设置和 Key（CodeFlying key 保留）", "小本本（记忆、提醒、情景）", "保险箱里的账号", "聊天记录和它生成过的页面", "SSH 钥匙和命令白名单")
+    else listOf("All settings and keys (the CodeFlying key is kept)", "The notebook (memories, reminders, scenes)", "The vault accounts", "The chat history and pages it made", "SSH keys and the command allow-list")
+
+/** Wipes everything the card promised to. Irreversible; the confirmation lists it first. */
+private fun factoryReset() {
+    runCatching { Assistant.clearConversation() }
+    runCatching { DesktopNotebook.book.wipe() }
+    runCatching { net.kuafuai.andee.desktop.mac.MacVault.wipe() }
+    runCatching { net.kuafuai.andee.desktop.shell.AndeeAgent.keys().forEach { net.kuafuai.andee.desktop.shell.AndeeAgent.delete(it.name) } }
+    runCatching { AppDirs.file("shell_always_allow.json").delete() }
+    // The CodeFlying key survives, as on the phone: without it the device is mute until the user finds it again.
+    val keep = Settings.get("codeflying_key")
+    runCatching { AppDirs.file("settings.properties").delete() }
+    if (keep.isNotBlank()) runCatching { Settings.save(mapOf("codeflying_key" to keep)) }
+    // A fresh notebook starts with its default todos, as on first launch.
+    runCatching { DesktopScheduler.catchUp() }
+    Strings.changed()
+}
+
+@Composable
+private fun FullOpenConfirm(zh: Boolean, onYes: () -> Unit, onNo: () -> Unit) {
+    fun t(a: String, b: String) = if (zh) a else b
+    var typed by remember { mutableStateOf("") }
+    Column(
+        Modifier.fillMaxWidth().padding(top = 8.dp).glassPanel(12).padding(12.dp),
+        verticalArrangement = Arrangement.spacedBy(8.dp),
+    ) {
+        Text(
+            t("完全开放后，Andee 运行命令不再进沙箱、不再问你。确认的话输入「开启」。", "With full access, commands run without the sandbox or asking. Type \"enable\" to confirm."),
+            color = Palette.label, fontSize = 13.sp,
+        )
+        androidx.compose.foundation.text.BasicTextField(
+            value = typed, onValueChange = { typed = it }, singleLine = true,
+            textStyle = androidx.compose.ui.text.TextStyle(color = Palette.label, fontSize = 14.sp),
+            cursorBrush = androidx.compose.ui.graphics.SolidColor(Palette.accent),
+            modifier = Modifier.fillMaxWidth().glassWell(10).padding(10.dp),
+        )
+        Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+            SecondaryButton(t("取消", "Cancel"), Modifier.weight(1f)) { onNo() }
+            if (typed.trim() == "开启" || typed.trim().equals("enable", true)) PrimaryButton(t("开启完全开放", "Enable full access"), Modifier.weight(1f)) { onYes() }
+        }
+    }
+}
+
+@Composable
+private fun SshKeys(zh: Boolean) {
+    fun t(a: String, b: String) = if (zh) a else b
+    var keys by remember { mutableStateOf(runCatching { net.kuafuai.andee.desktop.shell.AndeeAgent.keys() }.getOrDefault(emptyList())) }
+    var hosts by remember { mutableStateOf("github.com") }
+    var error by remember { mutableStateOf("") }
+    for (k in keys) {
+        Column(Modifier.fillMaxWidth().padding(vertical = 4.dp).glassPanel(10).padding(10.dp)) {
+            Text(k.name + "  →  " + k.hosts.ifEmpty { listOf(t("任何主机", "any host")) }.joinToString(), color = Palette.label, fontSize = 13.sp)
+            androidx.compose.foundation.text.selection.SelectionContainer {
+                Text(k.openSsh(), color = Palette.secondary, fontSize = 11.sp)
+            }
+            Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                Pill(t("删除", "Delete")) {
+                    runCatching { net.kuafuai.andee.desktop.shell.AndeeAgent.delete(k.name) }
+                    keys = runCatching { net.kuafuai.andee.desktop.shell.AndeeAgent.keys() }.getOrDefault(emptyList())
+                }
+            }
+        }
+    }
+    Text(t("允许用于这些主机（逗号分隔）", "Allowed hosts (comma-separated)"), color = Palette.secondary, fontSize = 12.sp)
+    androidx.compose.foundation.text.BasicTextField(
+        value = hosts, onValueChange = { hosts = it }, singleLine = true,
+        textStyle = androidx.compose.ui.text.TextStyle(color = Palette.label, fontSize = 14.sp),
+        cursorBrush = androidx.compose.ui.graphics.SolidColor(Palette.accent),
+        modifier = Modifier.fillMaxWidth().glassWell(10).padding(10.dp),
+    )
+    Row(Modifier.padding(top = 6.dp), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+        Pill(t("生成新钥匙", "Generate a key")) {
+            error = runCatching {
+                net.kuafuai.andee.desktop.shell.AndeeAgent.generate("andee-" + (keys.size + 1), hostList(hosts)); ""
+            }.getOrElse { it.message.orEmpty() }
+            keys = runCatching { net.kuafuai.andee.desktop.shell.AndeeAgent.keys() }.getOrDefault(emptyList())
+        }
+        Pill(t("导入 ~/.ssh/id_ed25519", "Import ~/.ssh/id_ed25519")) {
+            error = runCatching {
+                val f = java.io.File(System.getProperty("user.home"), ".ssh/id_ed25519")
+                net.kuafuai.andee.desktop.shell.AndeeAgent.import("id_ed25519", f.readText(), hostList(hosts)); ""
+            }.getOrElse { it.message.orEmpty() }
+            keys = runCatching { net.kuafuai.andee.desktop.shell.AndeeAgent.keys() }.getOrDefault(emptyList())
+        }
+    }
+    if (error.isNotEmpty()) Text(error, color = Palette.danger, fontSize = 12.sp)
+}
+
+private fun hostList(s: String) = s.split(',', ' ', '\n').map { it.trim() }.filter { it.isNotEmpty() }

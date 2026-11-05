@@ -1,0 +1,964 @@
+<resources>
+    <string name="app_name">Ciel</string>
+    <string name="notification_relay_label">Ciel notification access</string>
+    <string name="accessibility_service_description">Ciel needs this to see what is on screen and to tap, swipe and type for you. A floating ball appears on the home screen: tap it to talk, long-press to open the conversation.</string>
+
+    <!-- First run: three concrete stories, only the missing setup, then names. -->
+    <string name="onboarding_prelude_badge">Before we start</string>
+    <string name="onboarding_prelude_title">First, how shall we talk?</string>
+    <string name="onboarding_prelude_body">Pick a language and whether I speak. You can change both in Settings later.</string>
+    <string name="onboarding_prelude_lang">Language</string>
+    <string name="onboarding_prelude_sound">Sound</string>
+    <string name="onboarding_prelude_sound_on">Sound on</string>
+    <string name="onboarding_prelude_sound_on_note">I read my answers aloud</string>
+    <string name="onboarding_prelude_sound_off">Muted</string>
+    <string name="onboarding_prelude_sound_off_note">Text only</string>
+    <string name="onboarding_prelude_next">Done</string>
+    <string name="onboarding_intro_badge">Hi, I’m Andee</string>
+    <string name="onboarding_intro_title">I’ll move into your device\nand become its soul.</string>
+    <string name="onboarding_intro_chatbot_name">Chatbot</string>
+    <string name="onboarding_intro_chatbot">Waits to be asked.</string>
+    <string name="onboarding_intro_agent_name">Agent</string>
+    <string name="onboarding_intro_agent">Waits to be told.</string>
+    <string name="onboarding_intro_me_name">Me</string>
+    <string name="onboarding_intro_me">Doesn’t wait. Always here.</string>
+    <string name="onboarding_intro_next">So what can you do for me?</string>
+
+    <string name="onboarding_story_badge">Say you want to buy something.</string>
+    <string name="onboarding_shop_title">Tell me what you want. I’ll see it through.</string>
+    <string name="onboarding_shop_body">I know what you like. I open several apps, find coupons, compare prices and have another agent double-check. Before paying, I come back to you.</string>
+    <string name="onboarding_shop_request">“Buy my usual milk. Keep it under $10.”</string>
+    <string name="onboarding_shop_coupon">Store app · Found a coupon</string>
+    <string name="onboarding_shop_compare">Second store · Compared the same item</string>
+    <string name="onboarding_shop_agent">Price agent · Double-checked the deal</string>
+    <string name="onboarding_shop_result">Saved $3 · Total $8.60</string>
+    <string name="onboarding_shop_confirm">I’ll wait for you before paying</string>
+    <string name="onboarding_shop_next">What about customers?</string>
+
+    <string name="onboarding_customer_badge">I don’t miss questions, and you never teach me twice.</string>
+    <string name="onboarding_customer_title">When a customer arrives, I catch them first.</string>
+    <string name="onboarding_customer_body">Enquiries from every app reach me first. I clarify them and hand you only the decisions that need you.</string>
+    <string name="onboarding_customer_in">Customer: Can 100 units arrive by Friday?</string>
+    <string name="onboarding_customer_reply">Me: Which city? Do you need an invoice?</string>
+    <string name="onboarding_customer_memory">I remembered: this customer needs an invoice</string>
+    <string name="onboarding_customer_handoff">Only the decisions that need you reach you</string>
+    <string name="onboarding_customer_next">Can you save me some money too?</string>
+
+    <string name="onboarding_subscription_badge">The money that leaves quietly each month is the easiest to forget.</string>
+    <string name="onboarding_subscription_title">Auto-renewals? I keep an eye on them.</string>
+    <string name="onboarding_subscription_body">I know what you use and what you stopped using long ago, and I tell you what to cancel.</string>
+    <string name="onboarding_subscription_digest">Auto-charges this month</string>
+    <string name="onboarding_subscription_one">Video streaming</string>
+    <string name="onboarding_subscription_two">Cloud storage · unopened 3 months</string>
+    <string name="onboarding_subscription_three">Fitness app · unused 6 months</string>
+    <string name="onboarding_subscription_one_price">$8/mo</string>
+    <string name="onboarding_subscription_two_price">$5/mo</string>
+    <string name="onboarding_subscription_three_price">$10/mo</string>
+    <string name="onboarding_subscription_keep">In use</string>
+    <string name="onboarding_subscription_cancel">Cancel?</string>
+    <string name="onboarding_subscription_saved">Cancel these two, save $180 a year</string>
+    <string name="onboarding_subscription_ask">I ask you before cancelling anything</string>
+    <string name="onboarding_subscription_handover">Leave chores like this to me.</string>
+    <string name="onboarding_subscription_next">OK, let’s get started</string>
+
+    <string name="onboarding_setup_badge">%1$d more and I’m ready</string>
+    <string name="onboarding_setup_skip_note">I skip anything that is already set up</string>
+    <string name="onboarding_permission_overlay_title">First, keep me within reach.</string>
+    <string name="onboarding_permission_overlay_body">Allow display over other apps, and whatever app you are in, I wait at the edge of the screen and come back with the result.</string>
+    <string name="onboarding_permission_overlay_action">Allow floating window</string>
+    <string name="onboarding_permission_accessibility_title">Let me actually do the work.</string>
+    <string name="onboarding_permission_accessibility_body">With accessibility on, I can see, tap, swipe and type, only while doing what you gave me.</string>
+    <string name="onboarding_permission_accessibility_action">Enable accessibility</string>
+    <string name="onboarding_permission_microphone_title">Let me hear you.</string>
+    <string name="onboarding_permission_microphone_body">Allow the microphone and just tell me what you need. When you are not talking to me, your audio is not sent to the model.</string>
+    <string name="onboarding_permission_microphone_action">Allow microphone</string>
+    <string name="onboarding_permission_skip">Skip for now</string>
+    <string name="onboarding_skip_accessibility_note">If you skip, I can still chat, keep notes and remind you, but can’t operate your phone. You can turn it on any time from the self-check.</string>
+    <string name="onboarding_skip_microphone_note">If you skip, you can type to me. You can allow it any time from the self-check.</string>
+    <string name="onboarding_permission_safety_title">You stay in control</string>
+    <string name="onboarding_permission_safety_body">Before payment, important messages and other consequential actions, I stop and ask you.</string>
+
+    <string name="onboarding_model_badge">One last setup item</string>
+    <string name="onboarding_model_title">Choose a brain for me.</string>
+    <string name="onboarding_model_body">No technical knowledge needed. Pick CodeFlying for the simple route, or Local model if you already have your own model API.</string>
+    <string name="onboarding_model_recommended">Recommended</string>
+    <string name="onboarding_model_codeflying_note">The simple route. One key covers the model, voice and many tools. New users get free credit; usage beyond that is billed.</string>
+    <string name="onboarding_model_local_title">Local model</string>
+    <string name="onboarding_model_local_note">I run on this device and use your own model endpoint and billing. Enter an API key; the endpoint and model name can use the defaults.</string>
+    <string name="onboarding_model_key_hint">Paste the key here</string>
+    <string name="onboarding_model_base_hint">Leave blank to use %1$s</string>
+    <string name="onboarding_model_name_hint">Leave blank to use %1$s</string>
+    <string name="onboarding_model_open_site">Get free credit and copy a key</string>
+    <string name="onboarding_model_save">Save and continue</string>
+    <string name="onboarding_model_key_required">One key to go. Paste it and we carry on.</string>
+    <string name="onboarding_voice_title">Then let me hear and speak.</string>
+    <string name="onboarding_voice_body">A local model brings no voice, so it needs its own setup. Pick who listens to you and who speaks for me, and fill in that key.</string>
+    <string name="onboarding_voice_more">Endpoints and resource IDs have working defaults; change them in Settings.</string>
+    <string name="onboarding_voice_key_required">Voice still needs a key. Fill in the key for the service you picked so I can hear you and speak.</string>
+
+
+    <string name="onboarding_meet_badge">Finally, let’s meet.</string>
+    <string name="onboarding_meet_title">What should we call each other?</string>
+    <string name="onboarding_meet_body">I’ll remember these names and use them whenever we talk or work.</string>
+    <string name="onboarding_meet_assistant">What would you like to call me?</string>
+    <string name="onboarding_meet_andy">Andy</string>
+    <string name="onboarding_meet_other">Other</string>
+    <string name="onboarding_meet_custom_hint">Type a name you like</string>
+    <string name="onboarding_meet_user">What should I call you?</string>
+    <string name="onboarding_meet_user_hint">For example: Sam, Ms. Lee</string>
+    <string name="onboarding_meet_continue">That’s us</string>
+    <string name="onboarding_meet_name_required">Give me a name to call you, and we can begin.</string>
+
+    <string name="onboarding_ready_badge">Ready</string>
+    <string name="onboarding_ready_title">%1$s, I’ll remember you.</string>
+    <string name="onboarding_ready_body">I’m %1$s. Just say what you want done; I’ll find the app, the tool, or another Andee, and keep going until there is a result.</string>
+    <string name="onboarding_ready_memory">I remember your preferences and the people who matter</string>
+    <string name="onboarding_ready_proactive">I keep watch over what you hand me</string>
+    <string name="onboarding_ready_control">I ask before anything consequential</string>
+    <string name="onboarding_ready_start">Start doing things together</string>
+
+    <!--
+        English mirror of values/strings.xml. Same keys, same order, one entry
+        per Chinese entry — a key added on one side and not the other falls
+        back silently, so the Chinese would show through on an English tablet
+        with nothing to indicate why.
+
+        **What is here and what is not.** The app holds three kinds of Chinese
+        text and only the first is translated:
+
+        1. **What the user reads** — every window, card, bubble, settings row
+           and error line. That is this file. It is looked up through
+           `i18n/AppLocale`, never `context.getString` directly: the ball and
+           every card are overlay windows owned by a *service*, so the official
+           per-app locale API cannot reach them and the only thing that carries
+           the language is the `Context` you ask.
+        2. **What the model reads** — prompts, tool schemas, tool results. Written
+           in English, and deliberately so. The argument for leaving this kind in
+           Chinese used to be that the language a prompt is written in decides
+           the language the answer comes back in, so translating one without the
+           other is worse than translating neither. That pull still exists; it
+           has only reversed direction, so it is now held back from inside:
+           `brain/LocalPrompt.kt` §9 is the rule that makes the model answer in
+           whatever language the user actually spoke. Chinese that still turns up
+           inside an English prompt is either a label printed on the screen,
+           which the model is meant to repeat verbatim, or a specimen of what a
+           Chinese user says — never an oversight.
+
+           **A default whose value can reach the screen belongs to kind 1, not
+           kind 2**, even though it also travels inside a prompt. `会议记录`,
+           `通话` and `AI 界面` used to be Kotlin literals in `MeetingRecorder`,
+           `BodyCoreService` and `ToolSchemas`, on the argument that the brain
+           had to be handed the same title the page displayed. They are
+           `meeting_default_title`, `call_default_scene` and
+           `html_default_title` now: one key answered for both readers, so the
+           two still cannot disagree — and an English tablet shows an English
+           page header.
+        3. **What matches system text** — `NotificationRelayService`'s call
+           keywords, the unread-count pattern, the clipboard labels. Never
+           translated: they are compared against strings WeChat and Android
+           emit, which do not follow our setting. Translating them breaks the
+           feature rather than the wording.
+    -->
+    <string name="settings_title">Settings</string>
+    <string name="settings_default_device_name">This device</string>
+    <string name="settings_factory_reset">Factory reset</string>
+    <string name="common_cancel">Cancel</string>
+    <string name="common_save">Save</string>
+    <string name="settings_factory_reset_confirm_title">Factory reset?</string>
+    <string name="settings_factory_reset_list_intro">These are deleted for good — there is no backup:</string>
+    <string name="settings_factory_reset_after">The device goes back to a fresh install: the CodeFlying key is kept, other keys have to be entered again and the wake word has to be recorded again.</string>
+    <string name="settings_factory_reset_back">No, go back</string>
+    <string name="settings_factory_reset_confirm">Erase everything</string>
+    <!-- The two destructive buttons sit together at the foot of the
+         Diagnostics section, not in the footer beside Cancel/Save: a
+         destructive control beside the card's two ways out reads as a
+         third way out. -->
+    <string name="settings_clear_chat">Clear chat history</string>
+    <string name="settings_clear_chat_confirm_title">Clear the chat history?</string>
+    <string name="settings_clear_chat_confirm_body">The conversation record and its pages are deleted, and everything said in this session is forgotten. The notebook is untouched.</string>
+    <string name="settings_clear_chat_confirm">Clear it</string>
+    <string name="settings_clear_notes">Clear the notebook</string>
+    <string name="settings_clear_notes_confirm_title">Clear the notebook?</string>
+    <string name="settings_clear_notes_confirm_body">Everything it noted down, your preferences, and any reminder not yet due are deleted, with no way back. The current chat history is untouched.</string>
+    <string name="settings_clear_notes_confirm">Clear it</string>
+    <string name="settings_section_brain">Backend</string>
+    <string name="settings_brain_panel_note">The AI model and voice service Andee uses to think, listen and speak.</string>
+    <string name="settings_brain_cloud">Cloud</string>
+    <string name="settings_brain_local">On-device</string>
+    <string name="settings_brain_codeflying">CodeFlying</string>
+    <string name="settings_show_hub">Show cloud option</string>
+    <string name="settings_show_hub_note">Adds a Cloud backend tab for connecting to a hub you host yourself.</string>
+    <string name="settings_brain_codeflying_note">CodeFlying (CodeFlying.app): models and voice come set up for you; add your key and it works. You can also tap into a long list of third-party services — AI image, video and music generation, location, weather, PDF conversion, search, news, stocks and more. CodeFlying wraps and bills all of them in one place, so you never have to sign up with each provider or juggle their keys and invoices.\n\nNote: using CodeFlying backend services may incur charges.</string>
+    <string name="settings_hub_url">Hub URL</string>
+    <!-- The hub URL box is empty on a fresh install — the hint is what the
+         user sees in that empty box, so it is the pitch, not the format. -->
+    <string name="settings_hub_url_hint">Link your cloud agent</string>
+    <string name="settings_device_name">Device name</string>
+    <string name="settings_device_name_hint">What the hub should call this device</string>
+    <string name="settings_brain_cloud_note">The brain lives on a hub you run yourself; this device only acts.</string>
+    <string name="settings_llm_api_key">API key</string>
+    <string name="settings_llm_model">Model</string>
+    <string name="settings_llm_base_url">Base URL</string>
+    <string name="settings_llm_thinking">Deep thinking</string>
+    <string name="common_on">On</string>
+    <string name="common_off">Off</string>
+    <string name="settings_llm_effort">Reasoning effort</string>
+    <string name="common_high">High</string>
+    <string name="common_medium">Medium</string>
+    <string name="common_low">Low</string>
+    <string name="settings_brain_local_note">The device runs the agent loop itself, with no hub. Without a key it will not take over.</string>
+    <string name="settings_codeflying_get_key">No key? Sign up at the link below, then paste your key into the box underneath. New users get free credit.</string>
+    <string name="settings_codeflying_open_site">Open CodeFlying.app ›</string>
+    <string name="codeflying_url" translatable="false">https://www.codeflying.app/andee</string>
+    <string name="settings_no_key_use_codeflying">No key? Tap here to switch to CodeFlying</string>
+    <string name="settings_codeflying_key">CodeFlying key</string>
+    <string name="common_copy">Copy</string>
+    <string name="common_copied">Copied</string>
+    <string name="settings_section_wake">Wake word</string>
+    <string name="settings_wake_enrolled">Enrolled — say your wake word and it wakes up</string>
+    <string name="settings_wake_not_enrolled">Not enrolled — pick a phrase and say it 3 times to wake me by voice, e.g. “Hey Andee”</string>
+    <string name="settings_wake_record">Record</string>
+    <string name="settings_wake_locked_on">Listen while locked: on</string>
+    <string name="settings_wake_locked_off">Listen while locked: off</string>
+    <string name="settings_wake_locked_note">Andee keeps listening with the screen off. That costs battery: the microphone stays open, and so does the system recording indicator.</string>
+    <string name="common_clear">Clear</string>
+    <string name="common_delete">Delete</string>
+    <string name="settings_section_vault">Vault</string>
+    <string name="settings_vault_empty_note">No accounts yet — once saved, Andee can log in as you when a task needs it</string>
+    <string name="settings_vault_count_note">%1$d saved — the brain may read the phone and email, but only this device types the password</string>
+    <string name="settings_section_gear">Gear</string>
+    <string name="settings_gear_empty_note">Nothing scanned yet. Once it has been, it checks for a ready-made tool before doing a job by hand.</string>
+    <string name="settings_gear_count_note">%1$d installed, %2$d of them it has written down what they are for — you can read them, correct them, or tell it to stop mentioning one</string>
+    <string name="settings_gear_manage">View / manage</string>
+    <string name="gear_title">Gear</string>
+    <string name="gear_installed">%1$d installed</string>
+    <string name="gear_kinds_title">What it is told about</string>
+    <string name="gear_kinds_note">This is your call. A kind switched off appears nowhere it reads — not even in an \"and N more\" count.</string>
+    <string name="gear_kind_adult">Adult</string>
+    <string name="gear_kind_finance">Finance</string>
+    <string name="gear_kind_health">Health</string>
+    <string name="gear_kind_dating">Dating</string>
+    <string name="gear_kind_other">Everything else</string>
+    <string name="gear_tell">Shown</string>
+    <string name="gear_hide">Hidden</string>
+    <string name="gear_rescan">Rescan</string>
+    <string name="gear_scanning">Scanning…</string>
+    <string name="gear_scanned_ago">Scanned %1$s</string>
+    <string name="gear_never_scanned">Not scanned yet</string>
+    <string name="gear_scan_note">It also rescans once a day, on the first conversation. Last-used and use counts come from the system; the meaning is what it writes after really using something.</string>
+    <string name="gear_usage_access_note">Per-app use counts are not available right now — they need \"usage access\". Without it the list is ranked by what Andee itself has opened.</string>
+    <string name="gear_usage_access_open">Turn on</string>
+    <string name="gear_hidden_from_it">hidden from it</string>
+    <string name="gear_unlearned">It has not written down what this is for</string>
+    <string name="gear_by_user">Written by you; it will not change this</string>
+    <string name="gear_can_do">Can: %1$s</string>
+    <string name="gear_signed_in">signed in</string>
+    <string name="gear_signed_out">not signed in</string>
+    <string name="gear_last_used">last %1$s</string>
+    <string name="gear_uses">%1$d uses</string>
+    <string name="gear_edit">Edit</string>
+    <string name="gear_ignore">Never mention</string>
+    <string name="gear_unignore">Tell it again</string>
+    <string name="gear_forget">Forget what it learned</string>
+    <string name="gear_forget_confirm">Confirm forget</string>
+    <string name="gear_field_does">What it is</string>
+    <string name="gear_field_can_do">What it can do for you</string>
+    <string name="gear_none_match">Nothing matches.</string>
+    <string name="gear_search">Search</string>
+    <string name="settings_section_peers">Friends</string>
+    <string name="settings_peers_note">Andee can ask friends for help: your other devices, or other people’s Andees.</string>
+    <string name="settings_peers_count_note">%1$d friends</string>
+    <string name="settings_peers_manage">View / add</string>
+    <string name="peers_title">Friends</string>
+    <string name="peers_subtitle">Andee can ask friends for help: your other devices, or other people’s Andees</string>
+    <string name="peers_this">This device</string>
+    <string name="peers_fingerprint">Fingerprint %1$s</string>
+    <string name="peers_visible_title">Let other devices find me</string>
+    <string name="peers_visible_note">When on, friends on the same Wi-Fi can find this device. Anyone else cannot connect or see anything.</string>
+    <string name="peers_add_title">Add</string>
+    <string name="peers_paired">Friends %1$d</string>
+    <string name="peers_none">None yet.</string>
+    <string name="peers_linked">Linked</string>
+    <string name="peers_nearby_state">Nearby</string>
+    <string name="peers_away">Not nearby</string>
+    <string name="peers_connect">Connect</string>
+    <string name="peers_ping">Ping</string>
+    <string name="peers_unpair">Remove</string>
+    <string name="peers_unpair_confirm">Confirm remove</string>
+    <string name="peers_pairing">Pairing…</string>
+    <string name="gear_subtitle">What is installed and what each is for — it looks here before doing a job by hand</string>
+    <string name="settings_vault_manage">Manage</string>
+    <string name="settings_section_voice">Volcengine endpoints</string>
+    <string name="settings_section_voice_key">Speech</string>
+    <string name="settings_voice_factory_note">The source ships without a key. Enter your own to hear and speak; leave the rows below blank for the default endpoints.</string>
+    <string name="settings_voice_api_key">Volcengine API key</string>
+    <string name="settings_voice_api_key_hint">Volcengine Speech key — hearing and speaking both need it</string>
+    <string name="settings_voice_in_use">In use</string>
+    <string name="settings_voice_in_use_own">the Volcengine account you entered</string>
+    <string name="settings_voice_in_use_factory">nothing yet — hearing and speaking are off</string>
+    <string name="settings_voice_asr_endpoint">ASR endpoint</string>
+    <string name="settings_voice_asr_resource_id">ASR resource ID</string>
+    <string name="settings_voice_tts_endpoint">TTS endpoint</string>
+    <string name="settings_voice_tts_resource_id">TTS resource ID</string>
+    <string name="settings_voice_tts_sample_rate">TTS sample rate</string>
+    <string name="settings_voice_provider_huoshan">Volcengine</string>
+    <string name="settings_voice_provider_google">Google</string>
+    <string name="settings_voice_hear_provider">Hearing</string>
+    <string name="settings_voice_speak_provider">Speaking</string>
+    <string name="settings_voice_provider_system">System</string>
+    <string name="settings_google_api_key">Google API key</string>
+    <string name="settings_google_api_key_hint">Google AI Studio API key (free, no credit card needed) — used for both hearing and speaking</string>
+    <string name="settings_google_key_builtin">Built in at package time — leave blank to use it</string>
+    <string name="settings_google_project">Project number (optional)</string>
+    <string name="settings_google_project_hint">GCP project number when using Vertex AI; leave blank for AI Studio</string>
+    <string name="settings_google_location">Location (optional)</string>
+    <string name="settings_google_asr_model">Recognition model</string>
+    <string name="settings_google_tts_model">Synthesis model</string>
+    <string name="settings_google_base_url">Endpoint</string>
+    <string name="settings_google_language">Language</string>
+    <string name="settings_google_language_hint">blank = detect automatically</string>
+    <string name="settings_voice_google_note">Hearing runs on Gemini Live bidirectional streaming; synthesis uses HTTP/SSE. Free with zero credit card needed. Key stays on this device.</string>
+    <string name="settings_section_diagnostics">Diagnostics</string>
+    <string name="settings_section_advanced">Advanced</string>
+    <string name="settings_max_steps">Max steps per task</string>
+    <string name="settings_max_steps_note">The most tool calls the AI may make in a single task before stopping with a final answer. Guards against runaway loops and bills. Default 40 — a dozen steps is enough for most tasks.</string>
+    <string name="settings_advanced_note">Show the cloud option, typing, diagnostics and factory reset. Nothing here for day-to-day use.</string>
+    <string name="settings_grounding">Grounding capture</string>
+    <string name="settings_grounding_note">Records coordinate taps and screenshots to files/grounding for offline analysis — it photographs whatever you are doing. Needs the accessibility service restarted to take effect.</string>
+    <string name="settings_device_id">Device ID</string>
+    <string name="settings_section_notebook">Notebook</string>
+    <string name="settings_notebook_sweep_note">Once a conversation goes quiet it reviews it by itself: keeps what is worth keeping, schedules what it owes. On by default — this is where \\"it remembers\\" comes from. Off means it stops spending your key on those calls.</string>
+    <string name="settings_notebook_quiet_minutes">Quiet minutes before a review</string>
+    <string name="settings_notebook_daily_cap">Reviews per day, at most</string>
+    <string name="settings_notebook_today">Today / so far</string>
+    <string name="settings_notebook_stats">%1$d reviews (~%2$d tokens) · %3$d memories · %4$d promises open</string>
+    <string name="settings_notebook_browse">See what it remembers</string>
+    <string name="settings_section_notify">Notifications</string>
+    <string name="settings_notify_chat">Chat apps</string>
+    <string name="settings_notify_all">Everything</string>
+    <string name="settings_notify_note">When a message arrives it decides for itself whether it is worth your attention: lets the noise go, says the useful part out loud, handles what needs handling. \"Chat apps\" means the ones with a person on the other end — WeChat, QQ, DingTalk, Lark, SMS. \"Everything\" watches the rest too, minus progress bars and permanent notifications. It only puts a card up when it cannot decide. Off means nothing interrupts you — the messages are all still there, and you can ask about them whenever.</string>
+    <string name="nudge_muted_row">OK, nothing like \"%1$s\" again. To bring it back: Settings → Speaking first.</string>
+    <string name="settings_section_drive">On its own</string>
+    <string name="settings_drive_note">It keeps a few things it cares about, each with how often it means to look. It checks about every 20 minutes whether one has waited too long and is worth doing now. If so, it works on it for a while — writing a plan, tidying the people it knows, noting a thought, at most one bubble — without touching the screen, speaking, or sending anything for you. It does not ask whether you are there, and does not keep to hours: at most 40 checks and 6 work turns a day, with at least an hour between work turns; a tap on the ball stops it. Nothing overdue costs nothing. Off means it only moves when you call it.</string>
+    <string name="settings_section_nudge">Speaking first</string>
+    <string name="settings_nudge_few">Rarely</string>
+    <string name="settings_nudge_normal">Normal</string>
+    <string name="settings_nudge_note">Now and then a small bubble appears over the ball — \"Time for some water\", \"Want me to order lunch?\". It makes no sound and fades by itself if you ignore it, and it never shows while you are busy, talking or locked. \"Rarely\" is at most 1 an hour and 4 a day, \"Normal\" 2 an hour and 8 a day. Long-press a bubble and that kind never comes back.</string>
+    <string name="settings_nudge_muted">Turned off by long-press: %1$s</string>
+    <string name="settings_nudge_unmute">Bring them all back</string>
+    <string name="settings_section_plan">Its plans</string>
+    <string name="settings_plan_today">Today</string>
+    <string name="settings_plan_none_today">No plan for today yet. It writes one when it looks back over a quiet stretch.</string>
+    <string name="settings_plan_quiet">Not bothering you today about: %1$s</string>
+    <string name="settings_plan_directions">What it is helping you with</string>
+    <string name="settings_plan_none_directions">Nothing yet. It only writes these from things you have said.</string>
+    <string name="settings_plan_pause">Pause</string>
+    <string name="settings_plan_resume">Resume</string>
+    <string name="settings_plan_remove">Remove</string>
+    <string name="settings_plan_tell">Tell it something</string>
+    <string name="settings_plan_tell_hint">e.g. no water reminders today</string>
+    <string name="settings_plan_send">Send</string>
+    <string name="settings_plan_sent">Passed on — it will adjust its plan.</string>
+    <string name="settings_plan_kind_remind">remind</string>
+    <string name="settings_plan_kind_ask">ask</string>
+    <string name="settings_plan_kind_prepare">prepare</string>
+    <string name="settings_plan_kind_follow_up">follow up</string>
+    <string name="settings_plan_st_planned">to do</string>
+    <string name="settings_plan_st_done">done</string>
+    <string name="settings_plan_st_declined">declined</string>
+    <string name="settings_plan_st_ignored">ignored</string>
+    <string name="settings_plan_st_missed">missed</string>
+    <string name="settings_plan_st_skipped">skipped</string>
+    <string name="settings_plan_st_moved">moved</string>
+    <string name="settings_plan_st_dropped">removed</string>
+    <string name="settings_section_typing">Typing</string>
+    <string name="settings_typing_no_ime">ADBKeyboard is the only keyboard on this device and it has no keyboard UI, so nothing can be typed right now. Enable one in system settings and it will show up here.</string>
+    <string name="settings_typing_current">Your keyboard</string>
+    <string name="settings_typing_note">Normally it is your own keyboard, and you can type in any app. While I am typing something for you it switches to ADBKeyboard (which has no keyboard UI — that is the only way it works), and switches straight back.</string>
+    <string name="common_show">Show</string>
+    <string name="common_hide">Hide</string>
+
+    <!-- The pinned gesture tips at the bottom of the full card. The swipe hint
+         is last because it is the one gesture that only exists unfolded — the
+         folded ball reads a horizontal flick as a move instead. The legend
+         style ("1tap: talk") is deliberate: the long-form sentence wrapped to
+         two lines on the card, and a hint the user has to scroll past is
+         longer than one they can read at a glance. -->
+    <string name="window_tips">1tap: talk · 2tap: type · swipe: character</string>
+
+    <string name="artifacts_title">Made for you</string>
+    <string name="artifacts_subtitle">Pages it has built for you</string>
+    <string name="artifacts_open">Open</string>
+    <string name="artifacts_edit">Revise</string>
+    <string name="artifacts_delete_confirm">Really delete</string>
+    <string name="artifacts_empty">Nothing here yet.\nAsk it to build you a page — say, “make me a pomodoro timer”.</string>
+    <string name="artifacts_cap_note">Only the latest 100 are kept</string>
+    <string name="artifacts_versions">Versions</string>
+    <string name="artifacts_versions_count">%1$d versions</string>
+    <string name="artifacts_version_current">current</string>
+    <string name="artifacts_version_gone">gone</string>
+    <string name="artifacts_restore">Go back to this</string>
+    <string name="artifacts_edit_prompt">How should “%1$s” change? Say it or type it</string>
+    <string name="artifacts_edit_said">Revise “%1$s”: %2$s</string>
+
+    <string name="scenes_title">Scenes</string>
+    <string name="scenes_subtitle">Ways of working it worked out with you</string>
+    <string name="scenes_enter">Enter</string>
+    <string name="scenes_exit">Leave</string>
+    <string name="scenes_active">Current scene</string>
+    <string name="scenes_show_prompt">Rules</string>
+    <string name="scenes_hide_prompt">Hide</string>
+    <string name="scenes_empty">No scenes yet.\nDo the same kind of thing with it a few times — English practice, say — and it will offer to save it as a scene. Or just say “save this as a scene”.</string>
+    <string name="scenes_edit_note">To change a scene, just tell it — e.g. “in English practice, only correct one mistake at a time”</string>
+    <string name="scenes_meta_uses">Used %1$d times</string>
+    <string name="scenes_meta_auto">Enters by itself in %1$s</string>
+    <string name="scenes_chip">Scene · %1$s</string>
+    <string name="scenes_entered_row">(Entered scene: %1$s)</string>
+    <string name="scenes_exited_row">(Left scene: %1$s)</string>
+    <string name="scenes_presets_title">Ready-made scenes</string>
+    <string name="scenes_presets_note">Nothing is saved until you tap Adopt. After that it is yours like any other scene: change it or delete it whenever you like.</string>
+    <string name="scenes_preset_adopt">Adopt</string>
+    <string name="tree_helper_enabled_row">(This app was hiding its screen; turned on the system\'s accessibility enhance service so it shows it again)</string>
+    <string name="settings_scenes_browse">Manage scenes</string>
+
+    <!-- The factory-reset confirmation list; see config/FactoryReset.kt. -->
+    <string name="factory_reset_target_keys">the Volcano and DeepSeek keys, and every speech and brain setting</string>
+    <string name="factory_reset_target_notebook">the notebook: what it remembers and what it promised</string>
+    <string name="factory_reset_target_vault">the accounts, passwords and bank cards kept in the vault</string>
+    <string name="factory_reset_target_wake">the wake-word recordings (they will have to be recorded again)</string>
+    <string name="factory_reset_target_history">the conversation history and the pages it generated</string>
+    <string name="factory_reset_target_web">cookies and local storage left behind by the pages it drew</string>
+    <string name="factory_reset_target_grounding">the grounding screenshots and logs</string>
+    <string name="vault_title">Vault</string>
+    <string name="vault_edit_title">Edit account</string>
+    <string name="vault_intro">Accounts saved here let Andee log in for you when a task needs it.\nIt types the password into the field itself and never hands it to the remote brain.</string>
+    <string name="vault_empty">No accounts saved yet.</string>
+    <string name="vault_add_account">+ New account</string>
+    <string name="vault_password_saved">Password saved</string>
+    <string name="vault_summary_empty">(empty)</string>
+    <string name="vault_delete">Delete</string>
+    <string name="vault_field_name">Name</string>
+    <string name="vault_field_name_hint">Feishu / work email — the brain finds it by this name</string>
+    <string name="vault_field_phone">Phone</string>
+    <string name="vault_field_email">Email</string>
+    <string name="vault_field_username">Username</string>
+    <string name="vault_field_password">Password</string>
+    <string name="vault_password_note">The password is only typed into the field, never returned to the brain.</string>
+    <string name="vault_field_note">Note</string>
+    <string name="vault_field_note_hint">Hints like “sign in with an SMS code” — the brain can read these</string>
+    <string name="vault_section_card">Bank card (optional)</string>
+    <string name="vault_card_note">The number, expiry and CVV work like the password: typed into the field, never returned to the brain. Payment sheets in Alipay / WeChat / a banking app draw their own keypad and cannot be typed into — what this reaches is an ordinary checkout form or a card-binding page. Paying is still yours to confirm.</string>
+    <string name="vault_field_card_holder">Cardholder</string>
+    <string name="vault_field_card_holder_hint">The name printed on the card — the brain can read this</string>
+    <string name="vault_field_card_number">Card number</string>
+    <string name="vault_field_card_expiry">Expiry</string>
+    <string name="vault_field_card_expiry_hint">MM/YY</string>
+    <string name="vault_field_card_cvv">CVV</string>
+    <string name="vault_label_card_last4">Card ending</string>
+    <string name="vault_error_name_required">Name cannot be empty</string>
+    <string name="wake_title">Teach me your wake word</string>
+    <string name="wake_instructions">Pick any word or phrase you like to call me by, for example “Hey Andee”. Aim for something that takes at least half a second to say — very short words are easy to confuse and may not record at all. Tap Start, then say it the way you normally would — it stops on its own. You\'ll say the same thing %1$d times — don\'t say it more carefully than usual, or I won\'t recognise it when you call me normally.</string>
+    <string name="wake_progress">%1$d / %2$d</string>
+    <string name="wake_status_enrolled">Already recorded — recording again will overwrite it.</string>
+    <string name="wake_status_not_enrolled">Not recorded yet. Think of a phrase (e.g. “Hey Andee”), then tap Start.</string>
+    <string name="wake_close">Close</string>
+    <string name="wake_start">Start</string>
+    <string name="wake_listening">Listening…</string>
+    <string name="wake_speak_now">Go ahead — your wake word</string>
+    <string name="wake_retry">Try again</string>
+    <string name="wake_not_heard">Didn\'t catch that — move closer, then wait half a second after you finish before checking the screen.</string>
+    <string name="wake_say_again">Say it again</string>
+    <string name="wake_received">Got it (%1$d ms). %2$d to go.</string>
+    <string name="wake_rerecord">Record again</string>
+    <string name="wake_done">Done — just say your wake word. (threshold %1$s)</string>
+    <!-- device/LookActivity.kt -->
+    <string name="dev_look_focusing">Focusing…</string>
+    <string name="dev_look_seen">Got it</string>
+    <string name="dev_look_unclear">Didn\'t catch it</string>
+    <string name="dev_look_resting">Watching…</string>
+    <string name="dev_look_resting_front">Front camera · watching…</string>
+    <string name="dev_camera_unavailable">Can\'t open the camera</string>
+    <!-- device/ScanActivity.kt -->
+    <string name="dev_scan_align">Point at a QR code / barcode</string>
+    <!-- device/NotificationRelayService.kt: the signboard shown when a
+    message app pings. The app name is passed in, not translated here. -->
+    <string name="dev_notif_card_title">New %1$s message</string>
+    <string name="dev_notif_card_unread">New %1$s message (%2$d unread)</string>
+    <string name="dev_notif_card_look">Take a look</string>
+    <string name="dev_notif_card_ignore">Ignore</string>
+    <!-- device/PermissionsController.kt: the one sentence the brain reads
+    aloud, plus the per-grant phrase it is built from. The separator is
+    quoted so its trailing space survives aapt's whitespace trim. -->
+    <string name="dev_perm_feature_location">Location (where you are / navigation)</string>
+    <string name="dev_perm_feature_steps">Step count</string>
+    <string name="dev_perm_feature_contacts">Contacts (find someone to call)</string>
+    <string name="dev_perm_feature_call_phone">Direct dialing</string>
+    <string name="dev_perm_feature_call_log">Call history</string>
+    <string name="dev_perm_feature_sms">Read SMS (verification codes)</string>
+    <string name="dev_perm_feature_sms_send">Send SMS</string>
+    <string name="dev_perm_feature_calendar">Calendar (reminders)</string>
+    <string name="dev_perm_feature_calendar_write">Write calendar (add events)</string>
+    <string name="dev_perm_feature_notify_post">Post notifications (reminders, and the way back to me)</string>
+    <string name="dev_perm_feature_notifications">Notification access (know when you get messages)</string>
+    <string name="dev_perm_feature_overlay">Overlay (my face)</string>
+    <string name="dev_perm_say_prefix">Turn on: %1$s.</string>
+    <string name="dev_perm_say_sep">", "</string>
+    <string name="dev_perm_say_runtime">A dialog will pop up — just tap Allow.</string>
+    <string name="dev_perm_say_notification">I\'ll open Notification access settings — find this app and turn it on.</string>
+    <string name="history_empty">No conversation yet</string>
+    <string name="history_suggest_hint">Tell me, or pick one</string>
+    <string name="suggestion_turn">Enter the \"%1$s\" scene. %2$s</string>
+    <string name="history_role_you">You · %1$s</string>
+    <string name="history_role_assistant">Andee · %1$s</string>
+    <string name="history_role_error">Error · %1$s</string>
+    <string name="settings_section_timeline">In the conversation</string>
+    <string name="stage_tab_chat">Chat</string>
+    <string name="stage_tab_stage">Stage</string>
+    <string name="stage_empty_title">This is Andee’s place</string>
+    <string name="stage_empty_body">Nothing here yet. When it has a free moment it will put something up itself.</string>
+    <string name="stage_empty_button">Ask it to set it up now</string>
+    <string name="stage_furnish_turn">The stage in the middle of your home screen is your place, and it is still empty. Set it up — start with a page about yourself.</string>
+    <string name="history_page_kind">Page</string>
+    <string name="history_page_footer">A page by Andee · Tap to open</string>
+    <string name="history_role_page_open">Page · %1$s · Tap to reopen</string>
+    <string name="history_topic_label">Topic</string>
+    <string name="history_topic_meta">%1$s · %2$d messages</string>
+    <string name="history_topic_continue">Continue</string>
+    <string name="history_topic_transcript">Transcript</string>
+    <string name="history_topic_outputs">Made here (%1$d)</string>
+    <string name="history_topic_outputs_hide">Hide made here</string>
+    <string name="history_topic_output_item">%1$s · v%2$d</string>
+    <string name="topic_continue_prompt">Continue “%1$s”: what next? Say it or type it</string>
+    <string name="topic_continue_said">Continue “%1$s”: %2$s</string>
+    <string name="textpage_topic_head">Topic · %1$s</string>
+    <string name="textpage_topic_gone">The full text of this conversation has been cleared; only the summary on the topic card is left.</string>
+    <string name="history_role_page_cleared">Page · %1$s · Cleared</string>
+    <string name="html_default_title">AI page</string>
+    <string name="textpage_role_you">You</string>
+    <string name="textpage_role_assistant">Andee</string>
+    <string name="textpage_role_error">Error</string>
+    <string name="textpage_role_page">Page</string>
+    <!-- What called this turn into being. The old wording was just "Started",
+         which answers nothing: the first thing a log page owes a reader is
+         "why did he suddenly do something", and these five are five stories. -->
+    <string name="tracepage_kind_user">You spoke</string>
+    <string name="tracepage_kind_wake">A reminder came due</string>
+    <string name="tracepage_kind_notify">A notification arrived</string>
+    <string name="tracepage_kind_sweep">Quiet-hour review</string>
+    <string name="tracepage_kind_harvest">Reviewing before tidying up</string>
+    <string name="tracepage_kind_other">Started</string>
+    <string name="tracepage_step">Step %1$d</string>
+    <string name="tracepage_tokens">%1$s tokens in</string>
+    <string name="tracepage_calls">%1$d tool calls</string>
+    <string name="tracepage_no_calls">no tools</string>
+    <string name="tracepage_said">Said</string>
+    <string name="tracepage_thought">Thought</string>
+    <!-- The end event is only written on an ABNORMAL finish: a throw, the
+         repeat guard, or running out of steps. So this card never means "and
+         then it finished nicely", and its heading must not read that way. -->
+    <string name="tracepage_end">This turn did not finish on its own</string>
+    <string name="tracepage_gone">The log for this turn is gone</string>
+    <string name="tracepage_gone_hint">It may have been rotated out by newer entries, or this turn was not run by the local brain — only turns the local brain ran leave a log.</string>
+    <string name="card_ack">Got it</string>
+    <string name="bubble_tap_to_talk">Tap to talk</string>
+    <string name="input_hint">Type to talk to it…</string>
+    <string name="input_send">Send</string>
+    <string name="input_hint_photos">Send as is, or add a few words…</string>
+    <string name="input_take_photo">Take photo</string>
+    <string name="input_pick_photos">Choose images</string>
+    <string name="input_photos_row">[%1$d image(s)]</string>
+    <string name="cam_close">✕ Done</string>
+
+    <!-- BodyCoreService.kt — display-only; see the comment on the Chinese side. -->
+    <string name="svc_call_in_progress">I\'m on a call — tell me once it\'s hung up.</string>
+    <string name="svc_no_typable_ime">The only keyboard on this device is ADBKeyboard, and it has no UI — nothing can be typed.\nTurn on an input method in system settings and it will work.</string>
+    <string name="svc_voice_error_line">Voice: %1$s</string>
+    <string name="svc_voice_failed">Voice stopped working.\n%1$s</string>
+    <string name="svc_btn_type_instead">Type it instead</string>
+    <string name="svc_btn_open_settings">Open settings</string>
+    <string name="svc_stopped">Stopped</string>
+    <string name="svc_exit_meeting_active">A meeting is recording. End it and save the minutes before exiting Andee.</string>
+    <string name="svc_meeting_ended_line">(Meeting recording ended — %1$d characters, drafting the minutes…)</string>
+    <string name="svc_call_ended_line">(Call ended — %1$d characters, summarising…)</string>
+    <string name="svc_notification_look_line">(%1$s has a message — I tapped "Take a look"…)</string>
+    <string name="svc_notification_auto_line">(%1$s has a message — taking a look myself…)</string>
+    <string name="svc_no_brain_hub">No brain is connected yet, so I can\'t speak.</string>
+    <string name="svc_no_brain_local">The local brain has no key yet, so I can\'t speak.</string>
+    <string name="svc_no_brain_codeflying">There is no CodeFlying key yet, so I can\'t speak.</string>
+    <string name="svc_btn_get_key">Get a key</string>
+
+    <string name="notebook_dump_header">"Notebook · %1$d memories\n"</string>
+    <string name="notebook_dump_sort_note">"(Listed by type and most-recently updated; read-only)\n\n"</string>
+    <string name="notebook_dump_empty_memories">"(Nothing written down yet)\n"</string>
+    <string name="notebook_dump_expired">"  [expired]"</string>
+    <string name="notebook_dump_source">" · source "</string>
+    <string name="notebook_dump_hits">" · recalled %1$d times\n\n"</string>
+    <string name="notebook_dump_todos_header">"\nTodos · %1$d\n\n"</string>
+    <string name="notebook_dump_empty_todos">"(none)\n"</string>
+    <string name="notebook_dump_recurring">every %1$s</string>
+    <string name="notebook_dump_next">" · next "</string>
+    <string name="notebook_dump_last_error">"   last error: "</string>
+
+    <string name="wechat_title">Add Andee on WeChat</string>
+    <string name="wechat_hint">Scan with WeChat to add Andee as a friend</string>
+    <string name="wechat_save">Save to Photos</string>
+    <string name="wechat_saved">Saved. In WeChat\'s Scan, pick it from your photos</string>
+    <string name="wechat_save_failed">Could not save it; take a screenshot instead</string>
+    <string name="tl_woke">Reminder due: %1$s</string>
+    <string name="tl_notified">A notification was worth acting on</string>
+    <string name="tl_friend_task">Another Andee handed over a task</string>
+    <string name="tl_reviewed">Reviewed the conversation; kept %1$s things</string>
+    <string name="tl_folded">Put away a topic: %1$s</string>
+    <string name="tl_diary">Wrote today\'s diary</string>
+    <string name="tl_self">Rewrote who it is</string>
+    <string name="tl_wiki">Wrote to the wiki: %1$s</string>
+    <string name="tl_wiki_read">Opened a wiki article: %1$s</string>
+    <string name="tl_wiki_shown">Showed you a wiki article: %1$s</string>
+    <string name="tl_person">Noted a person: %1$s</string>
+    <string name="tl_care_add">Now cares about: %1$s</string>
+    <string name="tl_care_done">A care is done</string>
+    <string name="tl_care_drop">Let a care go</string>
+    <string name="tl_memory">Remembered: %1$s</string>
+    <string name="tl_todo">Set a todo: %1$s</string>
+    <string name="tl_todo_at">At: %1$s</string>
+    <string name="tl_plan_today">Wrote today\'s plan</string>
+    <string name="tl_plan_tomorrow">Wrote tomorrow\'s plan</string>
+    <string name="tl_thought">Thought: %1$s</string>
+    <string name="tl_work_started">Got up for “%1$s”</string>
+    <string name="tl_work_acted">Did some of “%1$s”</string>
+    <string name="tl_work_looked">Looked at “%1$s”, did nothing yet</string>
+    <string name="tl_work_nothing">Nothing came of “%1$s” this time</string>
+    <string name="tl_bubble">Bubble: %1$s</string>
+    <string name="tl_ignored">Let a notification from %1$s pass</string>
+    <string name="tl_morning">Thought out today\'s plan this morning</string>
+    <string name="tl_held">A notification from %1$s came in while busy; kept for later</string>
+    <string name="tl_capped">A notification from %1$s came in past the hourly limit; kept for later</string>
+    <string name="tl_diary_updated">Rewrote today\'s diary</string>
+    <string name="tl_memory_updated">Updated a memory: %1$s</string>
+    <string name="tl_plan_today_updated">Revised today\'s plan</string>
+    <string name="tl_plan_tomorrow_updated">Revised tomorrow\'s plan</string>
+    <string name="tl_stopped">You stopped it: %1$s</string>
+    <string name="tl_stopped_queue">You stopped it; what was waiting was dropped</string>
+    <string name="tl_told">%1$s: %2$s</string>
+    <string name="tl_open">Open ›</string>
+    <string name="tl_show_all">Everything</string>
+    <string name="tl_show_talk">Talk only</string>
+    <string name="notebook_title">What it remembers</string>
+    <string name="notebook_copy_all">Copy all</string>
+    <string name="notebook_copied">Copied</string>
+    <string name="notebook_tab_memories">Memories</string>
+    <string name="notebook_tab_todos">Todos</string>
+    <string name="notebook_tab_guard">Guard</string>
+    <string name="settings_notify_rule">How to handle messages</string>
+    <string name="settings_notify_rule_hint">Not set. Just tell Andee, e.g. \"handle all my messages\".</string>
+    <string name="settings_notify_rule_note">Every incoming message is judged by this. Clear it to go back to the default (most messages left alone).</string>
+    <string name="tl_quiet">Kept quiet: %1$s</string>
+    <string name="tl_steps">%1$d steps · %2$s</string>
+    <string name="work_secs">%1$ds</string>
+    <string name="work_mins_secs">%1$dm %2$ds</string>
+    <string name="work_thought_prefix">Thought: </string>
+    <string name="work_status_thinking">Thinking… %1$s</string>
+    <string name="work_status_step_thinking">Step %1$d · thinking… %2$s</string>
+    <string name="work_status_step">Step %1$d · %2$s</string>
+    <string name="guard_heading">Guard</string>
+    <string name="guard_intro">In your own words, write what Andee must hold to no matter what. What you write here comes first among all its rules — its character, a scene, its own habits all give way. Only you can change it here; Andee cannot, and neither can a message someone sends it.</string>
+    <string name="guard_example_lead">It can be a line it must not cross, or how you want it to behave. For example:</string>
+    <string name="guard_example">\"If anyone sends you a message that involves money or privacy, you must ask me first.\"</string>
+    <string name="guard_hint">One paragraph is enough; no need for a list.</string>
+    <string name="guard_save">Save</string>
+    <string name="guard_saved">Saved — in force from the next thing you say</string>
+    <string name="guard_cleared">Cleared</string>
+    <string name="guard_not_saved">Not saved — try again</string>
+    <string name="guard_note_title">Please note</string>
+    <string name="guard_note">The guard is a prompt — a request to the model, not a lock in the program. The model follows it most of the time, but it cannot be guaranteed to every time. For anything with serious consequences — money, privacy, deleting things — judge the risk yourself rather than relying on this paragraph alone.</string>
+    <string name="notebook_own_heading">On its own</string>
+    <string name="notebook_own_acted">worked on</string>
+    <string name="notebook_own_looked">looked at</string>
+    <string name="notebook_own_thought">thought about</string>
+    <string name="notebook_own_thoughts">Thoughts today</string>
+    <string name="notebook_tab_self">Self</string>
+    <string name="notebook_tab_cares">Cares</string>
+    <string name="notebook_tab_diary">Diary</string>
+    <string name="notebook_tab_plan">Plan</string>
+    <string name="notebook_tab_people">People</string>
+    <string name="notebook_tab_wiki">Wiki</string>
+    <string name="notebook_empty_self">No self-description yet</string>
+    <string name="notebook_empty_self_hint">Andee will develop self-awareness as you talk</string>
+    <string name="notebook_empty_cares">No cares yet</string>
+    <string name="notebook_empty_cares_hint">Tell Andee what you care about</string>
+    <string name="notebook_empty_diary">No diary yet</string>
+    <string name="notebook_empty_diary_hint">Andee will write at the end of the day</string>
+    <string name="notebook_empty_plan">No plan for today</string>
+    <string name="notebook_empty_plan_hint">Andee will think about today in the morning</string>
+    <string name="notebook_empty_people">No people yet</string>
+    <string name="notebook_empty_people_hint">Andee will remember important people you mention</string>
+    <string name="notebook_empty_wiki">Wiki is empty</string>
+    <string name="notebook_empty_wiki_hint">Ask Andee knowledge questions</string>
+    <string name="notebook_self_heading">Who I am</string>
+    <string name="notebook_updated_at">Updated %1$s</string>
+    <string name="notebook_care_attention">Needs attention</string>
+    <string name="notebook_plan_today">Today\'s plan</string>
+    <string name="notebook_wiki_open">Open ›</string>
+    <string name="notebook_wiki_back">‹ Wiki</string>
+    <string name="notebook_wiki_reading">Reading…</string>
+    <string name="notebook_wiki_source">Source: %1$s</string>
+    <string name="notebook_wiki_copy">Copy all</string>
+    <string name="notebook_empty_memories">Nothing written down yet</string>
+    <string name="notebook_empty_todos">Nothing queued up</string>
+    <string name="notebook_type_user">About you</string>
+    <string name="notebook_type_feedback">Your preferences</string>
+    <string name="notebook_type_way">How things get done</string>
+    <string name="notebook_type_reference">Reference</string>
+    <string name="notebook_type_failure">Past mistakes</string>
+    <string name="notebook_hits">recalled %1$d times</string>
+    <string name="notebook_delete_note">Deleting means gone — not hidden.</string>
+    <string name="notebook_todo_cron">every %1$s</string>
+    <string name="notebook_todo_paused">paused</string>
+    <string name="sched_channel_name">Promises</string>
+    <string name="sched_channel_desc">When the time comes but I can\'t wake up, at least say it clearly</string>
+    <string name="sched_notify_recurring">Recurring todo: %1$s</string>
+    <string name="sched_notify_title">I promised you this</string>
+    <string name="sched_notify_body">%1$s\n\n(When the time came I wasn\'t running, so I couldn\'t do it for you. Turn on the accessibility service and I\'ll pick it back up.)</string>
+    <string name="body_notify_channel">Running</string>
+    <string name="body_notify_channel_desc">The line that says I\'m here. The way back lives here too, when screen control drops.</string>
+    <string name="body_notify_title">I\'m here</string>
+    <string name="body_notify_text_ok">Screen control is up.</string>
+    <string name="body_notify_text_no_screen">Accessibility was switched off, so I can\'t reach the screen. Tap the action to get it back.</string>
+    <string name="body_notify_action_fix">Get it back</string>
+    <string name="body_notify_action_see">Let me see the screen</string>
+    <string name="cmd_vault_filling">Typing the “%2$s” for %1$s…</string>
+    <string name="cmd_ask_yes">OK</string>
+    <string name="cmd_ask_no">No thanks</string>
+
+    <string name="asr_listening">Listening…</string>
+    <string name="meeting_live_head">Recording %1$d:%2$02d · tap the ball to stop</string>
+
+    <!-- The names for a recording that never named itself; see the Chinese side. -->
+    <string name="meeting_default_title">Meeting</string>
+    <string name="call_default_scene">Call</string>
+
+    <!-- LocalBrain — display half only; see the comment on the Chinese side. -->
+    <string name="brain_no_key">The on-device brain has no API key yet. Long-press the ball to bring the card back, tap ⚙ in the control bar, and put the key in Backend → On-device → “DeepSeek Key”.</string>
+    <string name="brain_no_key_codeflying">There is no CodeFlying key yet. Long-press the ball to bring the card back, tap ⚙, and paste the key under Backend → CodeFlying. No key? Get one at CodeFlying.app.</string>
+    <string name="brain_error">Something broke on my side: %1$s</string>
+    <string name="brain_error_402">The backend answered 402, which most likely means the account is out of balance. Open Settings → Backend to see which provider you are using, then top up on that provider\'s website and try again.</string>
+    <string name="brain_error_auth">The backend refused the request (HTTP %1$d): the key is wrong, expired or disabled. Check the key in Settings → Backend, and generate a new one on the provider\'s website if needed.</string>
+    <string name="brain_error_400">The backend rejected the request: %1$s\nThe usual cause is a misspelled model name. Check it in Settings → Backend.</string>
+    <string name="brain_error_404">The backend could not find that address (HTTP 404). Check the endpoint URL and the model name in Settings → Backend.</string>
+    <string name="brain_error_moved">The backend did not answer as an API — the address may be wrong, or the service has moved (it pointed to: %1$s). Check the address in Settings → Backend; if you use CodeFlying, the problem is on the service side, and you can switch to On-device for now.</string>
+    <string name="brain_error_429">The backend is busy or being asked too often (HTTP 429). Say it again in a moment. If it keeps happening, check on the provider\'s website whether your quota has run out.</string>
+    <string name="brain_error_5xx">The backend itself is having trouble (HTTP %1$d). Your settings are not the problem. Try again in a few minutes, or check the provider\'s website for maintenance notices.</string>
+    <string name="brain_error_timeout">The backend took too long to answer. Check that the network is working and try again in a moment.</string>
+    <string name="brain_error_network">I could not reach the backend. Check this device\'s network; if that is fine, check the endpoint URL in Settings → Backend.</string>
+    <string name="brain_no_result">I got nothing back that time — say it again.</string>
+    <string name="brain_repeat_stop">I kept doing the same thing over and over (%1$s), so I stopped — that way is blocked. Try saying it differently, or take over.</string>
+    <string name="brain_max_steps">I have taken %1$d steps on this — the most one task is allowed — and it is not done yet, so I stopped here. Say \"go on\" and I will pick it up where I left off, or try asking another way. If tasks like this simply need more steps, open Andee\'s main screen, tap the settings icon at the top right, and raise \"Max steps per task\".</string>
+    <string name="narrate_get_screen">Reading the screen…</string>
+    <string name="narrate_screenshot">Looking at the screen…</string>
+    <string name="narrate_tap">Tapping…</string>
+    <string name="narrate_long_press">Long-pressing…</string>
+    <string name="narrate_swipe">Swiping…</string>
+    <string name="narrate_type">Typing…</string>
+    <string name="narrate_submit">Submitting…</string>
+    <string name="narrate_wait">Waiting…</string>
+    <string name="narrate_launch">Opening…</string>
+    <string name="narrate_system">Pressing a system key…</string>
+    <string name="narrate_show_html">Putting it on screen…</string>
+    <string name="narrate_pages">Looking through what it made before…</string>
+    <string name="narrate_topics">Looking back at where we got to…</string>
+    <string name="narrate_camera">Taking a look…</string>
+    <string name="narrate_dog">Moving a leg…</string>
+    <string name="narrate_market_search">Finding a tool…</string>
+    <string name="narrate_market_call">Calling an external service…</string>
+    <string name="brain_review_name">looking back over the conversation</string>
+    <string name="narrate_default">Running %1$s…</string>
+
+    <!--
+        Startup self-check. The findings come from `device/SelfCheck` — one
+        source, read by both the startup card and `ui/SelfCheckActivity`. The
+        two layers are deliberate: `title` says what is being checked, `detail`
+        says what was found and what breaks because of it. The second one is the
+        half a person can act on, so it names the symptom rather than the
+        setting.
+    -->
+    <string name="check_title_accessibility">Accessibility service</string>
+    <string name="check_title_overlay">Overlay permission</string>
+    <string name="check_title_network">Network</string>
+    <string name="check_title_brain">Assistant</string>
+    <string name="check_title_model">Model</string>
+    <string name="check_title_version">Version</string>
+    <string name="check_title_microphone">Microphone</string>
+    <string name="check_title_notify_post">Post notifications</string>
+    <string name="check_detail_notify_post_on">Reminders, and the way back to me, can both come through.</string>
+    <string name="check_detail_notify_post_off">I can post notifications, but the system is not letting them through — reminders, and the way back to me, are both dropped. Allow it with the button below.</string>
+    <string name="check_title_notifications">Notification access</string>
+    <string name="check_title_typing_channel">Typing channel</string>
+    <string name="check_title_adb_keyboard">ADB keyboard</string>
+    <string name="check_title_secure_settings">Typing without root</string>
+    <string name="check_title_voice_key">Voice API key</string>
+    <string name="check_title_voice_host">Voice service</string>
+    <string name="check_title_wake">Wake phrase</string>
+    <string name="check_title_battery">Background running</string>
+    <string name="check_title_auto_start">Auto-start</string>
+    <string name="check_title_disk">Storage</string>
+
+    <string name="check_detail_accessibility_on">On. The ball and every screen action are running.</string>
+    <string name="check_detail_accessibility_off">Off. The ball and chat still work, but I can’t touch the screen: no tapping, swiping or typing for you. The switch lives under \"Downloaded apps\" in the accessibility settings, not on the first screen.</string>
+    <string name="check_detail_overlay_on">Allowed. The ball can be drawn.</string>
+    <string name="check_detail_overlay_off">Off. Neither the ball nor any card can be drawn, while the service runs perfectly well in the background — which is why it looks like nothing happened at all.</string>
+    <string name="check_detail_network_on">Online.</string>
+    <string name="check_detail_network_off">Offline. Speech recognition, speech synthesis and every model call go over the network.</string>
+    <string name="check_detail_brain_on">Configured.</string>
+    <string name="check_detail_brain_hub_missing">Not set. The brain is set to the cloud, so the address of your own hub goes in ⚙ → Backend → Cloud → “Hub URL”. The Cloud tab is hidden by default — if you cannot see it, turn on Advanced → “Show cloud option” first. Without it there is nowhere to send what you say: no answers, and nothing on screen moves. To have this device think for itself, pick “On-device” in the same row.</string>
+    <string name="check_detail_brain_key_missing">Not set. The brain is set to run on this device, so open a DeepSeek account of your own and put the key in ⚙ → Backend → On-device → “DeepSeek Key”. Without it, what you say arrives and nothing can be answered or acted on.</string>
+    <string name="check_detail_brain_codeflying_key_missing">Not set. The backend is CodeFlying: sign up at CodeFlying.app, then put the key in ⚙ → Backend → CodeFlying. Without it, what you say arrives and nothing can be answered or acted on.</string>
+    <string name="check_detail_model_cloud">Cloud assistant — the model is not on this device.</string>
+    <string name="check_detail_model_no_key">No key yet. Fill one in and this becomes testable.</string>
+    <string name="check_detail_checking">Checking…</string>
+    <string name="check_detail_skipped_offline">Offline, so not tested.</string>
+    <string name="check_detail_model_ok">%1$s answered.</string>
+    <string name="check_detail_model_throttled">Reachable but rate-limited (HTTP 429). The configuration is right; it recovers on its own.</string>
+    <string name="check_detail_model_url">Could not connect: %1$s</string>
+    <string name="check_detail_model_key">Key rejected: %1$s</string>
+    <string name="check_detail_model_balance">The server answered %1$s: most likely the account is out of balance. Top up on the current provider\'s website and try again.</string>
+    <string name="check_detail_model_name">No model called “%1$s” on this server. It offers: %2$s</string>
+    <string name="check_detail_model_other">%1$s</string>
+    <!-- The one row that is about the app rather than the device, and the one
+         place this app sends anything outward. %1$s is always the release to
+         move to and %2$s is always the build in hand; the two rows differ by a
+         word, so do not swap the arguments between them. See SelfCheck.version. -->
+    <string name="check_detail_version_current">%1$s is the current release.</string>
+    <string name="check_detail_version_stale">Out of date: the latest is %1$s, you are on %2$s. Upgrade from GitHub or CodeFlying.</string>
+    <string name="check_detail_version_forced">Please upgrade to %1$s — this build (%2$s) is no longer supported. Upgrade from GitHub or CodeFlying.</string>
+    <string name="check_detail_version_offline">Offline, so not tested. You are on %1$s.</string>
+    <string name="check_detail_version_quota">Today\'s checks are used up; they reset tomorrow. You are on %1$s.</string>
+    <string name="check_detail_version_unreachable">Could not be checked: %1$s. You are on %2$s.</string>
+    <string name="check_detail_notif_on">Granted, and the listener is bound.</string>
+    <string name="check_detail_notif_zombie">Settings says “granted”, but the listener is not bound — notifications are being dropped silently.\nThis one only comes back if you turn it off and then on again; leaving it on does nothing.</string>
+    <string name="check_detail_notif_off">Off. Call announcements and forwarded notifications never arrive.</string>
+    <string name="check_detail_typing_a11y">Through the accessibility input method: I can type into a field myself — no keyboard to install, no default input method to change, no computer to plug in. Your own keyboard stays active throughout.</string>
+    <string name="check_detail_typing_adb">This Android version (below 13) has no accessibility input method, so typing goes through the ADB keyboard below — both of those rows have to be in place.</string>
+    <string name="check_detail_adb_kb_on">Enabled. It can type into other apps for you.</string>
+    <string name="check_detail_adb_kb_spare">Not needed now — typing goes through the accessibility input method. It stays as the spare: a field that channel cannot reach falls back to this one, and it has to be installed by then.</string>
+    <string name="check_detail_adb_kb_off">Installed but not enabled. Turn it on in system settings — it has no keyboard UI of its own, so enabling it does not get in the way of typing yourself.</string>
+    <string name="check_detail_adb_kb_missing">Not installed. Typing and filling in forms for you go through it (ADBKeyboard), so that does not work yet. Download it with the button here — when you come back this row is a one-tap enable.</string>
+    <string name="check_detail_secure_on">Granted. Typing into other apps works.</string>
+    <string name="check_detail_secure_missing">Not granted, so typing into other apps (type_text) is unavailable. There is no switch for this in Settings — it can only be given over adb with the cable plugged in.</string>
+    <string name="check_detail_secure_spare">Not granted, and typing works anyway — it goes through the accessibility input method. This is only needed by the spare channel above.</string>
+    <string name="check_detail_mic_on">Allowed.</string>
+    <string name="check_detail_mic_off">Not allowed. I can’t hear you, so tapping the ball won’t start listening; double-tap it to type to me instead.</string>
+    <string name="check_detail_voice_key_ok">Set. Recognition and synthesis use it to reach the provider.</string>
+    <string name="check_detail_voice_key_missing">Not set. The source ships without a key — open a speech service of your own and put its key in ⚙ → Backend → On-device. Without it, hearing and speaking cannot connect, and what you get back is a connection timeout that looks like a network fault. Everything else works.</string>
+    <string name="check_detail_voice_key_codeflying_missing">Voice uses the same CodeFlying key as the brain: put it in ⚙ → Backend → CodeFlying. Without it, listening and speaking cannot connect.</string>
+    <string name="check_detail_voice_host_ok">%1$s is reachable.</string>
+    <string name="check_detail_voice_host_bad">Could not reach %1$s: %2$s. Both recognition and synthesis will time out.</string>
+    <string name="check_detail_wake_on">Taught, and it wakes when you say it.</string>
+    <string name="check_detail_wake_off">Not taught yet. Pick a phrase (e.g. “Hey Andee”) and say it 3 times to wake me by voice. Everything still works without it, you just tap the ball to talk.</string>
+    <string name="check_detail_battery_on">Exempt, so pending reminders are not delayed.</string>
+    <string name="check_detail_battery_off">Not exempt from battery optimisation. Tap “Open settings” — the system asks “Ignore battery optimisations?”; take the button that ignores them.\nThe vendor’s own “App launch / background running” controls are a separate system; changing them leaves this row red. With the screen off a pending reminder may arrive late, and the wake phrase stops listening.</string>
+    <string name="check_detail_auto_start_on">Allowed. The process can bring itself back after the system kills it.</string>
+    <string name="check_detail_auto_start_off">Off. Xiaomi’s power policy reaps background processes on a timer, and without auto-start the assistant cannot come back after that — it looks like it just closes by itself. Tap to enable.</string>
+    <string name="check_detail_disk_ok">%1$d MB free.</string>
+    <string name="check_detail_disk_low">Only %1$d MB left; screenshots and pages will start going missing.</string>
+    <string name="check_detail_disk_full">Only %1$d MB left — almost nothing can be written.</string>
+    <string name="check_detail_disk_unknown">Could not be read.</string>
+
+    <string name="check_fix_settings">Open settings</string>
+    <!-- The notification-access switch already reads as on in the zombie state,
+         so that door is not “Open settings”. See SelfCheck.Fix.Screen.label. -->
+    <string name="check_fix_repower">Off, then on</string>
+    <string name="check_fix_download">Download</string>
+    <string name="check_fix_allow">Allow</string>
+    <string name="check_fix_app_settings">Open assistant settings</string>
+    <string name="check_fix_adb_lead">This one can only be done from a computer, over adb:</string>
+    <string name="check_fix_no_screen">This device has no such settings screen. You will have to find it in Settings yourself.</string>
+    <string name="check_page_title">Self-check</string>
+    <string name="check_page_lead">Where this device stands right now.</string>
+    <string name="check_page_ok_title">All good</string>
+    <string name="check_page_ok_note">Everything is set up. Tap the ball and talk.</string>
+    <string name="check_page_recheck">Check again</string>
+    <!-- The card's way out, in both places it appears: the ✕ in the header and
+         the filled button in the footer. Deliberately the same word as the
+         settings card's "Done" — these are the same card. -->
+    <string name="check_page_done">Done</string>
+    <string name="check_page_issues">%1$d must be fixed</string>
+    <string name="check_page_suggest">Ready to use · %1$d more worth doing</string>
+    <string name="check_page_warn_lead">These don’t stop anything working, but help.</string>
+    <string name="check_page_notes_lead">The rest is just for reference and changes nothing.</string>
+    <string name="check_card_title">%1$d thing(s) need attention</string>
+    <string name="check_card_open">Fix it</string>
+    <string name="check_card_ack">Got it</string>
+
+    <!-- The ball's looks. The user swipes the ball sideways on the full card to
+         change them, and the new one announces itself in the subtitle band —
+         that name is read by a person, hence a resource rather than
+         BallLook.name, which is for logs and diffs. -->
+    <string name="ball_look_andee">Andee</string>
+    <string name="ball_look_cream">Kitten</string>
+    <string name="ball_look_bajie">Pigsy</string>
+    <string name="ball_look_rabbit">Rascal</string>
+    <string name="ball_look_bear">Bear</string>
+    <string name="ball_look_imp">Imp</string>
+
+    <!-- The expressions screen: the entry in settings, and the card that shows them all -->
+    <!-- Appearance: light / dark. The switch takes effect at once (see ui.Theme), so the
+         note says what it reaches rather than what it is. -->
+    <string name="settings_section_theme">Appearance</string>
+    <string name="settings_theme_note">Light is a white card with dark text; dark is a dark card with light text. It switches at once — card, pages, bubbles and everything around the ball together.</string>
+    <string name="settings_theme_day">Light</string>
+    <string name="settings_theme_night">Dark</string>
+
+    <string name="settings_section_expr">Looks &amp; expressions</string>
+    <string name="settings_expr_note">See every character and every expression; tap one to switch.</string>
+    <string name="settings_expr_open">Open</string>
+    <string name="expr_title">Looks &amp; expressions</string>
+    <string name="expr_section_look">Look</string>
+    <string name="expr_section_mood">Expression</string>
+    <string name="expr_caption">%1$s · %2$s</string>
+    <string name="expr_calm">Calm</string>
+    <string name="expr_happy">Happy</string>
+    <string name="expr_curious">Curious</string>
+    <string name="expr_tense">Angry</string>
+    <string name="expr_anxious">Nervous</string>
+    <string name="expr_concerned">Worried</string>
+    <string name="expr_wink">Wink</string>
+    <string name="expr_wave">Wave</string>
+    <string name="expr_protect">Guard</string>
+    <string name="expr_celebrate">Celebrate</string>
+    <string name="expr_rest">Rest</string>
+    <string name="expr_listening">Listening</string>
+    <string name="expr_holding">Waiting</string>
+    <string name="expr_thinking">Thinking</string>
+    <string name="expr_speaking">Speaking</string>
+    <string name="expr_searching">Working</string>
+    <string name="expr_success">Success</string>
+    <string name="expr_failed">Failed</string>
+    <string name="expr_sleeping">Asleep</string>
+
+    <string name="peer_task_row">(task from %1$s) %2$s</string>
+    <string name="peers_scan">Scan to add</string>
+    <string name="peers_scan_note">Scan the QR code on the other Andee’s Friends page.</string>
+    <string name="peers_paired_ok">Added %1$s.</string>
+    <string name="peers_scan_failed">Could not add: %1$s</string>
+    <string name="peers_scan_not_ours">That is not an Andee code.</string>
+    <string name="peers_show_friend">Show my code to a friend</string>
+    <string name="peers_show_own">Show to my own device</string>
+    <string name="peers_show_note_own">Scan this with Andee on another device of yours. Valid for two minutes.</string>
+    <string name="peers_show_note_friend">Have your friend scan this with their Andee (Friends → Scan to add). Valid for two minutes.</string>
+    <string name="peers_show_failed">Could not show a code: %1$s</string>
+    <string name="peers_kinds_note">“My device” is trusted like you. A “friend” is asked about every time and cannot see your memory or conversations. For now, only on the same Wi-Fi.</string>
+    <string name="peers_kind_friend">Friend</string>
+    <string name="peers_kind_own">My device</string>
+    <string name="peers_ask_each">Ask me each time</string>
+    <string name="peers_always">Always allow</string>
+    <string name="peer_friend_row">(%1$s, a friend, asks) %2$s</string>
+    <string name="peer_friend_reply_row">(to %1$s) %2$s</string>
+    <string name="peer_friend_ask">%1$s, a friend’s Andee, asks me to: %2$s</string>
+    <string name="peer_friend_declined_row">Did not do it for %1$s.</string>
+    <string name="peer_allow">Allow</string>
+    <string name="peer_allow_always">Always allow</string>
+    <string name="peer_decline">Decline</string>
+    <string name="window_input_hint">Type to it…</string>
+    <string name="window_voice_on">Voice on</string>
+    <string name="window_muted">Muted</string>
+</resources>

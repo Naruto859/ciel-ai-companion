@@ -1,0 +1,1045 @@
+<resources>
+    <string name="app_name">Ciel</string>
+    <!--
+        Shown under the service name in Settings → Accessibility, and again in
+        the confirmation dialog. It is the one place the user is asked to hand
+        over screen access, so it says what Andee does with it in their own
+        language rather than naming the API.
+    -->
+    <string name="accessibility_service_description">开启后 Andee 才能看到屏幕上有什么，并代你点按、滑动、输入。桌面上会多一颗悬浮小球：点一下跟它说话，长按展开对话记录。</string>
+
+    <!-- First run: three concrete stories, only the missing setup, then names. -->
+    <string name="onboarding_prelude_badge">开始之前</string>
+    <string name="onboarding_prelude_title">先定一下，我们怎么交流</string>
+    <string name="onboarding_prelude_body">选好语言和声音，以后在设置里也能改。</string>
+    <string name="onboarding_prelude_lang">语言</string>
+    <string name="onboarding_prelude_sound">声音</string>
+    <string name="onboarding_prelude_sound_on">开启声音</string>
+    <string name="onboarding_prelude_sound_on_note">我会把回答读出来</string>
+    <string name="onboarding_prelude_sound_off">静音</string>
+    <string name="onboarding_prelude_sound_off_note">只显示文字</string>
+    <string name="onboarding_prelude_next">选好了</string>
+    <string name="onboarding_intro_badge">你好，我是 Andee</string>
+    <string name="onboarding_intro_title">我会住进你的设备，\n成为它的灵魂。</string>
+    <string name="onboarding_intro_chatbot_name">聊天机器人</string>
+    <string name="onboarding_intro_chatbot">等你开口。</string>
+    <string name="onboarding_intro_agent_name">智能体</string>
+    <string name="onboarding_intro_agent">等你派活。</string>
+    <string name="onboarding_intro_me_name">我</string>
+    <string name="onboarding_intro_me">不用等，一直在。</string>
+    <string name="onboarding_intro_next">那你能帮我做什么？</string>
+
+    <string name="onboarding_story_badge">比如，你想买点东西</string>
+    <string name="onboarding_shop_title">你想买的，我替你一路办到</string>
+    <string name="onboarding_shop_body">我记得你的口味，自己开几个 App 找券、比价，再请别的助手核对一遍。付款前，我回来问你。</string>
+    <string name="onboarding_shop_request">“帮我买常喝的牛奶，别超过 60 元”</string>
+    <string name="onboarding_shop_coupon">淘宝 · 领取店铺券</string>
+    <string name="onboarding_shop_compare">京东 · 比较同款价格</string>
+    <string name="onboarding_shop_agent">价格助手 · 再核对一次</string>
+    <string name="onboarding_shop_result">省了 18 元 · 到手 ¥53.80</string>
+    <string name="onboarding_shop_confirm">付款前我等你确认</string>
+    <string name="onboarding_shop_next">那客户来了呢？</string>
+
+    <string name="onboarding_customer_badge">我不漏问，你也不用每次从头教我</string>
+    <string name="onboarding_customer_title">客户来了，我先替你接住</string>
+    <string name="onboarding_customer_body">各个 App 来的询单我先接住、问清楚，只把要你拍板的交给你。</string>
+    <string name="onboarding_customer_in">客户：100 件，周五能到吗？</string>
+    <string name="onboarding_customer_reply">我：发到哪个城市？需要开发票吗？</string>
+    <string name="onboarding_customer_memory">我记住了：这位客户需要专票</string>
+    <string name="onboarding_customer_handoff">只把要你决定的事交给你</string>
+    <string name="onboarding_customer_next">还能帮我省点钱吗？</string>
+
+    <string name="onboarding_subscription_badge">每个月悄悄扣的钱，最容易忘</string>
+    <string name="onboarding_subscription_title">自动续费，我替你盯着</string>
+    <string name="onboarding_subscription_body">哪些在用、哪些早就不用了，我都记着。该退的，我提醒你。</string>
+    <string name="onboarding_subscription_digest">这个月的自动扣费</string>
+    <string name="onboarding_subscription_one">视频会员</string>
+    <string name="onboarding_subscription_two">网盘会员 · 3 个月没打开</string>
+    <string name="onboarding_subscription_three">健身 App · 半年没用</string>
+    <string name="onboarding_subscription_one_price">¥25/月</string>
+    <string name="onboarding_subscription_two_price">¥15/月</string>
+    <string name="onboarding_subscription_three_price">¥30/月</string>
+    <string name="onboarding_subscription_keep">在用</string>
+    <string name="onboarding_subscription_cancel">建议退订</string>
+    <string name="onboarding_subscription_saved">退掉这两个，一年省 ¥540</string>
+    <string name="onboarding_subscription_ask">退订前，我先问你一声</string>
+    <string name="onboarding_subscription_handover">这种麻烦事，交给我。</string>
+    <string name="onboarding_subscription_next">好，我们开始吧</string>
+
+    <string name="onboarding_setup_badge">还差 %1$d 项，我就准备好了</string>
+    <string name="onboarding_setup_skip_note">已经开好的，我会自动跳过</string>
+    <string name="onboarding_permission_overlay_title">先让我出现在你面前</string>
+    <string name="onboarding_permission_overlay_body">开启“悬浮窗”后，不管你在用哪个 App，我都在屏幕边上等你，办完事回来告诉你结果。</string>
+    <string name="onboarding_permission_overlay_action">去开启悬浮窗</string>
+    <string name="onboarding_permission_accessibility_title">让我真正能动手</string>
+    <string name="onboarding_permission_accessibility_body">开启无障碍服务后，我才能在你交给我的事里看屏幕、点按、滑动和输入。</string>
+    <string name="onboarding_permission_accessibility_action">去开启无障碍服务</string>
+    <string name="onboarding_permission_microphone_title">让我听见你</string>
+    <string name="onboarding_permission_microphone_body">允许使用麦克风后，你直接对我说要做什么就行。你不跟我说话时，我不会把声音发给模型。</string>
+    <string name="onboarding_permission_microphone_action">允许使用麦克风</string>
+    <string name="onboarding_permission_skip">先跳过</string>
+    <string name="onboarding_skip_accessibility_note">跳过的话，我能陪你聊天、记事、提醒，但还不能替你操作手机。以后在自检里随时能开。</string>
+    <string name="onboarding_skip_microphone_note">跳过的话，你可以打字跟我说。以后在自检里随时能开。</string>
+    <string name="onboarding_permission_safety_title">你始终做主</string>
+    <string name="onboarding_permission_safety_body">付款、发重要消息这类关键操作前，我会停下来问你。</string>
+
+    <string name="onboarding_model_badge">最后一项配置</string>
+    <string name="onboarding_model_title">给我选一个大脑</string>
+    <string name="onboarding_model_body">不用懂技术。想省心就选 CodeFlying；你已经有自己的模型接口，就选本地模型。</string>
+    <string name="onboarding_model_recommended">推荐</string>
+    <string name="onboarding_model_codeflying_note">最省心。模型、语音和各种工具用一把密钥，不用逐个申请。新用户有免费额度，超出后按量计费。</string>
+    <string name="onboarding_model_local_title">本地模型</string>
+    <string name="onboarding_model_local_note">我在这台设备上运行，用你自己的模型接口和账单。需要填 API Key；接口地址和模型名称可以先用默认值。</string>
+    <string name="onboarding_model_key_hint">把密钥粘贴到这里</string>
+    <string name="onboarding_model_base_hint">留空则使用 %1$s</string>
+    <string name="onboarding_model_name_hint">留空则使用 %1$s</string>
+    <string name="onboarding_model_open_site">领取免费额度并复制密钥</string>
+    <string name="onboarding_model_save">保存，继续</string>
+    <string name="onboarding_model_key_required">还差一把密钥，粘贴进来我们就继续。</string>
+    <string name="onboarding_voice_title">再让我能听、能说</string>
+    <string name="onboarding_voice_body">本地模型不带语音，要单独配。选好谁来听你说话、谁来替我开口，填上对应的密钥就行。</string>
+    <string name="onboarding_voice_more">接口地址、资源 ID 都有默认值，要改去设置里。</string>
+    <string name="onboarding_voice_key_required">语音还差密钥。填上选中那家的密钥，我才能听见你、开口说话。</string>
+
+
+    <string name="onboarding_meet_badge">最后，我们认识一下</string>
+    <string name="onboarding_meet_title">以后，我们怎么称呼彼此？</string>
+    <string name="onboarding_meet_body">我会记住这个称呼，以后聊天、办事都这样叫。</string>
+    <string name="onboarding_meet_assistant">你想怎么叫我？</string>
+    <string name="onboarding_meet_andy">安迪</string>
+    <string name="onboarding_meet_other">其它</string>
+    <string name="onboarding_meet_custom_hint">输入你喜欢的名字</string>
+    <string name="onboarding_meet_user">我该怎么称呼你？</string>
+    <string name="onboarding_meet_user_hint">比如：老陈、李女士</string>
+    <string name="onboarding_meet_continue">就这样认识吧</string>
+    <string name="onboarding_meet_name_required">告诉我一个称呼，我们就可以开始了。</string>
+
+    <string name="onboarding_ready_badge">准备好了</string>
+    <string name="onboarding_ready_title">%1$s，我记住你了</string>
+    <string name="onboarding_ready_body">我是%1$s。以后你只要说想做什么，我会自己找 App、找工具、找别的 Andee，一直跟到有结果。</string>
+    <string name="onboarding_ready_memory">我记得你的偏好和重要的人</string>
+    <string name="onboarding_ready_proactive">你交代的事，我主动盯着</string>
+    <string name="onboarding_ready_control">关键操作前，我先问你</string>
+    <string name="onboarding_ready_start">开始一起做事</string>
+
+    <!-- The notification listener, named in system settings. -->
+    <string name="notification_relay_label">Andee 通知读取</string>
+
+    <!--
+        The settings sheet. Default language is Chinese: this file is `values/`
+        so an unmatched locale falls back here, and the app has shipped Chinese
+        from the start. `values-en/` mirrors it key for key — a key added here
+        and not there silently shows Chinese on an English tablet.
+
+        Not every Chinese literal in the app belongs in here. The policy — what
+        the user reads versus what the model reads versus what matches system
+        text — is written out at the top of `values-en/strings.xml`; read that
+        before adding a string or "fixing" a deliberate omission.
+    -->
+    <string name="settings_title">设置</string>
+    <string name="settings_default_device_name">这台设备</string>
+    <string name="settings_factory_reset">恢复出厂设置</string>
+    <string name="common_cancel">取消</string>
+    <string name="common_save">保存</string>
+    <string name="settings_factory_reset_confirm_title">恢复出厂设置？</string>
+    <string name="settings_factory_reset_list_intro">下面这些会被删掉，删了就找不回来：</string>
+    <string name="settings_factory_reset_after">设备会回到刚装好的样子：CodeFlying key 会保留，其他 key 要重新填，唤醒词要重新录。</string>
+    <string name="settings_factory_reset_back">不，返回</string>
+    <string name="settings_factory_reset_confirm">确认清空</string>
+    <!-- The three destructive buttons sit together at the foot of the 诊断
+         section, not in the footer beside 取消/保存: a destructive control
+         beside the card's two ways out reads as a third way out. -->
+    <string name="settings_clear_chat">清空聊天记录</string>
+    <string name="settings_clear_chat_confirm_title">清空聊天记录？</string>
+    <string name="settings_clear_chat_confirm_body">对话记录和它生成过的页面会删掉，这场对话聊过的内容它也会忘掉。小本本不受影响。</string>
+    <string name="settings_clear_chat_confirm">确认清空</string>
+    <!-- 小本本是跨对话留下来的东西，所以和清空聊天记录是两件事，各清各的。 -->
+    <string name="settings_clear_notes">清空小本本</string>
+    <string name="settings_clear_notes_confirm_title">清空小本本？</string>
+    <string name="settings_clear_notes_confirm_body">它记下的事、你的偏好、还没到点的提醒，都会删掉，找不回来。这场聊天记录不受影响。</string>
+    <string name="settings_clear_notes_confirm">确认清空</string>
+    <string name="settings_section_brain">后端</string>
+    <string name="settings_brain_panel_note">提供 AI 模型和语音服务，Andee 靠它思考、听和说。</string>
+    <string name="settings_brain_cloud">云端</string>
+    <string name="settings_brain_local">本机</string>
+    <string name="settings_brain_codeflying">CodeFlying</string>
+    <string name="settings_show_hub">显示云端选项</string>
+    <string name="settings_show_hub_note">把「云端」加到后端选项里，用来连你自己搭的 Hub。</string>
+    <string name="settings_brain_codeflying_note">CodeFlying（CodeFlying.net）：默认模型和语音都帮你配好，填上密钥就能用。还能直接调用海量第三方能力 —— AI 画图/做视频/写音乐、定位、天气、PDF 转换、搜索、新闻、股票……全部由 CodeFlying 统一封装、统一计费，不用自己逐个去申请密钥、对账单。\n\n提示：使用 CodeFlying 的后端服务可能会产生费用。</string>
+    <string name="settings_hub_url">Hub 地址</string>
+    <!-- The hub URL box is empty on a fresh install — the hint is what the
+         user sees in that empty box, so it is the pitch, not the format. -->
+    <string name="settings_hub_url_hint">链接你的云端Agent</string>
+    <string name="settings_device_name">设备名</string>
+    <string name="settings_device_name_hint">Hub 那边怎么称呼这台设备</string>
+    <string name="settings_brain_cloud_note">大脑在你自己搭的 Hub 那边，这台设备只负责动手。</string>
+    <string name="settings_llm_api_key">接口密钥</string>
+    <string name="settings_llm_model">模型</string>
+    <string name="settings_llm_base_url">接口地址</string>
+    <string name="settings_llm_thinking">深度思考</string>
+    <string name="common_on">开</string>
+    <string name="common_off">关</string>
+    <string name="settings_llm_effort">思考强度</string>
+    <string name="common_high">高</string>
+    <string name="common_medium">中</string>
+    <string name="common_low">低</string>
+    <string name="settings_brain_local_note">设备自己跑 agent loop，不连 Hub。没有 Key 就不会接管。</string>
+    <string name="settings_codeflying_get_key">没有密钥？到下面的链接注册登录，复制你的密钥粘贴到下方输入框。新用户可免费获得额度。</string>
+    <string name="settings_codeflying_open_site">打开 CodeFlying.net ›</string>
+    <string name="codeflying_url" translatable="false">https://www.codeflying.net/andee</string>
+    <string name="settings_no_key_use_codeflying">没有密钥？点这里切换到 CodeFlying 配置</string>
+    <string name="settings_codeflying_key">CodeFlying 密钥</string>
+    <string name="common_copy">复制</string>
+    <string name="common_copied">已复制</string>
+    <string name="settings_section_wake">语音唤醒</string>
+    <string name="settings_wake_enrolled">已录入 —— 说出你录的唤醒词就行</string>
+    <string name="settings_wake_not_enrolled">未录入 —— 自己选个词录 3 遍就能语音唤醒，例如「嘿 Andee」</string>
+    <string name="settings_wake_record">录入</string>
+    <string name="settings_wake_locked_on">锁屏时也听：已开启</string>
+    <string name="settings_wake_locked_off">锁屏时也听：已关闭</string>
+    <string name="settings_wake_locked_note">屏幕关闭时也会听。更耗电，麦克风会一直开着，状态栏的录音提示也会一直显示。</string>
+    <string name="common_clear">清除</string>
+    <string name="common_delete">删除</string>
+    <string name="settings_section_vault">保险箱</string>
+    <string name="settings_vault_empty_note">还没有存账号 —— 存了之后，Andee 办事时可以直接用它们登录</string>
+    <string name="settings_vault_count_note">已存 %1$d 个账号 —— 手机号邮箱大脑读得到，密码只由设备替你敲进输入框</string>
+    <string name="settings_section_gear">装备</string>
+    <string name="settings_gear_empty_note">还没扫描过装了哪些 App。扫描后，它动手前会先看有没有现成的工具可以用。</string>
+    <string name="settings_gear_count_note">装了 %1$d 个，它记过其中 %2$d 个是干什么的 —— 你可以看、改、让它别再提某一个</string>
+    <string name="settings_gear_manage">查看 / 管理</string>
+    <string name="gear_title">装备</string>
+    <string name="gear_installed">已安装 %1$d</string>
+    <string name="gear_kinds_title">让它知道哪些</string>
+    <string name="gear_kinds_note">这是你的决定。关掉的类别不会出现在它读到的任何地方，连「另有几个」的数字里也不算。</string>
+    <string name="gear_kind_adult">成人</string>
+    <string name="gear_kind_finance">金融</string>
+    <string name="gear_kind_health">健康</string>
+    <string name="gear_kind_dating">交友</string>
+    <string name="gear_kind_other">其它</string>
+    <string name="gear_tell">告诉它</string>
+    <string name="gear_hide">不告诉它</string>
+    <string name="gear_rescan">重新扫描</string>
+    <string name="gear_scanning">扫描中…</string>
+    <string name="gear_scanned_ago">上次扫描 %1$s</string>
+    <string name="gear_never_scanned">还没扫描过</string>
+    <string name="gear_scan_note">每天第一次对话时也会自动扫描一次。「最近用过、用了几次」由系统记录，含义由它用过之后自己写。</string>
+    <string name="gear_usage_access_note">现在拿不到每个 App 用了几次 —— 要开「使用情况访问」才有。没开时只按它自己打开过的次数排序。</string>
+    <string name="gear_usage_access_open">去开启</string>
+    <string name="gear_hidden_from_it">对它隐藏</string>
+    <string name="gear_unlearned">它还没记过这个是干什么的</string>
+    <string name="gear_by_user">你写的，它不会改</string>
+    <string name="gear_can_do">能替你：%1$s</string>
+    <string name="gear_signed_in">已登录</string>
+    <string name="gear_signed_out">未登录</string>
+    <string name="gear_last_used">最近 %1$s</string>
+    <string name="gear_uses">%1$d 次</string>
+    <string name="gear_edit">编辑</string>
+    <string name="gear_ignore">不再提这个</string>
+    <string name="gear_unignore">恢复告诉它</string>
+    <string name="gear_forget">忘掉它学到的</string>
+    <string name="gear_forget_confirm">确认忘掉</string>
+    <string name="gear_field_does">这是什么</string>
+    <string name="gear_field_can_do">能替你做什么</string>
+    <string name="gear_none_match">没有匹配的。</string>
+    <string name="gear_search">搜索</string>
+    <string name="settings_section_peers">朋友</string>
+    <string name="settings_peers_note">Andee 可以请朋友帮忙：你自己的其它设备，或者别人的 Andee。</string>
+    <string name="settings_peers_count_note">%1$d 个朋友</string>
+    <string name="settings_peers_manage">查看 / 添加</string>
+    <string name="peers_title">朋友</string>
+    <string name="peers_subtitle">Andee 可以请朋友帮忙：你自己的其它设备，或者别人的 Andee</string>
+    <string name="peers_this">这台设备</string>
+    <string name="peers_fingerprint">指纹 %1$s</string>
+    <string name="peers_visible_title">允许其它设备找到我</string>
+    <string name="peers_visible_note">打开后，朋友在同一个 Wi-Fi 里能找到这台设备。不是朋友的设备连不上，也看不到任何内容。</string>
+    <string name="peers_add_title">添加</string>
+    <string name="peers_paired">朋友 %1$d</string>
+    <string name="peers_none">还没有。</string>
+    <string name="peers_linked">已连接</string>
+    <string name="peers_nearby_state">在附近</string>
+    <string name="peers_away">不在附近</string>
+    <string name="peers_connect">连接</string>
+    <string name="peers_ping">测试</string>
+    <string name="peers_unpair">删除</string>
+    <string name="peers_unpair_confirm">确认删除</string>
+    <string name="peers_pairing">配对中…</string>
+    <string name="gear_subtitle">装了什么、各是干什么的 —— 它动手前会先看这里</string>
+    <string name="settings_vault_manage">管理</string>
+    <string name="settings_section_voice">火山接口地址</string>
+    <string name="settings_section_voice_key">语音</string>
+    <string name="settings_voice_factory_note">源码不带密钥。填上自己的 Key 才听得见、说得出;下面几行留空用默认地址即可。</string>
+    <string name="settings_voice_api_key">火山 API Key</string>
+    <string name="settings_voice_api_key_hint">火山引擎语音服务的 Key,听和说都靠它</string>
+    <string name="settings_voice_in_use">现在用的</string>
+    <string name="settings_voice_in_use_own">你自己填的那个火山账号</string>
+    <string name="settings_voice_in_use_factory">还没填,听和说都用不了</string>
+    <string name="settings_voice_asr_endpoint">识别地址</string>
+    <string name="settings_voice_asr_resource_id">识别资源 ID</string>
+    <string name="settings_voice_tts_endpoint">合成地址</string>
+    <string name="settings_voice_tts_resource_id">合成资源 ID</string>
+    <string name="settings_voice_tts_sample_rate">合成采样率</string>
+    <string name="settings_voice_provider_huoshan">火山</string>
+    <string name="settings_voice_provider_google">谷歌</string>
+    <string name="settings_voice_hear_provider">识别（听）</string>
+    <string name="settings_voice_speak_provider">朗读（说）</string>
+    <string name="settings_voice_provider_system">系统</string>
+    <string name="settings_google_api_key">Google API Key</string>
+    <string name="settings_google_api_key_hint">Google AI Studio API Key (免费免信用卡)，识别与朗读通用</string>
+    <string name="settings_google_key_builtin">已内置(编译时写入),留空即用它</string>
+    <string name="settings_google_project">项目号（可选）</string>
+    <string name="settings_google_project_hint">使用 Vertex AI 时填写 GCP 项目编号，默认 AI Studio 留空即可</string>
+    <string name="settings_google_location">区域（可选）</string>
+    <string name="settings_google_asr_model">识别模型</string>
+    <string name="settings_google_tts_model">合成模型</string>
+    <string name="settings_google_base_url">接口地址</string>
+    <string name="settings_google_language">语言</string>
+    <string name="settings_google_language_hint">留空 = 自动判断</string>
+    <string name="settings_voice_google_note">识别走 Gemini Live 双向流式，合成走 HTTP/SSE。免费零信用卡，密钥仅保存在本地设备。</string>
+    <string name="settings_section_diagnostics">诊断</string>
+    <string name="settings_section_advanced">高级</string>
+    <string name="settings_max_steps">单次任务最多步数</string>
+    <string name="settings_max_steps_note">每轮任务里 AI 最多能调用多少次工具。超过就停下并给个结束语，防止死循环烧 token。默认 40，一般的任务十几步就够了。</string>
+    <string name="settings_advanced_note">显示云端选项、打字、诊断和恢复出厂设置。日常用不到，都藏在这里。</string>
+    <string name="settings_grounding">接地采集</string>
+    <string name="settings_grounding_note">把坐标点击和截图记到 files/grounding 供离线分析 —— 它会拍下你当时在做的事。改完要重开无障碍服务才生效。</string>
+    <string name="settings_device_id">设备 ID</string>
+    <string name="settings_section_notebook">小本本</string>
+    <string name="settings_notebook_sweep_note">聊完静下来之后，它会自己回头看一眼：该记的记下、该跟的排上。默认开着 —— 「它记得住」就是这么来的。关掉之后不再花你的 key 做这件事。</string>
+    <string name="settings_notebook_quiet_minutes">静默多久算聊完（分钟）</string>
+    <string name="settings_notebook_daily_cap">每天最多复盘几次</string>
+    <string name="settings_notebook_today">今天 / 攒到现在</string>
+    <string name="settings_notebook_stats">复盘 %1$d 次（约 %2$d tokens）· 记住 %3$d 条 · 还欠着 %4$d 件事</string>
+    <string name="settings_notebook_browse">看它记得的事</string>
+    <string name="settings_section_notify">消息提醒</string>
+    <string name="settings_notify_chat">聊天类</string>
+    <string name="settings_notify_all">全部</string>
+    <string name="settings_notify_note">来消息的时候，它先自己看一眼值不值当：没事的就放过，要紧的说一声，该办的直接去办。「聊天类」是微信、QQ、钉钉、飞书、短信这些有人在那头的；「全部」连其它 App 也一起看（进度条、常驻通知除外）。拿不准的才弹牌子问你。关掉就谁也不打扰你 —— 消息都还在，想知道的时候问它一声就行。</string>
+    <string name="nudge_muted_row">好，像「%1$s」这样的以后不提了。想恢复，到 设置 → 主动招呼。</string>
+    <string name="settings_section_drive">自己动起来</string>
+    <string name="settings_drive_note">它心里记着几件在意的事，每件都有「多久该看一次」。它大约每 20 分钟想一想：有没有哪件拖得太久、现在值得去做。值得就自己做一会儿——写方案、整理它认识的人、记下想法，最多留一个气泡——不碰屏幕，不出声，也不替你发任何东西。不看你在不在，也不分白天夜里：每天最多想 40 次、动手 6 次，两次之间至少隔一小时；点一下球它立刻停下来。没有拖久的事时不花你的 key。关掉就只在你叫它时才动。</string>
+    <string name="settings_section_nudge">主动招呼</string>
+    <string name="settings_nudge_few">少</string>
+    <string name="settings_nudge_normal">正常</string>
+    <string name="settings_nudge_note">它有时会在球的头上冒一个小气泡，比如「该喝水啦」「要帮你点外卖吗？」。不出声，不理它几秒后就自己消失；你在忙、在说话或者锁屏时都不会出。「少」是每小时最多 1 个、每天 4 个，「正常」是每小时 2 个、每天 8 个。长按某个气泡，这一类以后就不再提。</string>
+    <string name="settings_nudge_muted">长按关掉的：%1$s</string>
+    <string name="settings_nudge_unmute">全部恢复</string>
+    <string name="settings_section_plan">它的打算</string>
+    <string name="settings_plan_today">今天</string>
+    <string name="settings_plan_none_today">今天还没有计划。它会在你们安静一阵后的复盘里写出来。</string>
+    <string name="settings_plan_quiet">今天不打扰：%1$s</string>
+    <string name="settings_plan_directions">长期在帮你做的事</string>
+    <string name="settings_plan_none_directions">还没有。它只会根据你说过的话来写。</string>
+    <string name="settings_plan_pause">暂停</string>
+    <string name="settings_plan_resume">恢复</string>
+    <string name="settings_plan_remove">移除</string>
+    <string name="settings_plan_tell">告诉它一句</string>
+    <string name="settings_plan_tell_hint">比如：今天别提喝水了</string>
+    <string name="settings_plan_send">发送</string>
+    <string name="settings_plan_sent">已转告，它会自己调整计划。</string>
+    <string name="settings_plan_kind_remind">提醒</string>
+    <string name="settings_plan_kind_ask">问一句</string>
+    <string name="settings_plan_kind_prepare">准备</string>
+    <string name="settings_plan_kind_follow_up">跟进</string>
+    <string name="settings_plan_st_planned">待做</string>
+    <string name="settings_plan_st_done">已做</string>
+    <string name="settings_plan_st_declined">不用了</string>
+    <string name="settings_plan_st_ignored">没理</string>
+    <string name="settings_plan_st_missed">错过</string>
+    <string name="settings_plan_st_skipped">跳过</string>
+    <string name="settings_plan_st_moved">推迟</string>
+    <string name="settings_plan_st_dropped">已移除</string>
+    <string name="settings_section_typing">打字</string>
+    <string name="settings_typing_no_ime">这台设备上只有 ADBKeyboard（它没有键盘界面），所以现在打不了字。去系统设置里启用一个输入法，这里就会出现。</string>
+    <string name="settings_typing_current">你现在的输入法</string>
+    <string name="settings_typing_note">平时就是你自己的输入法 —— 任何 App 里都能正常打字。我替你打字时会临时切到 ADBKeyboard（它没有键盘界面，只能这么用），打完立刻切回来。</string>
+    <string name="common_show">显示</string>
+    <string name="common_hide">隐藏</string>
+
+    <!-- The pinned gesture tips at the bottom of the full card. The swipe hint
+         is last because it is the one gesture that only exists unfolded — the
+         folded ball reads a horizontal flick as a move instead. -->
+    <string name="window_tips">点小球说话 · 双击打字 · 滑动切换性格</string>
+
+    <!-- 产物: the pages the assistant has made. See ui/ArtifactsUi.kt. -->
+    <string name="artifacts_title">产物</string>
+    <string name="artifacts_subtitle">它为你做的网页</string>
+    <string name="artifacts_open">打开</string>
+    <string name="artifacts_edit">继续修改</string>
+    <string name="artifacts_delete_confirm">确认删除</string>
+    <string name="artifacts_empty">还没有产物。\n让它给你做个网页试试，比如「做个番茄钟」。</string>
+    <string name="artifacts_cap_note">只保留最近 100 个</string>
+    <!-- 版本: a revision of an artifact. See ChatHistory.Entry.version. -->
+    <string name="artifacts_versions">版本</string>
+    <string name="artifacts_versions_count">%1$d 个版本</string>
+    <string name="artifacts_version_current">当前</string>
+    <string name="artifacts_version_gone">已清理</string>
+    <string name="artifacts_restore">回到这版</string>
+    <!-- Shown on the card after 继续修改, while it waits for the change. -->
+    <string name="artifacts_edit_prompt">要怎么改「%1$s」？说出来或打字告诉我</string>
+    <!-- The scrollback row for the user's change request. -->
+    <string name="artifacts_edit_said">修改「%1$s」：%2$s</string>
+
+    <!-- 情景: ways of working it learned with the user. See ui/ScenesUi.kt. -->
+    <string name="scenes_title">情景</string>
+    <string name="scenes_subtitle">它和你一起总结出来的做事方式</string>
+    <string name="scenes_enter">进入</string>
+    <string name="scenes_exit">退出</string>
+    <string name="scenes_active">当前情景</string>
+    <string name="scenes_show_prompt">看规则</string>
+    <string name="scenes_hide_prompt">收起</string>
+    <string name="scenes_empty">还没有情景。\n和它多做几次同一类事——比如陪练英语——它会提议存成情景。也可以直接说「把这个存成情景」。</string>
+    <string name="scenes_edit_note">要修改情景，直接对它说，比如「把练英语改成每次只纠一个错」</string>
+    <string name="scenes_meta_uses">用过 %1$d 次</string>
+    <string name="scenes_meta_auto">打开 %1$s 时自动进入</string>
+    <!-- The chip on the unfolded card while a scene is active. -->
+    <string name="scenes_chip">情景 · %1$s</string>
+    <!-- Scrollback rows written by the device itself when a scene starts or ends. -->
+    <string name="scenes_entered_row">（进入情景：%1$s）</string>
+    <string name="scenes_exited_row">（退出情景：%1$s）</string>
+    <!-- Ready-made scenes offered at the foot of the card; see config/ScenePresets.kt. -->
+    <string name="scenes_presets_title">现成的情景</string>
+    <string name="scenes_presets_note">点「采用」才会存进来，存好之后和你自己的情景一样，随时可以改、可以删。</string>
+    <string name="scenes_preset_adopt">采用</string>
+    <!-- Scrollback row: the device switched on a system accessibility helper so an app would expose its UI. -->
+    <string name="tree_helper_enabled_row">（这个应用把界面藏起来了，已打开系统的「无障碍增强」服务让它交出来）</string>
+    <string name="settings_scenes_browse">管理情景</string>
+
+    <!-- The 恢复出厂设置 confirmation list: one line per thing wiped.
+         Kept beside config/FactoryReset.kt, which walks them in this order. -->
+    <string name="factory_reset_target_keys">火山 key、DeepSeek key，以及所有语音与大脑的设置</string>
+    <string name="factory_reset_target_notebook">小本本：记住的事、答应过还没办的事</string>
+    <string name="factory_reset_target_vault">保险箱里存的账号密码和银行卡</string>
+    <string name="factory_reset_target_wake">唤醒词的录音（要重新录一遍）</string>
+    <string name="factory_reset_target_history">对话历史，和它生成过的页面</string>
+    <string name="factory_reset_target_web">内置页面留下的 cookie 与本地存储</string>
+    <string name="factory_reset_target_grounding">接地采集存下的截图与日志</string>
+    <string name="vault_title">保险箱</string>
+    <string name="vault_edit_title">编辑账号</string>
+    <string name="vault_intro">存在这里的账号,Andee 办事时可以直接用来登录。\n密码只会被它替你敲进输入框,不会交给远端的大脑。</string>
+    <string name="vault_empty">还没有存任何账号。</string>
+    <string name="vault_add_account">+ 新增账号</string>
+    <string name="vault_password_saved">密码 已存</string>
+    <string name="vault_summary_empty">(空)</string>
+    <string name="vault_delete">删除</string>
+    <string name="vault_field_name">名称</string>
+    <string name="vault_field_name_hint">飞书 / 公司邮箱 —— 大脑按这个名字找</string>
+    <string name="vault_field_phone">手机号</string>
+    <string name="vault_field_email">邮箱</string>
+    <string name="vault_field_username">用户名</string>
+    <string name="vault_field_password">密码</string>
+    <string name="vault_password_note">密码只会被敲进输入框,不会返回给大脑。</string>
+    <string name="vault_field_note">备注</string>
+    <string name="vault_field_note_hint">「用手机验证码登录」之类的提示,大脑读得到</string>
+    <string name="vault_section_card">银行卡(可选)</string>
+    <string name="vault_card_note">卡号、有效期、安全码和密码一样,只会被敲进输入框,不会返回给大脑。支付宝 / 微信 / 银行 App 的支付键盘是它们自己画的,敲不进去 —— 这里填的是网页或 App 的结账表单、绑卡页。付款本身仍然由你来确认。</string>
+    <string name="vault_field_card_holder">持卡人</string>
+    <string name="vault_field_card_holder_hint">卡上印的名字,大脑读得到</string>
+    <string name="vault_field_card_number">卡号</string>
+    <string name="vault_field_card_expiry">有效期</string>
+    <string name="vault_field_card_expiry_hint">MM/YY</string>
+    <string name="vault_field_card_cvv">安全码 CVV</string>
+    <string name="vault_label_card_last4">尾号</string>
+    <string name="vault_error_name_required">名称不能为空</string>
+    <string name="wake_title">教我认你的唤醒词</string>
+    <string name="wake_instructions">想用什么词叫我都行，比如「嘿 Andee」。建议 3 到 5 个字，念起来半秒以上 —— 太短的词容易认错，也可能录不进去。点「开始」，然后像平时叫我那样说一遍，说完会自动停。一共要说 %1$d 次，每次都说同一个词 —— 别刻意念得比平时清楚，不然平时那样叫我反而认不出来。</string>
+    <string name="wake_progress">%1$d / %2$d</string>
+    <string name="wake_status_enrolled">已经录过了，再录一次会覆盖。</string>
+    <string name="wake_status_not_enrolled">还没录过。想好一个词（例如「嘿 Andee」），点「开始」。</string>
+    <string name="wake_close">关闭</string>
+    <string name="wake_start">开始</string>
+    <string name="wake_listening">听着…</string>
+    <string name="wake_speak_now">说吧 —— 你的唤醒词</string>
+    <string name="wake_retry">再来一次</string>
+    <string name="wake_not_heard">没听清 —— 离近一点，说完等半秒再看屏幕。</string>
+    <string name="wake_say_again">再说一次</string>
+    <string name="wake_received">收到（%1$d 毫秒）。还差 %2$d 次。</string>
+    <string name="wake_rerecord">重录</string>
+    <string name="wake_done">好了，说出你录的唤醒词就行。（阈值 %1$s）</string>
+    <!-- device/LookActivity.kt -->
+    <string name="dev_look_focusing">正在对焦…</string>
+    <string name="dev_look_seen">看到了</string>
+    <string name="dev_look_unclear">没看清</string>
+    <string name="dev_look_resting">正在看…</string>
+    <string name="dev_look_resting_front">前置 · 正在看…</string>
+    <string name="dev_camera_unavailable">摄像头打不开</string>
+    <!-- device/ScanActivity.kt -->
+    <string name="dev_scan_align">对准二维码 / 条形码</string>
+    <!-- device/NotificationRelayService.kt: the signboard shown when a
+    message app pings. The app name is passed in, not translated here. -->
+    <string name="dev_notif_card_title">收到%1$s消息</string>
+    <string name="dev_notif_card_unread">收到%1$s消息（%2$d 条未读）</string>
+    <string name="dev_notif_card_look">帮我看看</string>
+    <string name="dev_notif_card_ignore">忽略</string>
+    <!-- device/PermissionsController.kt: the one sentence the brain reads
+    aloud, plus the per-grant phrase it is built from. -->
+    <string name="dev_perm_feature_location">位置(在哪/导航)</string>
+    <string name="dev_perm_feature_steps">运动步数</string>
+    <string name="dev_perm_feature_contacts">通讯录(打电话找人)</string>
+    <string name="dev_perm_feature_call_phone">直接拨号</string>
+    <string name="dev_perm_feature_call_log">通话记录</string>
+    <string name="dev_perm_feature_sms">读短信(验证码)</string>
+    <string name="dev_perm_feature_sms_send">发短信</string>
+    <string name="dev_perm_feature_calendar">日历(日程提醒)</string>
+    <string name="dev_perm_feature_calendar_write">写日历(记日程)</string>
+    <string name="dev_perm_feature_notify_post">弹出通知(提醒,和"回到我"的那条)</string>
+    <string name="dev_perm_feature_notifications">通知感知(微信来消息我知道)</string>
+    <string name="dev_perm_feature_overlay">悬浮窗(我的脸)</string>
+    <string name="dev_perm_say_prefix">需要开启: %1$s。</string>
+    <string name="dev_perm_say_sep">、</string>
+    <string name="dev_perm_say_runtime">会弹窗,点允许即可。</string>
+    <string name="dev_perm_say_notification">会打开通知使用权设置,找到这个应用打开开关。</string>
+    <string name="history_empty">还没有对话</string>
+    <string name="history_suggest_hint">告诉我，或者选一个</string>
+    <string name="suggestion_turn">进入「%1$s」情景。%2$s</string>
+    <string name="history_role_you">你 · %1$s</string>
+    <string name="history_role_assistant">Andee · %1$s</string>
+    <string name="history_role_error">出错 · %1$s</string>
+    <string name="settings_section_timeline">对话里显示</string>
+    <string name="stage_tab_chat">对话</string>
+    <string name="stage_tab_stage">舞台</string>
+    <string name="stage_empty_title">这里是 Andee 的地方</string>
+    <string name="stage_empty_body">它还没布置。等它空下来，会自己在这里放点东西。</string>
+    <string name="stage_empty_button">现在就让它布置</string>
+    <string name="stage_furnish_turn">首页中间这块舞台是你的地方，现在还空着。布置一下吧，第一次就写写你自己。</string>
+    <string name="history_page_kind">页面</string>
+    <string name="history_page_footer">Andee 做的页面 · 点击打开</string>
+    <string name="history_role_page_open">界面 · %1$s · 点击重新打开</string>
+    <!-- 话题: a finished stretch of conversation, folded into one card. -->
+    <string name="history_topic_label">话题</string>
+    <string name="history_topic_meta">%1$s · %2$d 条</string>
+    <string name="history_topic_continue">继续话题</string>
+    <string name="history_topic_transcript">对话记录</string>
+    <string name="history_topic_outputs">产出物（%1$d）</string>
+    <string name="history_topic_outputs_hide">收起产出物</string>
+    <string name="history_topic_output_item">%1$s · v%2$d</string>
+    <string name="topic_continue_prompt">继续「%1$s」：接下来想做什么？说出来或打字告诉我</string>
+    <string name="topic_continue_said">继续「%1$s」：%2$s</string>
+    <string name="textpage_topic_head">话题 · %1$s</string>
+    <string name="textpage_topic_gone">这段对话的原文已经清理，只剩话题卡片上的摘要。</string>
+    <string name="history_role_page_cleared">界面 · %1$s · 已清理</string>
+    <string name="html_default_title">AI 界面</string>
+    <string name="textpage_role_you">你</string>
+    <string name="textpage_role_assistant">Andee</string>
+    <string name="textpage_role_error">出错</string>
+    <string name="textpage_role_page">界面</string>
+    <!-- 是什么把这一轮叫起来的。原来的「起因」太笼统：一条日志页的第一句
+         话要回答的就是「他为什么忽然动了」，而这五种起因讲的是五个不同的故事。 -->
+    <string name="tracepage_kind_user">你开口了</string>
+    <string name="tracepage_kind_wake">一件待办到点了</string>
+    <string name="tracepage_kind_notify">来了一条通知</string>
+    <string name="tracepage_kind_sweep">安静时段的回顾</string>
+    <string name="tracepage_kind_harvest">整理对话前的回顾</string>
+    <string name="tracepage_kind_other">起因</string>
+    <string name="tracepage_step">步骤 %1$d</string>
+    <string name="tracepage_tokens">上下文 %1$s token</string>
+    <string name="tracepage_calls">%1$d 个工具调用</string>
+    <string name="tracepage_no_calls">没有调用工具</string>
+    <string name="tracepage_said">说</string>
+    <string name="tracepage_thought">想</string>
+    <!-- end 事件只在**非正常收尾**时才写：抛异常、复读保护、超步数。
+         所以这张卡永远不是在报「顺利结束」，标题不能那么平淡。 -->
+    <string name="tracepage_end">这一轮没能自己跑完</string>
+    <string name="tracepage_gone">这一轮的日志已经不在了</string>
+    <string name="tracepage_gone_hint">它可能已经被更新的日志挤掉了，或者这一轮不是本地大脑跑的 —— 只有本地大脑跑过的轮次才留日志。</string>
+    <string name="card_ack">知道了</string>
+    <string name="bubble_tap_to_talk">点击说话</string>
+    <string name="input_hint">打字跟它说…</string>
+    <string name="input_send">发送</string>
+    <string name="input_hint_photos">可以直接发送，或者补一句…</string>
+    <string name="input_take_photo">拍照</string>
+    <string name="input_pick_photos">选图片</string>
+    <string name="input_photos_row">［%1$d 张图片］</string>
+    <string name="cam_close">✕ 完成</string>
+
+    <!--
+        BodyCoreService.kt: the lines this file shows on its own — the ball's
+        chrome, and the cards it pops when the microphone or the brain is not
+        there.
+
+        Every one of these is display-only. The neighbouring Chinese in that
+        file is *not*: `meetingMinutesQuery`, `callSummaryQuery`, the
+        `LocalBrain.note` stage direction and the todo wake-up prompts are text
+        written **to the model**, and the language of a prompt decides the
+        language of the answer. They are deliberately left alone — an English
+        interface must not become a Chinese reply. See the note at the top of
+        `values-en/strings.xml`.
+
+        `%1$s`/`%1$d` are substitutions, not literal text. `ADBKeyboard` and
+        `key` stay as they are: they are the name of an app and of a field in
+        the settings card, and neither is translated on either side.
+    -->
+    <string name="svc_call_in_progress">通话中，等挂断了再跟我说吧</string>
+    <string name="svc_no_typable_ime">这台设备上只有 ADBKeyboard（它没有键盘界面），打不了字。\n去系统设置里启用一个输入法就行。</string>
+    <string name="svc_voice_error_line">语音：%1$s</string>
+    <string name="svc_voice_failed">语音用不了了。\n%1$s</string>
+    <!--
+        The two buttons off the failure cards, and the shared dismiss. They are
+        compared by identity in the code that builds them, so the label a
+        handler tests against and the label the user reads are always the same
+        lookup — see `reportVoiceFailure`.
+    -->
+    <string name="svc_btn_type_instead">打字说</string>
+    <string name="svc_btn_open_settings">打开设置</string>
+    <string name="svc_stopped">已停止</string>
+    <string name="svc_exit_meeting_active">正在记录会议，请先结束会议并保存纪要，再退出安迪。</string>
+    <!--
+        The two parenthesised rows dropped into the scrollback when a recording
+        winds itself up. They read as a stage direction on purpose, mirroring
+        the shape the brain is handed — but they are only ever displayed:
+        `ChatHistory` is read by `HistoryListView` and nothing else, and the
+        model is given `meetingMinutesQuery`/`callSummaryQuery` instead.
+    -->
+    <string name="svc_meeting_ended_line">（会议记录结束，共 %1$d 字，正在整理纪要…）</string>
+    <string name="svc_call_ended_line">（通话结束，共 %1$d 字，正在整理…）</string>
+    <string name="svc_notification_look_line">（%1$s 来消息了，我点了「看看」…）</string>
+    <string name="svc_notification_auto_line">（%1$s 来消息了，我自己看一眼…）</string>
+    <string name="svc_no_brain_hub">还没有接上大脑，我说不上话。</string>
+    <string name="svc_no_brain_local">本地大脑还没配 key，我说不上话。</string>
+    <string name="svc_no_brain_codeflying">还没有 CodeFlying 密钥，我说不上话。</string>
+    <string name="svc_btn_get_key">获取密钥</string>
+
+    <!--
+        config/Notebook.kt — the read-only dump the settings sheet renders. The
+        values that end in a space or a newline are quoted, which is what keeps
+        aapt from trimming them. The *other* strings in Notebook (the "name 不能
+        为空" family) are tool results written to the model and stay Chinese.
+    -->
+    <string name="notebook_dump_header">"小本本 · 记忆 %1$d 条\n"</string>
+    <string name="notebook_dump_sort_note">"（下面按类型和最近更新排列，只读）\n\n"</string>
+    <string name="notebook_dump_empty_memories">"（还没有记下任何东西）\n"</string>
+    <string name="notebook_dump_expired">"  [已过期]"</string>
+    <string name="notebook_dump_source">" · 来源 "</string>
+    <string name="notebook_dump_hits">" · 被查过 %1$d 次\n\n"</string>
+    <string name="notebook_dump_todos_header">"\n待办 %1$d 条\n\n"</string>
+    <string name="notebook_dump_empty_todos">"（没有）\n"</string>
+    <string name="notebook_dump_recurring">周期 %1$s</string>
+    <string name="notebook_dump_next">" · 下次 "</string>
+    <string name="notebook_dump_last_error">"   上次出错："</string>
+
+    <!--
+        ui/NotebookUi.kt — the browse-and-delete page, as opposed to the
+        export-shaped dump above. Unlike the dump these are read by the *user*,
+        so they are translated like any other chrome, and the type names are
+        words rather than the raw enum values ("没接住" is not a word a person
+        uses; 踩过的坑 is).
+    -->
+    <string name="wechat_title">加 Andee 为微信好友</string>
+    <string name="wechat_hint">用微信扫码，添加 Andee 为好友</string>
+    <string name="wechat_save">保存到相册</string>
+    <string name="wechat_saved">已保存到相册，在微信「扫一扫」里选图片即可</string>
+    <string name="wechat_save_failed">没存上，可以截屏保存</string>
+    <string name="tl_woke">提醒到点：%1$s</string>
+    <string name="tl_notified">一条通知值得处理，开始做</string>
+    <string name="tl_friend_task">另一台设备的 Andee 交来一件事</string>
+    <string name="tl_reviewed">复盘了一遍，记下 %1$s 处</string>
+    <string name="tl_folded">收起了一个话题：%1$s</string>
+    <string name="tl_diary">写了今天的日记</string>
+    <string name="tl_self">改写了自我描述</string>
+    <string name="tl_wiki">写进维基：%1$s</string>
+    <string name="tl_wiki_read">翻出了维基：%1$s</string>
+    <string name="tl_wiki_shown">给你看了维基：%1$s</string>
+    <string name="tl_person">记下了一个人：%1$s</string>
+    <string name="tl_care_add">开始在意：%1$s</string>
+    <string name="tl_care_done">一件在意的事做完了</string>
+    <string name="tl_care_drop">放下了一件在意的事</string>
+    <string name="tl_memory">记住了：%1$s</string>
+    <string name="tl_todo">排了一件待办：%1$s</string>
+    <string name="tl_todo_at">时间：%1$s</string>
+    <string name="tl_plan_today">写了今天的打算</string>
+    <string name="tl_plan_tomorrow">写了明天的打算</string>
+    <string name="tl_thought">自己想了想：%1$s</string>
+    <string name="tl_work_started">自己动起来：「%1$s」</string>
+    <string name="tl_work_acted">做完了「%1$s」的一部分</string>
+    <string name="tl_work_looked">看了看「%1$s」，没动手</string>
+    <string name="tl_work_nothing">「%1$s」这次没做成什么</string>
+    <string name="tl_bubble">冒了个气泡：%1$s</string>
+    <string name="tl_ignored">没打扰你：%1$s 的一条通知</string>
+    <string name="tl_morning">早上想好了今天的打算</string>
+    <string name="tl_held">收到 %1$s 的通知，正在忙，先放着</string>
+    <string name="tl_capped">收到 %1$s 的通知，这个小时看得太多了，先放着</string>
+    <string name="tl_diary_updated">改写了今天的日记</string>
+    <string name="tl_memory_updated">更新了记忆：%1$s</string>
+    <string name="tl_plan_today_updated">改了今天的打算</string>
+    <string name="tl_plan_tomorrow_updated">改了明天的打算</string>
+    <string name="tl_stopped">被你叫停了：%1$s</string>
+    <string name="tl_stopped_queue">被你叫停了，排着的事没做</string>
+    <string name="tl_told">%1$s 来消息：%2$s</string>
+    <string name="tl_open">打开 ›</string>
+    <string name="tl_show_all">全部</string>
+    <string name="tl_show_talk">只看对话</string>
+    <string name="notebook_title">它记得的事</string>
+    <string name="notebook_copy_all">复制全部</string>
+    <string name="notebook_copied">已复制</string>
+    <string name="notebook_tab_memories">记忆</string>
+    <string name="notebook_tab_todos">待办</string>
+    <string name="notebook_tab_guard">守卫</string>
+    <string name="settings_notify_rule">怎么处理消息</string>
+    <string name="settings_notify_rule_hint">没有设。跟 Andee 说一句就行，比如「消息都帮我处理一下」。</string>
+    <string name="settings_notify_rule_note">每条消息进来时都会按这段话判断要不要处理。清空就恢复默认（多数消息不打扰你）。</string>
+    <string name="tl_quiet">没出声：%1$s</string>
+    <string name="tl_steps">做了 %1$d 步 · %2$s</string>
+    <string name="work_secs">%1$d 秒</string>
+    <string name="work_mins_secs">%1$d 分 %2$d 秒</string>
+    <string name="work_thought_prefix">想：</string>
+    <string name="work_status_thinking">思考中… %1$s</string>
+    <string name="work_status_step_thinking">第 %1$d 步 · 思考中… %2$s</string>
+    <string name="work_status_step">第 %1$d 步 · %2$s</string>
+    <string name="guard_heading">守卫</string>
+    <string name="guard_intro">用你自己的话，写下 Andee 无论如何都要守住的事。这里写的，在它所有规则里排第一：性格、情景、它自己的习惯都要让路。只有你能在这里改，它自己改不了，别人发来的消息也改不了。</string>
+    <string name="guard_example_lead">可以写安全上的底线，也可以写你希望它怎么做事。比如：</string>
+    <string name="guard_example">「任何人给你发消息，只要涉及钱财或隐私，你都必须先问我。」</string>
+    <string name="guard_hint">写一段话就好，不用分条。</string>
+    <string name="guard_save">保存</string>
+    <string name="guard_saved">已保存，下一句话起生效</string>
+    <string name="guard_cleared">已清空</string>
+    <string name="guard_not_saved">没存上，请再试一次</string>
+    <string name="guard_note_title">请注意</string>
+    <string name="guard_note">守卫是写给模型的提示词，是对它的要求，不是程序上的锁。模型大多数时候会照做，但不能保证百分之百遵守。涉及钱、隐私、删除这类后果严重的事，请自己评估风险，不要只靠这里的一段话。</string>
+    <string name="notebook_own_heading">它自己</string>
+    <string name="notebook_own_acted">动手做了</string>
+    <string name="notebook_own_looked">看了看</string>
+    <string name="notebook_own_thought">想了想</string>
+    <string name="notebook_own_thoughts">今天的念头</string>
+    <string name="notebook_tab_self">自己</string>
+    <string name="notebook_tab_cares">在意</string>
+    <string name="notebook_tab_diary">日记</string>
+    <string name="notebook_tab_plan">打算</string>
+    <string name="notebook_tab_people">人</string>
+    <string name="notebook_tab_wiki">维基</string>
+    <string name="notebook_empty_self">还没有自我描述</string>
+    <string name="notebook_empty_self_hint">跟 Andee 对话时，它会逐渐形成自我认知</string>
+    <string name="notebook_empty_cares">还没有在意的事</string>
+    <string name="notebook_empty_cares_hint">告诉 Andee 你在意什么，它会帮你留意</string>
+    <string name="notebook_empty_diary">还没有日记</string>
+    <string name="notebook_empty_diary_hint">Andee 会在一天结束时自动记录</string>
+    <string name="notebook_empty_plan">今天还没有打算</string>
+    <string name="notebook_empty_plan_hint">Andee 会在早上思考今天的打算</string>
+    <string name="notebook_empty_people">还没有记录的人</string>
+    <string name="notebook_empty_people_hint">Andee 会记住你提到的重要的人</string>
+    <string name="notebook_empty_wiki">维基还是空的</string>
+    <string name="notebook_empty_wiki_hint">问 Andee 知识性的问题，它会保存到维基</string>
+    <string name="notebook_self_heading">我是谁</string>
+    <string name="notebook_updated_at">更新于 %1$s</string>
+    <string name="notebook_care_attention">需要关注</string>
+    <string name="notebook_plan_today">今天的打算</string>
+    <string name="notebook_wiki_open">打开 ›</string>
+    <string name="notebook_wiki_back">‹ 维基</string>
+    <string name="notebook_wiki_reading">正在读取…</string>
+    <string name="notebook_wiki_source">来源：%1$s</string>
+    <string name="notebook_wiki_copy">复制全文</string>
+    <string name="notebook_empty_memories">还没记下什么</string>
+    <string name="notebook_empty_todos">没有排着的待办</string>
+    <string name="notebook_type_user">关于你</string>
+    <string name="notebook_type_feedback">你的偏好</string>
+    <string name="notebook_type_way">做事的方式</string>
+    <string name="notebook_type_reference">资料</string>
+    <string name="notebook_type_failure">踩过的坑</string>
+    <string name="notebook_hits">被查过 %1$d 次</string>
+    <string name="notebook_delete_note">删掉就没了，不会只是藏起来。</string>
+    <string name="notebook_todo_cron">周期 %1$s</string>
+    <string name="notebook_todo_paused">已暂停</string>
+
+    <!--
+        config/Scheduler.kt. `sched_channel_name` and `sched_channel_desc` are
+        the notification channel; see the KDoc on `channelName` for why a
+        language change does not reach a channel that already exists.
+    -->
+    <string name="sched_channel_name">答应过的事</string>
+    <string name="sched_channel_desc">到点了但我醒不过来时，先把话说清楚</string>
+    <string name="sched_notify_recurring">周期待办：%1$s</string>
+    <string name="sched_notify_title">我当时答应过你</string>
+    <string name="sched_notify_body">%1$s\n\n（到点的时候我没有在运行，所以没能替你去办。打开无障碍服务之后我会接着办。）</string>
+
+    <!--
+        BodyCoreService.kt — the body's own row in the shade.
+
+        It is the only surface the app has that survives accessibility being
+        revoked, so it is also the only place the way back can live. Wording
+        rule: with the screen it is a statement with nothing to do; without it
+        it says what is actually broken and offers exactly one action.
+    -->
+    <string name="body_notify_channel">我在运行</string>
+    <string name="body_notify_channel_desc">常驻的一行，说明我还在。屏幕操作掉线时，回来的路也在这里。</string>
+    <string name="body_notify_title">我在</string>
+    <string name="body_notify_text_ok">屏幕操作已就绪。</string>
+    <string name="body_notify_text_no_screen">无障碍被系统关掉了，我现在碰不到屏幕。点右边接回来。</string>
+    <string name="body_notify_action_fix">接回来</string>
+    <string name="body_notify_action_see">允许看屏幕</string>
+
+    <!-- net/CommandDispatcher.kt — the three lines from it a user can see. -->
+    <string name="cmd_vault_filling">正在填入「%1$s」的%2$s…</string>
+    <string name="cmd_ask_yes">好的</string>
+    <string name="cmd_ask_no">不用</string>
+
+    <!-- The subtitle while the mic is open, before a word has landed. -->
+    <string name="asr_listening">听着…</string>
+
+    <!--
+        MeetingRecorder: the live header while a recording runs. Two numbers,
+        so `%1$d` is minutes and `%2$02d` is zero-padded seconds — keep the
+        order if you reword it.
+    -->
+    <string name="meeting_live_head">会议记录中 %1$d:%2$02d · 点球结束</string>
+
+    <!--
+        The two names for a recording that never named itself.
+
+        `meeting_default_title` is written by `MeetingRecorder.start` and read
+        back by `BodyCoreService.meetingMinutesQuery` — one key for both, on
+        purpose: the brain is handed the title and the page is laid out under
+        the same one, so two literals that drifted apart would show up as a page
+        titled one thing and a brain told another.
+
+        `call_default_scene` is the `callSummaryQuery` twin, for an extension
+        that registered without a `scene`.
+
+        Both were Kotlin literals until now, which is the same bug in two
+        places: the value does reach the screen (it becomes the page title the
+        minutes or the summary is laid out under), so on an English tablet it
+        read Chinese. They follow the interface language like every other
+        displayed string — see `AppLocale`, and the header of
+        `values-en/strings.xml`.
+    -->
+    <string name="meeting_default_title">会议记录</string>
+    <string name="call_default_scene">通话</string>
+
+    <!--
+        LocalBrain, the half of it the user sees.
+
+        This class is a genuine split and it is not obvious from the file: its
+        `onProgress` and `onFinal` strings become the ball's subtitle and a row
+        in the scrollback, so they belong here — while its `toolMessage` and
+        tool-result strings are read by the model and belong nowhere near this
+        file. `brain_error`, `brain_repeat_stop` and `narrate_default` carry a
+        tool or exception name through `%1$s`; that name is an identifier and
+        stays as it is in both languages.
+    -->
+    <string name="brain_no_key">本地大脑还没配 API key。长按小球把卡片展开，点控制条上的 ⚙ 打开设置，把 Key 填进「后端」→「本机」→「DeepSeek Key」。</string>
+    <string name="brain_no_key_codeflying">还没有 CodeFlying 密钥。长按小球展开卡片，点 ⚙ 打开设置，在「后端」→「CodeFlying」里粘贴密钥；还没有的话，去 CodeFlying.net 注册获取。</string>
+    <string name="brain_error">我这边出错了：%1$s</string>
+    <string name="brain_error_402">后端服务返回了 402，多半是账户余额不足了。到「设置」→「后端」看看当前用的是哪家服务商，打开它的官网充值后再试。</string>
+    <string name="brain_error_auth">后端拒绝了请求（HTTP %1$d）：Key 填错、过期或被停用了。到「设置」→「后端」检查 Key，必要时去服务商官网重新生成一个。</string>
+    <string name="brain_error_400">后端说请求有问题：%1$s\n最常见的原因是模型名写错了，到「设置」→「后端」核对一下模型名。</string>
+    <string name="brain_error_404">后端找不到这个地址（HTTP 404）。到「设置」→「后端」检查接口地址和模型名有没有填错。</string>
+    <string name="brain_error_moved">后端没有按接口回答，地址可能填错了，或者服务换了地址（它指向：%1$s）。到「设置」→「后端」检查地址；如果用的是 CodeFlying，这是服务那边的问题，可以先切到「本机」。</string>
+    <string name="brain_error_429">后端现在太忙或者请求太频繁了（HTTP 429），过一会儿再说一遍就行。如果一直这样，去服务商官网看看额度有没有用完。</string>
+    <string name="brain_error_5xx">后端服务自己出了问题（HTTP %1$d），不是你这边的设置有误。过几分钟再试；一直不行就去服务商官网看看是否在维护。</string>
+    <string name="brain_error_timeout">后端半天没有回应。先看看网络通不通，稍后再试一次。</string>
+    <string name="brain_error_network">连不上后端服务。检查一下这台设备的网络；如果网络没问题，到「设置」→「后端」核对接口地址。</string>
+    <string name="brain_no_result">我这轮没拿到结果，你再说一遍试试。</string>
+    <string name="brain_repeat_stop">我一直在重复同一个动作（%1$s），停下来了 —— 这条路走不通，换个说法或者你来操作一下。</string>
+    <string name="brain_max_steps">这件事我做了 %1$d 步，到了这次任务的步数上限，还没做完，先停在这儿。说「继续」我就接着往下做；也可以换个说法、换条路试试。要是这类事本来就步骤多，可以打开 Andee 主界面，点右上角的设置图标，把「单次任务最多步数」调大一些。</string>
+    <!--
+        `narrate()`: the one-line subtitle for a tool the model called without
+        saying anything. Chinese and English here are deliberately terse —
+        they are read at a glance while a task is running, not read carefully.
+    -->
+    <string name="narrate_get_screen">读一下屏幕…</string>
+    <string name="narrate_screenshot">看一眼屏幕…</string>
+    <string name="narrate_tap">点一下…</string>
+    <string name="narrate_long_press">长按…</string>
+    <string name="narrate_swipe">滑动…</string>
+    <string name="narrate_type">输入文字…</string>
+    <string name="narrate_submit">提交…</string>
+    <string name="narrate_wait">等一下…</string>
+    <string name="narrate_launch">打开…</string>
+    <string name="narrate_system">操作系统按键…</string>
+    <string name="narrate_show_html">把结果放到屏幕上…</string>
+    <string name="narrate_pages">翻一下之前做的东西…</string>
+    <string name="narrate_topics">回想一下之前聊到哪儿了…</string>
+    <string name="narrate_camera">看一眼…</string>
+    <string name="narrate_dog">动一下腿…</string>
+    <!--
+        市场的两个元工具。market_call 包着每一个市场 API —— 天气、航班、
+        出图、OCR —— 没有一个动词能同时说清，所以这两条是诚实的泛称。
+        不加这两条时走的是 fallback，会把标识符原样摆到屏幕上：
+        「正在 market_call…」。
+    -->
+    <string name="narrate_market_search">找工具…</string>
+    <string name="narrate_market_call">调用外部服务…</string>
+    <string name="brain_review_name">回顾这段对话</string>
+    <string name="narrate_default">正在 %1$s…</string>
+
+    <!--
+      开机自检。发现由 device/SelfCheck 产出(设备侧、只有一个来源)，
+      BodyCoreService 拿它弹一张卡、ui/SelfCheckActivity 拿它渲染成一页。
+      文案分两层:title 说「在查什么」，detail 说「查到什么、坏了会怎样」——
+      后者才是用户能读懂的那半，所以每条都写症状而不是写参数名。
+    -->
+    <string name="check_title_accessibility">无障碍服务</string>
+    <string name="check_title_overlay">悬浮窗权限</string>
+    <string name="check_title_network">网络</string>
+    <string name="check_title_brain">大脑</string>
+    <string name="check_title_model">模型连通</string>
+    <string name="check_title_version">版本</string>
+    <string name="check_title_microphone">麦克风</string>
+    <string name="check_title_notify_post">弹出通知</string>
+    <string name="check_detail_notify_post_on">提醒,和"回到我"的那条通知,都能弹出来。</string>
+    <string name="check_detail_notify_post_off">我是能发通知的,但系统现在没放行——提醒,和"回到我"的那条,都会被丢掉。点下面的按钮允许。</string>
+    <string name="check_title_notifications">通知使用权</string>
+    <string name="check_title_typing_channel">打字通道</string>
+    <string name="check_title_adb_keyboard">ADB 键盘</string>
+    <string name="check_title_secure_settings">免 root 输入</string>
+    <string name="check_title_voice_key">语音密钥</string>
+    <string name="check_title_voice_host">语音服务可达</string>
+    <string name="check_title_wake">唤醒词</string>
+    <string name="check_title_battery">后台运行</string>
+    <string name="check_title_auto_start">自启动</string>
+    <string name="check_title_disk">存储空间</string>
+
+    <string name="check_detail_accessibility_on">已开启，球和屏幕操作都在跑。</string>
+    <string name="check_detail_accessibility_off">没开。球和聊天都还在，但我碰不到屏幕：不能替你点按、滑动、输入。开关在无障碍设置的「已下载的应用」里，不在第一屏上。</string>
+    <string name="check_detail_overlay_on">已允许，球能画出来。</string>
+    <string name="check_detail_overlay_off">没开。球和卡片都画不出来，而服务在后台其实跑得好好的 —— 所以看起来像「什么都没发生」。</string>
+    <string name="check_detail_network_on">已联网。</string>
+    <string name="check_detail_network_off">没联网。语音识别、语音合成、模型调用全都走网络。</string>
+    <string name="check_detail_brain_on">已配置。</string>
+    <string name="check_detail_brain_hub_missing">还没填。现在用的是云端大脑，得把你自己搭的 Hub 地址填进 ⚙ →「后端」→「云端」→「Hub 地址」。「云端」默认藏着，看不到就先去「高级」→「显示云端选项」把它打开。没有它，你说的话没地方送，问了不会有回答，屏幕也不会动。想让这台设备自己想，就在同一排把大脑切成「本机」。</string>
+    <string name="check_detail_brain_key_missing">还没填。现在用的是本机大脑，得你自己去 DeepSeek 开一个，把 Key 填进 ⚙ →「后端」→「本机」→「DeepSeek Key」。没有它，你说的话我收得到，却答不出、也动不了手。</string>
+    <string name="check_detail_brain_codeflying_key_missing">还没填。现在用的是 CodeFlying，到 CodeFlying.net 注册登录拿到密钥，填进 ⚙ →「后端」→「CodeFlying」。没有它，你说的话我收得到，却答不出、也动不了手。</string>
+    <string name="check_detail_model_cloud">云端大脑，模型不在这台设备上。</string>
+    <string name="check_detail_model_no_key">还没填 Key，填了才测得了。</string>
+    <string name="check_detail_checking">检查中…</string>
+    <string name="check_detail_skipped_offline">没网，先不测。</string>
+    <string name="check_detail_model_ok">%1$s 通了。</string>
+    <string name="check_detail_model_throttled">连上了，但被限流（HTTP 429）。配置是对的，过一会儿会自己恢复。</string>
+    <string name="check_detail_model_url">连不上：%1$s</string>
+    <string name="check_detail_model_key">Key 被拒：%1$s</string>
+    <string name="check_detail_model_balance">服务端返回 %1$s：多半是账户余额不足。去当前服务商的官网充值后再试。</string>
+    <string name="check_detail_model_name">模型名「%1$s」不在服务端列表里。这台服务上有的：%2$s</string>
+    <string name="check_detail_model_other">%1$s</string>
+    <!-- 版本这条是全表唯一「关于 App 自己」而不是「关于这台设备」的检查，也是
+         唯一一次主动往外发东西。%1$s 恒为「该升到的版本」，%2$s 恒为「你手上这个」，
+         两条文案的参数顺序不许对调。见 SelfCheck.version。 -->
+    <string name="check_detail_version_current">%1$s 已经是最新。</string>
+    <string name="check_detail_version_stale">版本落后了：最新是 %1$s，你现在是 %2$s。请到 GitHub 或 CodeFlying 升级。</string>
+    <string name="check_detail_version_forced">请升级到 %1$s —— 你现在这个（%2$s）已经不再支持了。到 GitHub 或 CodeFlying 升级。</string>
+    <string name="check_detail_version_offline">没网，先不测。当前 %1$s。</string>
+    <string name="check_detail_version_quota">今天的检查次数用完了，明天恢复。当前 %1$s。</string>
+    <string name="check_detail_version_unreachable">查不到：%1$s。当前是 %2$s。</string>
+    <string name="check_detail_notif_on">已授权，监听器也连着。</string>
+    <string name="check_detail_notif_zombie">系统显示「已授权」，但监听器没连上，通知会被静默丢掉。\n这条得关掉再打开一次才行 —— 只打开不生效。</string>
+    <string name="check_detail_notif_off">没开。来电播报和通知转发都收不到。</string>
+    <string name="check_detail_typing_a11y">走无障碍输入法：我自己就能往输入框里打字，不用装键盘、不用改默认输入法、也不用插电脑。你自己的键盘全程照用。</string>
+    <string name="check_detail_typing_adb">这个系统版本（低于 Android 13）没有无障碍输入法，打字得走下面的 ADB 键盘，所以那两条要备齐。</string>
+    <string name="check_detail_adb_kb_on">已启用，能替你往别的应用里打字。</string>
+    <string name="check_detail_adb_kb_spare">现在打字走无障碍输入法，用不着它了。留着当备用：碰上它打不进去的输入框，会自动换回这条路 —— 那时候得先装上。</string>
+    <string name="check_detail_adb_kb_off">装了但没启用。去系统设置里把它打开就行 —— 它自己没有键盘界面，启用它不影响你平时打字。</string>
+    <string name="check_detail_adb_kb_missing">没装。替你打字、填表都靠它（ADBKeyboard），所以这类事现在做不了。点右边下载装上，回来这条就只剩「启用」一步。</string>
+    <string name="check_detail_secure_on">已授权，能往别的应用里打字。</string>
+    <string name="check_detail_secure_missing">没授权，往别的应用里打字（type_text）用不了。这条在设置里没有开关 —— 只能插上线用 adb 给。</string>
+    <string name="check_detail_secure_spare">没授权，不过不影响打字 —— 现在走的是无障碍输入法。它只给上面那条备用通道用，没有也行。</string>
+    <string name="check_detail_mic_on">已允许。</string>
+    <string name="check_detail_mic_off">没允许。我听不见你说话，点球不会开始听；双击球可以打字跟我说。</string>
+    <string name="check_detail_voice_key_ok">已填。识别和合成用它连服务商。</string>
+    <string name="check_detail_voice_key_missing">还没填。源码里不带密钥，得你自己去开一个语音服务,把 Key 填进 ⚙ →「后端」→「本机」。没有它，听和说都连不上 —— 报出来的却是连接超时，看着像网络坏了。其余功能照常。</string>
+    <string name="check_detail_voice_key_codeflying_missing">语音用的是 CodeFlying 的密钥，和大脑是同一个，填进 ⚙ →「后端」→「CodeFlying」即可。没有它，听和说都连不上。</string>
+    <string name="check_detail_voice_host_ok">%1$s 可达。</string>
+    <string name="check_detail_voice_host_bad">连不上 %1$s：%2$s。识别和合成都会超时。</string>
+    <string name="check_detail_wake_on">已录入，喊一声就醒。</string>
+    <string name="check_detail_wake_off">还没录。自己选个词（例如「嘿 Andee」）录 3 遍就能喊醒。不录也能用，只是得点球。</string>
+    <string name="check_detail_battery_on">已在白名单，待办闹钟不会被推迟。</string>
+    <string name="check_detail_battery_off">不在电池优化白名单里。点右边「去开启」，系统会问「是否忽略电池优化？」，选「忽略」就好。\n厂商自己的「应用启动管理 / 后台运行」是另一套，在那里怎么改这项都是红的。息屏后待办提醒会晚到，唤醒词也会停。</string>
+    <string name="check_detail_auto_start_on">已允许。进程被系统杀掉后能自己拉回来。</string>
+    <string name="check_detail_auto_start_off">没开。小米的省电策略会定时杀掉后台进程，没开自启动就拉不回来，表现就是「用一会儿自己关掉」。点右边去开启。</string>
+    <string name="check_detail_disk_ok">剩余 %1$d MB。</string>
+    <string name="check_detail_disk_low">只剩 %1$d MB，再占下去会开始丢截图和页面。</string>
+    <string name="check_detail_disk_full">只剩 %1$d MB，基本写不进东西了。</string>
+    <string name="check_detail_disk_unknown">读不出来。</string>
+
+    <string name="check_fix_settings">去开启</string>
+    <!-- 通知使用权在「僵尸」态时那个开关本来就显示成已打开，所以这个门不是
+         「去开启」。见 SelfCheck.Fix.Screen.label。 -->
+    <string name="check_fix_repower">关闭再打开</string>
+    <string name="check_fix_download">去下载</string>
+    <string name="check_fix_allow">允许</string>
+    <string name="check_fix_app_settings">打开设置</string>
+    <string name="check_fix_adb_lead">这条只能在电脑上用 adb 执行：</string>
+    <string name="check_fix_no_screen">这台设备上没有这个设置页面。得自己在系统设置里找一下。</string>
+    <string name="check_page_title">自检</string>
+    <string name="check_page_lead">这台设备现在的状态。</string>
+    <string name="check_page_ok_title">一切正常</string>
+    <string name="check_page_ok_note">都配好了，去点球说话吧。</string>
+    <string name="check_page_recheck">重新检查</string>
+    <!-- 卡片的出口，两处都用它：头部的 ✕ 和底部的实心按钮。故意和设置卡
+         「完成」是同一个词 —— 这就是同一张卡。 -->
+    <string name="check_page_done">完成</string>
+    <string name="check_page_issues">%1$d 项必须处理</string>
+    <string name="check_page_suggest">能用了 · 还有 %1$d 项建议处理</string>
+    <string name="check_page_warn_lead">下面几项不影响使用，开了会更好用。</string>
+    <string name="check_page_notes_lead">下面几条仅供参考，不影响使用。</string>
+    <string name="check_card_title">有 %1$d 项需要处理</string>
+    <string name="check_card_open">去处理</string>
+    <string name="check_card_ack">知道了</string>
+
+    <!-- 球球的几种样子。用户在全屏卡片上左右滑动球球来换，换到哪个就用字幕
+         报一下名字 —— 这个名字是给人看的，所以是资源，而不是 BallLook.name
+         （那个是给日志和 diff 看的）。 -->
+    <string name="ball_look_andee">Andee</string>
+    <string name="ball_look_cream">小猫</string>
+    <string name="ball_look_bajie">八戒</string>
+    <string name="ball_look_rabbit">贱贱兔</string>
+    <string name="ball_look_bear">憨憨熊</string>
+    <string name="ball_look_imp">小恶魔</string>
+
+    <!-- 表情页：设置里"表情"一节的入口，以及那张看所有表情的卡片 -->
+    <!-- 外观：浅色 / 深色。切换是立刻生效的（见 ui.Theme），所以说明里要讲清它管到哪儿 -->
+    <string name="settings_section_theme">外观</string>
+    <string name="settings_theme_note">浅色是白底深字，深色是深底浅字。点一下立刻换，卡片、页面、气泡和小球周围一起变。</string>
+    <string name="settings_theme_day">浅色</string>
+    <string name="settings_theme_night">深色</string>
+
+    <string name="settings_section_expr">形象与表情</string>
+    <string name="settings_expr_note">看看每个形象和每个表情，点一下就换。</string>
+    <string name="settings_expr_open">打开</string>
+    <string name="expr_title">形象与表情</string>
+    <string name="expr_section_look">形象</string>
+    <string name="expr_section_mood">表情</string>
+    <string name="expr_caption">%1$s · %2$s</string>
+    <string name="expr_calm">平静</string>
+    <string name="expr_happy">开心</string>
+    <string name="expr_curious">好奇</string>
+    <string name="expr_tense">生气</string>
+    <string name="expr_anxious">紧张</string>
+    <string name="expr_concerned">担心</string>
+    <string name="expr_wink">眨眼</string>
+    <string name="expr_wave">挥手</string>
+    <string name="expr_protect">守护</string>
+    <string name="expr_celebrate">庆祝</string>
+    <string name="expr_rest">休息</string>
+    <string name="expr_listening">在听</string>
+    <string name="expr_holding">等你选</string>
+    <string name="expr_thinking">思考</string>
+    <string name="expr_speaking">说话</string>
+    <string name="expr_searching">干活</string>
+    <string name="expr_success">成功</string>
+    <string name="expr_failed">失败</string>
+    <string name="expr_sleeping">睡着</string>
+
+    <string name="peer_task_row">（%1$s 交来的任务）%2$s</string>
+    <string name="peers_scan">扫码添加</string>
+    <string name="peers_scan_note">扫对方 Andee「朋友」页上的二维码。</string>
+    <string name="peers_paired_ok">已添加 %1$s。</string>
+    <string name="peers_scan_failed">没加上：%1$s</string>
+    <string name="peers_scan_not_ours">这不是 Andee 的二维码。</string>
+    <string name="peers_show_friend">出示二维码给朋友</string>
+    <string name="peers_show_own">出示给我的设备</string>
+    <string name="peers_show_note_own">用你自己的另一台设备上的 Andee 扫这个码。两分钟内有效。</string>
+    <string name="peers_show_note_friend">让朋友用他的 Andee 扫这个码（朋友 → 扫码添加）。两分钟内有效。</string>
+    <string name="peers_show_failed">没能出示二维码：%1$s</string>
+    <string name="peers_kinds_note">「我的设备」和你一样被信任；「朋友」每次请求都会先问你，也看不到你的记忆和对话。暂时只能在同一个 Wi-Fi 里找到彼此。</string>
+    <string name="peers_kind_friend">朋友</string>
+    <string name="peers_kind_own">我的设备</string>
+    <string name="peers_ask_each">每次先问我</string>
+    <string name="peers_always">总是允许</string>
+    <string name="peer_friend_row">（朋友 %1$s 请求）%2$s</string>
+    <string name="peer_friend_reply_row">（回复 %1$s）%2$s</string>
+    <string name="peer_friend_ask">朋友 %1$s 的 Andee 想请我做：%2$s</string>
+    <string name="peer_friend_declined_row">没有替 %1$s 做。</string>
+    <string name="peer_allow">允许</string>
+    <string name="peer_allow_always">总是允许</string>
+    <string name="peer_decline">拒绝</string>
+    <string name="window_input_hint">打字跟它说…</string>
+    <string name="window_voice_on">朗读</string>
+    <string name="window_muted">静音</string>
+</resources>

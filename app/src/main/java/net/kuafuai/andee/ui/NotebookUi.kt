@@ -1,0 +1,954 @@
+package net.kuafuai.andee.ui
+
+import android.annotation.SuppressLint
+import android.content.ClipData
+import android.content.ClipboardManager
+import android.content.Context
+import android.graphics.Color
+import android.graphics.PixelFormat
+import android.text.format.DateUtils
+import android.view.Gravity
+import android.view.View
+import android.view.WindowManager
+import android.widget.LinearLayout
+import android.widget.ScrollView
+import android.widget.TextView
+import net.kuafuai.andee.R
+import net.kuafuai.andee.config.Notebook
+import net.kuafuai.andee.config.Scheduler
+import net.kuafuai.andee.i18n.AppLocale
+import java.text.SimpleDateFormat
+import java.util.Locale
+
+/**
+ * 它记得的事: what the device remembers, browsable and deletable per item.
+ *
+ * The header's 复制全部 copies [Notebook.dumpText] — every field, untruncated,
+ * export-shaped. That is the only route to the raw text; the rows here answer
+ * a different question: "what is it allowed to remember about me".
+ *
+ * Eight tabs, the same eight and in the same order as the Mac's 小本本:
+ * **自己** (its self-description), **在意** (its cares, most overdue first),
+ * **日记** (the last week of diary pages), **打算** (today's plan), **人** (who it
+ * knows), **维基** (its articles — tap one to read it from the file, now),
+ * **记忆** ([net.kuafuai.andee.config.Memory] by type, tap to read the content),
+ * **待办** (active and paused [net.kuafuai.andee.config.Todo]s, soonest first).
+ * What the model wrote is Markdown and is drawn as such ([MarkdownView]).
+ *
+ * No editing: the brain writes these, not the person. Delete (memories and
+ * todos) is the only mutation, and it is **destructive** — gone from the
+ * encrypted blob, not archived — because a delete that merely hides something
+ * does not answer the question this page exists for.
+ *
+ * Same window shape as [VaultUi], its sibling on top of the settings card:
+ * focusable, hidden from accessibility, counted by [OwnCard] — a focused
+ * window that dumps as zero nodes is exactly what [OwnCard] explains.
+ */
+class NotebookUi(
+    private val context: Context,
+    private val onDismiss: () -> Unit = {},
+    /**
+     * The user typed a line to it from 打算 → 告诉它一句 («今天别提喝水了»). Wired to the service's own user-turn path;
+     * null hides the box, because a box that sends nowhere is worse than none.
+     */
+    private val onTellBrain: ((String) -> Unit)? = null,
+    /** Open straight on this wiki article (`wiki_show`) rather than on 守卫. */
+    private val startWiki: String? = null,
+) {
+
+    private val wm: WindowManager =
+        context.getSystemService(Context.WINDOW_SERVICE) as WindowManager
+
+    private var root: View? = null
+
+    /** Index into [TABS]. */
+    private var tab = 0
+
+    /** The wiki article being read in the 维基 tab, or null for the list. */
+    private var wikiOpen: String? = null
+
+    /** What reading [wikiOpen] came back with; null while it is still being read. */
+    private var wikiArticle: Result<net.kuafuai.andee.wiki.Article>? = null
+
+    /** Memories whose content is unfolded. */
+    private val expanded = mutableSetOf<String>()
+
+    /** Whether the compositor agreed to blur. See [Glass.frost]. */
+    private var frosted = false
+
+    /**
+     * Strings in the user's language, refreshed at the top of [build].
+     *
+     * Refreshed there and not in [show] on purpose: [rebuild] goes straight to
+     * [build] without passing through [show], so rewrapping in the one function
+     * that consumes it means no future caller has to remember to do it.
+     *
+     * Views are still built on [context]; only text comes from here. See
+     * [AppLocale] for why those two are deliberately different Contexts.
+     */
+    private var lctx: Context = context
+
+    fun show() {
+        if (root != null) return
+        val p = WindowManager.LayoutParams(
+            cardWidth(), cardHeight(),
+            WindowManager.LayoutParams.TYPE_APPLICATION_OVERLAY,
+            0,
+            PixelFormat.TRANSLUCENT,
+        ).apply {
+            gravity = Gravity.CENTER
+            // 守卫 has a text box; the card shrinks for the keyboard rather than sitting under it, as SettingsUi does.
+            softInputMode = WindowManager.LayoutParams.SOFT_INPUT_ADJUST_RESIZE
+        }
+        frosted = Glass.frost(context, wm, p)
+        val v = build()
+        runCatching {
+            v.hideFromAccessibility()
+            wm.addView(v, p)
+            root = v
+            OwnCard.shown()
+            Glass.enter(v)
+        }
+        startWiki?.let { tab = TABS.indexOf(Tab.WIKI); openArticle(it) }
+    }
+
+    fun hide() {
+        val v = root ?: return
+        root = null
+        Glass.exit(v) {
+            runCatching { wm.removeView(v) }
+            OwnCard.hidden()
+            onDismiss()
+        }
+    }
+
+    private fun rebuild() {
+        val old = root ?: return
+        val v = build()
+        runCatching {
+            v.hideFromAccessibility()
+            val p = old.layoutParams as WindowManager.LayoutParams
+            wm.removeView(old)
+            wm.addView(v, p)
+            root = v
+            Glass.fadeIn(v)
+        }
+    }
+
+    private fun cardWidth(): Int =
+        minOf(dp(560), (wm.currentWindowMetrics.bounds.width() * 0.96f).toInt())
+
+    private fun cardHeight(): Int =
+        minOf(dp(720), (wm.currentWindowMetrics.bounds.height() * 0.90f).toInt())
+
+    // ---- build ----
+
+    @SuppressLint("SetTextI18n")
+    private fun build(): View {
+        lctx = AppLocale.wrap(context)
+        val card = LinearLayout(context).apply {
+            orientation = LinearLayout.VERTICAL
+            background = Glass.card(context, dp(28), frosted)
+            clipToOutline = true
+        }
+
+        card.addView(header(), matchWrap())
+        divider(card)
+        card.addView(tabBar(), matchWrap())
+
+        val scroll = ScrollView(context)
+        val body = LinearLayout(context).apply {
+            orientation = LinearLayout.VERTICAL
+            setPadding(dp(20), dp(16), dp(20), dp(16))
+        }
+        when (TABS[tab]) {
+            Tab.SELF -> buildSelf(body)
+            Tab.CARES -> buildCares(body)
+            Tab.DIARY -> buildDiary(body)
+            Tab.PLAN -> buildPlan(body)
+            Tab.PEOPLE -> buildPeople(body)
+            Tab.WIKI -> if (wikiOpen != null) buildArticle(body) else buildWiki(body)
+            Tab.MEMORIES -> buildMemories(body)
+            Tab.TODOS -> buildTodos(body)
+            Tab.GUARD -> buildGuard(body)
+        }
+        scroll.addView(body, matchWrap())
+        card.addView(scroll, LinearLayout.LayoutParams(MATCH, 0, 1f))
+
+        return card
+    }
+
+    private fun header(): LinearLayout {
+        val h = LinearLayout(context).apply {
+            orientation = LinearLayout.HORIZONTAL
+            gravity = Gravity.CENTER_VERTICAL
+            setPadding(dp(22), dp(18), dp(14), dp(12))
+        }
+        h.addView(
+            TextView(context).apply {
+                text = lctx.getString(R.string.notebook_title)
+                textSize = Glass.Type.HEADLINE
+                setTextColor(Color.parseColor(Glass.TITLE))
+            },
+            LinearLayout.LayoutParams(0, WRAP, 1f),
+        )
+        h.addView(copyButton())
+        h.addView(View(context), LinearLayout.LayoutParams(dp(8), 1))
+        h.addView(closeButton())
+        return h
+    }
+
+    private fun copyButton(): TextView = TextView(context).apply {
+        val label = lctx.getString(R.string.notebook_copy_all)
+        text = label
+        textSize = Glass.Type.CAPTION
+        setTextColor(Color.parseColor(Glass.SECONDARY))
+        gravity = Gravity.CENTER
+        setPadding(dp(12), 0, dp(12), 0)
+        background = Glass.panel(context, dp(16))
+        isClickable = true
+        Glass.pressable(this)
+        setOnClickListener {
+            val cm = context.getSystemService(Context.CLIPBOARD_SERVICE) as ClipboardManager
+            val ok = runCatching {
+                cm.setPrimaryClip(
+                    ClipData.newPlainText(lctx.getString(R.string.notebook_title), Notebook.dumpText(context)),
+                )
+            }.isSuccess
+            if (!ok) return@setOnClickListener
+            text = lctx.getString(R.string.notebook_copied)
+            setTextColor(Color.parseColor(Glass.OK))
+            postDelayed({
+                text = label
+                setTextColor(Color.parseColor(Glass.SECONDARY))
+            }, 1500)
+        }
+        layoutParams = LinearLayout.LayoutParams(WRAP, dp(32))
+    }
+
+    private fun closeButton(): TextView = TextView(context).apply {
+        text = "✕"
+        textSize = Glass.Type.CAPTION
+        setTextColor(Color.parseColor(Glass.SECONDARY))
+        gravity = Gravity.CENTER
+        background = Glass.panel(context, dp(16))
+        isClickable = true
+        Glass.pressable(this)
+        setOnClickListener { hide() }
+        layoutParams = LinearLayout.LayoutParams(dp(32), dp(32))
+    }
+
+    /** Nine tabs do not fit a phone's width at a readable size, so the row scrolls sideways. */
+    private fun tabBar(): View {
+        val bar = LinearLayout(context).apply {
+            orientation = LinearLayout.HORIZONTAL
+            setPadding(dp(8), dp(8), dp(8), dp(8))
+        }
+        var selected: View? = null
+        TABS.forEachIndexed { i, t ->
+            if (i > 0) bar.addView(View(context), LinearLayout.LayoutParams(dp(4), 1))
+            val button = tabButton(i, lctx.getString(t.label))
+            // 守卫 unwritten: a red dot on the tab, as on the top bar's 小本本 key.
+            val v = if (t == Tab.GUARD) withDot(button) else button
+            // The view in the row, not the button inside the dot's frame — its left is 0 within that frame.
+            if (i == tab) selected = v
+            bar.addView(v)
+        }
+        return android.widget.HorizontalScrollView(context).apply {
+            isHorizontalScrollBarEnabled = false
+            addView(bar)
+            // Picking a tab rebuilds the card, and a new scroll view starts at 0 — which left 记忆 and 待办 cut off at
+            // the edge right after they were tapped. Bring the selected one fully into view once it is laid out.
+            val reveal = { selected?.let { v -> if (v.right > scrollX + width || v.left < scrollX) scrollTo((v.right - width + dp(8)).coerceAtLeast(0), 0) } }
+            post { reveal() }
+            // And again when the card is resized (the keyboard coming up for 守卫's box), which put the row back at 0.
+            addOnLayoutChangeListener { _, l, t, r, b, ol, ot, or, ob -> if (r - l != or - ol || b - t != ob - ot) post { reveal() } }
+        }
+    }
+
+    private fun tabButton(index: Int, label: String): TextView =
+        TextView(context).apply {
+            text = label
+            textSize = Glass.Type.BODY
+            gravity = Gravity.CENTER
+            setPadding(dp(14), dp(10), dp(14), dp(10))
+            val active = tab == index
+            setTextColor(
+                Color.parseColor(if (active) Glass.TITLE else Glass.SECONDARY),
+            )
+            background = if (active) {
+                Glass.panel(context, dp(12))
+            } else {
+                null
+            }
+            isClickable = !active
+            if (!active) {
+                Glass.pressable(this)
+                setOnClickListener { tab = index; wikiOpen = null; rebuild() }
+            }
+            layoutParams = LinearLayout.LayoutParams(WRAP, WRAP)
+        }
+
+    /** [v] with a small red dot on its top-right corner. */
+    private fun withDot(v: View): View {
+        val lp = v.layoutParams
+        v.layoutParams = android.widget.FrameLayout.LayoutParams(lp.width, lp.height)
+        return android.widget.FrameLayout(context).apply {
+            layoutParams = LinearLayout.LayoutParams(lp.width, lp.height)
+            addView(v)
+            val dot = RedDot.view(context).apply { visibility = if (Notebook.guard(context).isEmpty()) View.VISIBLE else View.GONE }
+            guardDot = dot
+            addView(dot, android.widget.FrameLayout.LayoutParams(dp(7), dp(7), Gravity.TOP or Gravity.END).apply {
+                topMargin = dp(5); rightMargin = dp(5)
+            })
+        }
+    }
+
+    /** The red dot on the 守卫 tab; shown while nothing is written. */
+    private var guardDot: View? = null
+
+    // ---- 守卫 ----
+
+    /**
+     * 守卫: one paragraph the user writes, above everything in Andee's prompt ([net.kuafuai.andee.config.Guard]).
+     * Only written here — no tool reaches it. The card guides and gives one example; what goes in is the user's,
+     * and it says plainly that this is a request made in the prompt, not a guarantee.
+     */
+    private fun buildGuard(body: LinearLayout) {
+        val guard = Notebook.guard(context)
+        var last = guard.text()
+        val p = panel()
+        p.addView(label(lctx.getString(R.string.guard_heading), Glass.Type.TITLE, Glass.TITLE, bold = true), matchWrap())
+        p.addView(label(lctx.getString(R.string.guard_intro), Glass.Type.CAPTION, Glass.PHOTO_INK, top = 8).apply {
+            setLineSpacing(0f, 1.25f)
+        }, matchWrap())
+        p.addView(label(lctx.getString(R.string.guard_example_lead), Glass.Type.CAPTION, Glass.PHOTO_INK, top = 10), matchWrap())
+        p.addView(label(lctx.getString(R.string.guard_example), Glass.Type.CAPTION, Glass.LABEL).apply {
+            background = Glass.well(context, dp(10))
+            setPadding(dp(12), dp(8), dp(12), dp(8))
+            setLineSpacing(0f, 1.2f)
+        }, matchWrap().apply { topMargin = dp(6) })
+
+        val count = label("", Glass.Type.MICRO, Glass.MUTED).apply { maxLines = 1; ellipsize = android.text.TextUtils.TruncateAt.END }
+        val save = TextView(context).apply {
+            text = lctx.getString(R.string.guard_save)
+            textSize = Glass.Type.BODY
+            setTextColor(Color.parseColor(Glass.ON_TINT))
+            gravity = Gravity.CENTER
+            background = Glass.tinted(context, dp(20))
+            setPadding(dp(24), dp(10), dp(24), dp(10))
+            Glass.pressable(this)
+            visibility = View.GONE
+        }
+        val box = android.widget.EditText(context).apply {
+            background = Glass.well(context, dp(13))
+            setPadding(dp(14), dp(12), dp(14), dp(12))
+            setTextColor(Color.parseColor(Glass.TITLE))
+            setHintTextColor(Color.parseColor(Glass.MUTED))
+            textSize = Glass.Type.BODY
+            hint = lctx.getString(R.string.guard_hint)
+            inputType = android.text.InputType.TYPE_CLASS_TEXT or android.text.InputType.TYPE_TEXT_FLAG_MULTI_LINE or
+                android.text.InputType.TYPE_TEXT_FLAG_CAP_SENTENCES
+            isSingleLine = false
+            minLines = 4
+            gravity = Gravity.TOP or Gravity.START
+            filters = arrayOf(android.text.InputFilter.LengthFilter(net.kuafuai.andee.config.Guard.MAX_CHARS))
+            setText(last)
+        }
+        fun paint(note: String = "") {
+            val now = box.text?.toString().orEmpty()
+            count.text = note.ifEmpty { "${now.length} / ${net.kuafuai.andee.config.Guard.MAX_CHARS}" }
+            count.setTextColor(Color.parseColor(if (note.isNotEmpty()) Glass.SECONDARY else Glass.MUTED))
+            save.visibility = if (now.trim() != last) View.VISIBLE else View.GONE
+        }
+        box.addTextChangedListener(object : android.text.TextWatcher {
+            override fun beforeTextChanged(s: CharSequence?, a: Int, b: Int, c: Int) {}
+            override fun onTextChanged(s: CharSequence?, a: Int, b: Int, c: Int) {}
+            override fun afterTextChanged(s: android.text.Editable?) = paint()
+        })
+        save.setOnClickListener {
+            val now = box.text?.toString().orEmpty()
+            if (guard.set(now)) {
+                last = now.trim()
+                Notebook.onGuardChanged?.invoke()
+                paint(lctx.getString(if (last.isEmpty()) R.string.guard_cleared else R.string.guard_saved))
+                // The tab's dot follows; the text box keeps its focus and contents.
+                guardDot?.visibility = if (last.isEmpty()) View.VISIBLE else View.GONE
+            } else {
+                paint(lctx.getString(R.string.guard_not_saved))
+            }
+        }
+        p.addView(box, matchWrap().apply { topMargin = dp(14) })
+        val row = LinearLayout(context).apply {
+            orientation = LinearLayout.HORIZONTAL
+            gravity = Gravity.CENTER_VERTICAL
+        }
+        row.addView(count, LinearLayout.LayoutParams(0, WRAP, 1f))
+        row.addView(save, LinearLayout.LayoutParams(WRAP, WRAP))
+        p.addView(row, matchWrap().apply { topMargin = dp(10) })
+        paint()
+        addRow(body, p)
+
+        // The honest part, kept apart from the guidance so it is not skimmed past.
+        val note = panel()
+        note.addView(label(lctx.getString(R.string.guard_note_title), Glass.Type.CAPTION, Glass.WARN, bold = true), matchWrap())
+        note.addView(label(lctx.getString(R.string.guard_note), Glass.Type.MICRO, Glass.PHOTO_INK, top = 6).apply {
+            setLineSpacing(0f, 1.25f)
+        }, matchWrap())
+        addRow(body, note)
+    }
+
+    // ---- 自己 · 在意 · 日记 · 打算 · 人 · 维基 ----
+
+    private fun md(text: String, color: String = Glass.LABEL, size: Float = Glass.Type.BODY): View =
+        MarkdownView.build(context, text, color, size, onLink = ::openLink)
+
+    /** A link opens in the browser, which an overlay would sit on top of — so the card goes first. */
+    private fun openLink(url: String) {
+        runCatching {
+            context.startActivity(
+                android.content.Intent(android.content.Intent.ACTION_VIEW, android.net.Uri.parse(url))
+                    .addFlags(android.content.Intent.FLAG_ACTIVITY_NEW_TASK),
+            )
+            hide()
+        }
+    }
+
+    private fun stamp(ms: Long): String = SimpleDateFormat("yyyy-MM-dd HH:mm", Locale.US).format(ms)
+
+    private fun panel(): LinearLayout = LinearLayout(context).apply {
+        orientation = LinearLayout.VERTICAL
+        setPadding(dp(14), dp(12), dp(14), dp(12))
+        background = Glass.panel(context, dp(14))
+    }
+
+    private fun label(text: String, size: Float, color: String, bold: Boolean = false, top: Int = 0): TextView =
+        TextView(context).apply {
+            this.text = text
+            textSize = size
+            setTextColor(Color.parseColor(color))
+            if (bold) setTypeface(typeface, android.graphics.Typeface.BOLD)
+            setPadding(0, dp(top), 0, 0)
+        }
+
+    private fun addRow(body: LinearLayout, v: View) = body.addView(v, matchWrap().apply { bottomMargin = dp(10) })
+
+    private fun buildSelf(body: LinearLayout) {
+        val n = Notebook.selfhood(context).narrative()
+        if (n == null) {
+            body.addView(emptyState(lctx.getString(R.string.notebook_empty_self), lctx.getString(R.string.notebook_empty_self_hint)))
+            return
+        }
+        val p = panel()
+        p.addView(label(lctx.getString(R.string.notebook_self_heading), Glass.Type.TITLE, Glass.TITLE, bold = true), matchWrap())
+        p.addView(md(n.text, Glass.PHOTO_INK), matchWrap().apply { topMargin = dp(10) })
+        p.addView(label(lctx.getString(R.string.notebook_updated_at, stamp(n.updatedAt)), Glass.Type.MICRO, Glass.MUTED, top = 8), matchWrap())
+        addRow(body, p)
+    }
+
+    private fun buildCares(body: LinearLayout) {
+        val self = Notebook.selfhood(context)
+        val cares = self.cares().filter { it.status == "active" }.sortedByDescending { self.overdue(it) }
+        if (cares.isEmpty()) {
+            body.addView(emptyState(lctx.getString(R.string.notebook_empty_cares), lctx.getString(R.string.notebook_empty_cares_hint)))
+            return
+        }
+        for (c in cares) {
+            val p = panel()
+            p.addView(label(c.what, Glass.Type.BODY, Glass.TITLE, bold = true), matchWrap())
+            if (c.why.isNotBlank()) p.addView(md(c.why, Glass.PHOTO_INK, Glass.Type.CAPTION), matchWrap().apply { topMargin = dp(4) })
+            if (c.note.isNotBlank()) p.addView(label(c.note, Glass.Type.CAPTION, Glass.SECONDARY, top = 6), matchWrap())
+            val foot = LinearLayout(context).apply { orientation = LinearLayout.HORIZONTAL; setPadding(0, dp(8), 0, 0) }
+            foot.addView(label(c.kind, Glass.Type.MICRO, Glass.MUTED), LinearLayout.LayoutParams(0, WRAP, 1f))
+            if (self.overdue(c) > 0.5) foot.addView(label(lctx.getString(R.string.notebook_care_attention), Glass.Type.MICRO, Glass.ACCENT))
+            p.addView(foot, matchWrap())
+            addRow(body, p)
+        }
+    }
+
+    private fun buildDiary(body: LinearLayout) {
+        onItsOwn(body)
+        val pages = Notebook.selfhood(context).diary(7)
+        if (pages.isEmpty()) {
+            body.addView(emptyState(lctx.getString(R.string.notebook_empty_diary), lctx.getString(R.string.notebook_empty_diary_hint)))
+            return
+        }
+        for (page in pages) {
+            val p = panel()
+            p.addView(label(page.date, Glass.Type.CAPTION, Glass.SECONDARY), matchWrap())
+            p.addView(md(page.text), matchWrap().apply { topMargin = dp(10) })
+            addRow(body, p)
+        }
+    }
+
+    /** Today's thoughts and the last thing it did by itself — the device's record, so nothing done unasked is invisible. */
+    private fun onItsOwn(body: LinearLayout) {
+        val drive = Notebook.drive(context)
+        val thoughts = drive.thoughtsToday()
+        val last = drive.lastWork()
+        if (thoughts.isEmpty() && last == null) return
+        val p = panel()
+        p.addView(label(lctx.getString(R.string.notebook_own_heading), Glass.Type.CAPTION, Glass.SECONDARY), matchWrap())
+        if (last != null) {
+            val did = lctx.getString(when (last.effect) { "acted" -> R.string.notebook_own_acted; "looked" -> R.string.notebook_own_looked; else -> R.string.notebook_own_thought })
+            p.addView(label("${stamp(last.at)} · $did「${last.what}」", Glass.Type.BODY, Glass.LABEL, top = 8), matchWrap())
+            if (last.summary.isNotBlank()) p.addView(md(last.summary, Glass.PHOTO_INK, Glass.Type.CAPTION), matchWrap().apply { topMargin = dp(4) })
+        }
+        if (thoughts.isNotEmpty()) {
+            p.addView(label(lctx.getString(R.string.notebook_own_thoughts), Glass.Type.CAPTION, Glass.SECONDARY, top = 10), matchWrap())
+            for (t in thoughts.reversed()) p.addView(label("· " + t.text, Glass.Type.CAPTION, Glass.PHOTO_INK, top = 4), matchWrap())
+        }
+        addRow(body, p)
+    }
+
+    /**
+     * 打算: today's plan with each item's state and ✕ while it is still to come, what it leaves alone today, the
+     * long-term directions (pause / remove), and 告诉它一句. This is the only place the plan is shown — Settings
+     * used to carry the same thing, differently. Removing and pausing are done by the device at once
+     * (`Plans.dropItemByUser`, `setDirectionByUser`), and the model may not undo them.
+     */
+    private fun buildPlan(body: LinearLayout) {
+        val plans = Notebook.plans(context)
+        val day = plans.day(plans.today())
+        val p = panel()
+        p.addView(label(lctx.getString(R.string.settings_plan_today), Glass.Type.CAPTION, Glass.SECONDARY), matchWrap())
+        if (day == null) {
+            p.addView(label(lctx.getString(R.string.settings_plan_none_today), Glass.Type.CAPTION, Glass.MUTED, top = 6), matchWrap())
+        } else {
+            if (day.intent.isNotBlank()) p.addView(md(day.intent, Glass.TITLE, Glass.Type.BODY), matchWrap().apply { topMargin = dp(6) })
+            for (it in day.items.sortedBy { i -> i.time.ifEmpty { "99" } }) {
+                val live = it.status == "planned"
+                val row = LinearLayout(context).apply { orientation = LinearLayout.HORIZONTAL; gravity = Gravity.CENTER_VERTICAL }
+                row.addView(label("${it.time.ifEmpty { it.slot }.ifEmpty { "·" }}  ${planKind(it.kind)}  ${it.what}", Glass.Type.CAPTION, Glass.LABEL).apply {
+                    alpha = if (live) 1f else 0.6f
+                }, LinearLayout.LayoutParams(0, WRAP, 1f))
+                row.addView(label(planStatus(it.status), Glass.Type.MICRO, Glass.MUTED).apply { setPadding(dp(10), 0, dp(4), 0) })
+                if (live) row.addView(link("✕") {
+                    plans.dropItemByUser(day.date, it.id)
+                    Scheduler.syncPlan(context)
+                    rebuild()
+                })
+                p.addView(row, matchWrap().apply { topMargin = dp(6) })
+            }
+            if (day.quiet.isNotEmpty()) {
+                p.addView(label(lctx.getString(R.string.settings_plan_quiet, day.quiet.joinToString("；") { it.trim().trimEnd('。', '.', '；', ';') }), Glass.Type.CAPTION, Glass.MUTED, top = 8), matchWrap())
+            }
+        }
+        p.addView(label(lctx.getString(R.string.settings_plan_directions), Glass.Type.CAPTION, Glass.SECONDARY, top = 14), matchWrap())
+        val dirs = plans.directions().filter { d -> d.status != "dropped" && d.status != "done" }
+        if (dirs.isEmpty()) p.addView(label(lctx.getString(R.string.settings_plan_none_directions), Glass.Type.CAPTION, Glass.MUTED, top = 6), matchWrap())
+        for (d in dirs) {
+            val paused = d.status == "paused"
+            val row = LinearLayout(context).apply { orientation = LinearLayout.HORIZONTAL; gravity = Gravity.CENTER_VERTICAL }
+            row.addView(label(d.title + if (d.howIHelp.isNotEmpty()) " — ${d.howIHelp}" else "", Glass.Type.CAPTION, Glass.LABEL).apply {
+                alpha = if (paused) 0.5f else 1f
+            }, LinearLayout.LayoutParams(0, WRAP, 1f))
+            row.addView(link(lctx.getString(if (paused) R.string.settings_plan_resume else R.string.settings_plan_pause)) {
+                plans.setDirectionByUser(d.id, if (paused) "active" else "paused"); rebuild()
+            })
+            row.addView(link(lctx.getString(R.string.settings_plan_remove)) {
+                plans.setDirectionByUser(d.id, "dropped"); rebuild()
+            })
+            p.addView(row, matchWrap().apply { topMargin = dp(6) })
+        }
+        onTellBrain?.let { tell ->
+            p.addView(label(lctx.getString(R.string.settings_plan_tell), Glass.Type.CAPTION, Glass.SECONDARY, top = 14), matchWrap())
+            val row = LinearLayout(context).apply { orientation = LinearLayout.HORIZONTAL; gravity = Gravity.CENTER_VERTICAL }
+            val et = android.widget.EditText(context).apply {
+                background = Glass.well(context, dp(13))
+                setPadding(dp(14), dp(11), dp(14), dp(11))
+                setTextColor(Color.parseColor(Glass.TITLE))
+                setHintTextColor(Color.parseColor(Glass.MUTED))
+                textSize = Glass.Type.BODY
+                isSingleLine = true
+                inputType = android.text.InputType.TYPE_CLASS_TEXT
+                hint = lctx.getString(R.string.settings_plan_tell_hint)
+            }
+            row.addView(et, LinearLayout.LayoutParams(0, WRAP, 1f))
+            val sent = label("", Glass.Type.CAPTION, Glass.MUTED, top = 6)
+            row.addView(link(lctx.getString(R.string.settings_plan_send)) {
+                val text = et.text?.toString().orEmpty().trim()
+                if (text.isEmpty()) return@link
+                tell(text)
+                et.setText("")
+                sent.text = lctx.getString(R.string.settings_plan_sent)
+            })
+            p.addView(row, matchWrap().apply { topMargin = dp(6) })
+            p.addView(sent, matchWrap())
+        }
+        addRow(body, p)
+    }
+
+    private fun link(text: String, onClick: () -> Unit): TextView = TextView(context).apply {
+        this.text = text
+        textSize = Glass.Type.CAPTION
+        setTextColor(Color.parseColor(Glass.ACCENT))
+        setPadding(dp(10), dp(8), dp(4), dp(8))
+        isClickable = true
+        Glass.pressable(this)
+        setOnClickListener { onClick() }
+    }
+
+    private fun planKind(kind: String): String = lctx.getString(
+        when (kind) {
+            "ask" -> R.string.settings_plan_kind_ask
+            "prepare" -> R.string.settings_plan_kind_prepare
+            "follow_up" -> R.string.settings_plan_kind_follow_up
+            else -> R.string.settings_plan_kind_remind
+        },
+    )
+
+    private fun planStatus(status: String): String = lctx.getString(
+        when (status) {
+            "done" -> R.string.settings_plan_st_done
+            "declined" -> R.string.settings_plan_st_declined
+            "ignored" -> R.string.settings_plan_st_ignored
+            "missed" -> R.string.settings_plan_st_missed
+            "skipped" -> R.string.settings_plan_st_skipped
+            "moved" -> R.string.settings_plan_st_moved
+            "dropped" -> R.string.settings_plan_st_dropped
+            else -> R.string.settings_plan_st_planned
+        },
+    )
+
+    private fun buildPeople(body: LinearLayout) {
+        val people = Notebook.people(context).all().filter { it.status == "active" }
+        if (people.isEmpty()) {
+            body.addView(emptyState(lctx.getString(R.string.notebook_empty_people), lctx.getString(R.string.notebook_empty_people_hint)))
+            return
+        }
+        for (person in people) {
+            val p = panel()
+            p.addView(label(person.name, Glass.Type.TITLE, Glass.TITLE, bold = true), matchWrap())
+            if (person.relation.isNotBlank()) p.addView(label(person.relation, Glass.Type.CAPTION, Glass.SECONDARY, top = 4), matchWrap())
+            person.impressions.firstOrNull()?.let {
+                p.addView(md(it.text, Glass.PHOTO_INK, Glass.Type.CAPTION), matchWrap().apply { topMargin = dp(8) })
+            }
+            addRow(body, p)
+        }
+    }
+
+    private fun wikiLine(m: net.kuafuai.andee.wiki.Meta): String =
+        listOf(m.kind, "v${m.version}", m.status.key, stamp(m.updated)).joinToString(" · ")
+
+    private fun buildWiki(body: LinearLayout) {
+        val entries = Notebook.wiki(context).all().sortedByDescending { it.updated }
+        if (entries.isEmpty()) {
+            body.addView(emptyState(lctx.getString(R.string.notebook_empty_wiki), lctx.getString(R.string.notebook_empty_wiki_hint)))
+            return
+        }
+        for (m in entries) {
+            val p = panel().apply {
+                isClickable = true
+                Glass.pressable(this)
+                setOnClickListener { openArticle(m.id) }
+            }
+            val top = LinearLayout(context).apply { orientation = LinearLayout.HORIZONTAL; gravity = Gravity.CENTER_VERTICAL }
+            top.addView(label(m.title, Glass.Type.BODY, Glass.TITLE, bold = true), LinearLayout.LayoutParams(0, WRAP, 1f))
+            top.addView(label(lctx.getString(R.string.notebook_wiki_open), Glass.Type.CAPTION, Glass.ACCENT))
+            p.addView(top, matchWrap())
+            p.addView(label(wikiLine(m), Glass.Type.MICRO, Glass.MUTED, top = 4), matchWrap())
+            if (m.summary.isNotBlank()) {
+                // The summary is the start of the body, markup and all; a two-line preview reads only its prose.
+                p.addView(label(net.kuafuai.andee.text.Md.preview(m.summary), Glass.Type.CAPTION, Glass.PHOTO_INK, top = 6).apply {
+                    maxLines = 2
+                    ellipsize = android.text.TextUtils.TruncateAt.END
+                }, matchWrap())
+            }
+            addRow(body, p)
+        }
+    }
+
+    /** Reads the article from its file — off the main thread, since a backend other than the folder may be remote. */
+    private fun openArticle(id: String) {
+        wikiOpen = id
+        wikiArticle = null
+        rebuild()
+        Thread({
+            val r = Notebook.wiki(context).read(id)
+            root?.post {
+                if (wikiOpen != id) return@post
+                wikiArticle = r
+                rebuild()
+            }
+        }, "WikiRead").start()
+    }
+
+    private fun buildArticle(body: LinearLayout) {
+        val bar = LinearLayout(context).apply { orientation = LinearLayout.HORIZONTAL; gravity = Gravity.CENTER_VERTICAL }
+        bar.addView(label(lctx.getString(R.string.notebook_wiki_back), Glass.Type.BODY, Glass.ACCENT).apply {
+            setPadding(dp(2), dp(6), dp(12), dp(6))
+            isClickable = true
+            Glass.pressable(this)
+            setOnClickListener { wikiOpen = null; wikiArticle = null; rebuild() }
+        })
+        bar.addView(View(context), LinearLayout.LayoutParams(0, 1, 1f))
+        val article = wikiArticle?.getOrNull()
+        if (article != null) {
+            bar.addView(label(lctx.getString(R.string.notebook_wiki_copy), Glass.Type.CAPTION, Glass.ACCENT).apply {
+                setPadding(dp(12), dp(6), dp(2), dp(6))
+                isClickable = true
+                Glass.pressable(this)
+                setOnClickListener {
+                    val cm = context.getSystemService(Context.CLIPBOARD_SERVICE) as ClipboardManager
+                    if (runCatching { cm.setPrimaryClip(ClipData.newPlainText(article.meta.title, article.body)) }.isSuccess) {
+                        text = lctx.getString(R.string.notebook_copied)
+                    }
+                }
+            })
+        }
+        body.addView(bar, matchWrap().apply { bottomMargin = dp(10) })
+        val r = wikiArticle
+        when {
+            r == null -> body.addView(label(lctx.getString(R.string.notebook_wiki_reading), Glass.Type.BODY, Glass.SECONDARY), matchWrap())
+            r.isFailure -> body.addView(label(r.exceptionOrNull()?.message.orEmpty(), Glass.Type.BODY, Glass.DANGER), matchWrap())
+            else -> {
+                val a = r.getOrThrow()
+                val p = panel().apply { setPadding(dp(16), dp(14), dp(16), dp(16)) }
+                p.addView(label(a.meta.title, Glass.Type.TITLE, Glass.TITLE, bold = true), matchWrap())
+                p.addView(label(wikiLine(a.meta), Glass.Type.MICRO, Glass.MUTED, top = 4), matchWrap())
+                if (a.meta.source.isNotBlank()) {
+                    p.addView(label(lctx.getString(R.string.notebook_wiki_source, a.meta.source), Glass.Type.MICRO, Glass.MUTED, top = 2), matchWrap())
+                }
+                p.addView(md(a.body), matchWrap().apply { topMargin = dp(14) })
+                addRow(body, p)
+            }
+        }
+    }
+
+    @SuppressLint("SetTextI18n")
+    private fun buildMemories(body: LinearLayout) {
+        val all = Notebook.memories(context).filter { !it.expired() }
+        if (all.isEmpty()) {
+            body.addView(emptyState(lctx.getString(R.string.notebook_empty_memories)))
+            return
+        }
+
+        val byType = all.groupBy { it.type }
+        body.addView(TextView(context).apply {
+            text = lctx.getString(R.string.notebook_delete_note)
+            textSize = Glass.Type.MICRO
+            setTextColor(Color.parseColor(Glass.MUTED))
+        }, matchWrap())
+        for (type in Notebook.TYPES) {
+            val group = byType[type] ?: continue
+            val sorted = group.sortedWith(
+                compareByDescending<net.kuafuai.andee.config.Memory> { it.importance }
+                    .thenByDescending { it.updatedAt },
+            )
+            body.addView(sectionHeader(typeLabel(type)))
+            for (m in sorted) {
+                body.addView(memoryRow(m), matchWrap().apply { bottomMargin = dp(10) })
+            }
+        }
+    }
+
+    private fun typeLabel(type: String): String = when (type) {
+        "user" -> lctx.getString(R.string.notebook_type_user)
+        "feedback" -> lctx.getString(R.string.notebook_type_feedback)
+        "way" -> lctx.getString(R.string.notebook_type_way)
+        "reference" -> lctx.getString(R.string.notebook_type_reference)
+        "failure" -> lctx.getString(R.string.notebook_type_failure)
+        else -> type
+    }
+
+    @SuppressLint("SetTextI18n")
+    private fun memoryRow(m: net.kuafuai.andee.config.Memory): View {
+        val row = LinearLayout(context).apply {
+            orientation = LinearLayout.VERTICAL
+            setPadding(dp(14), dp(12), dp(14), dp(12))
+            background = Glass.panel(context, dp(14))
+        }
+
+        val title = LinearLayout(context).apply {
+            orientation = LinearLayout.HORIZONTAL
+            gravity = Gravity.CENTER_VERTICAL
+        }
+        title.addView(
+            TextView(context).apply {
+                text = m.name
+                textSize = Glass.Type.BODY
+                setTextColor(Color.parseColor(Glass.TITLE))
+            },
+            LinearLayout.LayoutParams(0, WRAP, 1f),
+        )
+        title.addView(deleteButton {
+            Notebook.forget(context, m.name)
+            rebuild()
+        })
+        row.addView(title, matchWrap())
+
+        // Tap to read what it actually wrote down; the description is only the line it recalls it by.
+        if (m.content.isNotBlank()) {
+            row.isClickable = true
+            Glass.pressable(row)
+            row.setOnClickListener {
+                if (!expanded.remove(m.name)) expanded += m.name
+                rebuild()
+            }
+        }
+
+        if (m.description.isNotBlank()) {
+            row.addView(
+                TextView(context).apply {
+                    text = m.description
+                    textSize = Glass.Type.CAPTION
+                    setTextColor(Color.parseColor(Glass.SECONDARY))
+                    setPadding(0, dp(4), 0, 0)
+                },
+                matchWrap(),
+            )
+        }
+
+        if (m.name in expanded && m.content.isNotBlank()) {
+            row.addView(md(m.content, Glass.PHOTO_INK, Glass.Type.CAPTION), matchWrap().apply { topMargin = dp(8) })
+        }
+
+        val meta = buildString {
+            val stamp = SimpleDateFormat("yyyy-MM-dd HH:mm", Locale.US).format(m.updatedAt)
+            append(stamp)
+            if (m.hits > 0) {
+                append(" · ")
+                append(lctx.getString(R.string.notebook_hits, m.hits))
+            }
+        }
+        row.addView(
+            TextView(context).apply {
+                text = meta
+                textSize = Glass.Type.MICRO
+                setTextColor(Color.parseColor(Glass.MUTED))
+                setPadding(0, dp(6), 0, 0)
+            },
+            matchWrap(),
+        )
+
+        return row
+    }
+
+    @SuppressLint("SetTextI18n")
+    private fun buildTodos(body: LinearLayout) {
+        val active = Notebook.todos(context, "active")
+        if (active.isEmpty()) {
+            body.addView(emptyState(lctx.getString(R.string.notebook_empty_todos)))
+            return
+        }
+
+        val sorted = active.sortedBy { it.nextRunAt }
+        for (t in sorted) {
+            body.addView(todoRow(t), matchWrap().apply { bottomMargin = dp(10) })
+        }
+    }
+
+    @SuppressLint("SetTextI18n")
+    private fun todoRow(t: net.kuafuai.andee.config.Todo): View {
+        val row = LinearLayout(context).apply {
+            orientation = LinearLayout.VERTICAL
+            setPadding(dp(14), dp(12), dp(14), dp(12))
+            background = Glass.panel(context, dp(14))
+        }
+
+        val title = LinearLayout(context).apply {
+            orientation = LinearLayout.HORIZONTAL
+            gravity = Gravity.CENTER_VERTICAL
+        }
+        title.addView(
+            TextView(context).apply {
+                text = t.what
+                textSize = Glass.Type.BODY
+                setTextColor(Color.parseColor(Glass.TITLE))
+            },
+            LinearLayout.LayoutParams(0, WRAP, 1f),
+        )
+        title.addView(deleteButton {
+            // Same three steps as the brain's own `todo drop`: without the
+            // cancel, the alarm still fires for a row the user just deleted.
+            Notebook.patchTodo(context, t.id, status = "dropped", nextRunAt = 0L)
+            Scheduler.cancelTodo(context, t.id)
+            rebuild()
+        })
+        row.addView(title, matchWrap())
+
+        val detail = buildString {
+            if (t.mode == "cron") {
+                append(lctx.getString(R.string.notebook_todo_cron, t.cronExpr))
+            } else {
+                val rel = DateUtils.getRelativeTimeSpanString(
+                    t.at,
+                    System.currentTimeMillis(),
+                    DateUtils.MINUTE_IN_MILLIS,
+                )
+                append(rel)
+            }
+            if (t.status == "paused") {
+                append(" · ")
+                append(lctx.getString(R.string.notebook_todo_paused))
+            }
+        }
+        row.addView(
+            TextView(context).apply {
+                text = detail
+                textSize = Glass.Type.CAPTION
+                setTextColor(Color.parseColor(Glass.SECONDARY))
+                setPadding(0, dp(4), 0, 0)
+            },
+            matchWrap(),
+        )
+
+        return row
+    }
+
+    private fun sectionHeader(label: String): TextView = TextView(context).apply {
+        text = label
+        textSize = Glass.Type.CAPTION
+        setTextColor(Color.parseColor(Glass.MUTED))
+        setPadding(0, dp(16), 0, dp(8))
+        layoutParams = matchWrap()
+    }
+
+    private fun emptyState(msg: String, hint: String? = null): TextView = TextView(context).apply {
+        text = if (hint == null) msg else "$msg\n$hint"
+        textSize = Glass.Type.BODY
+        setTextColor(Color.parseColor(Glass.MUTED))
+        gravity = Gravity.CENTER
+        setPadding(dp(20), dp(40), dp(20), dp(40))
+        layoutParams = matchWrap()
+    }
+
+    private fun deleteButton(onClick: () -> Unit): TextView = TextView(context).apply {
+        text = lctx.getString(R.string.common_delete)
+        textSize = Glass.Type.CAPTION
+        setTextColor(Color.parseColor(Glass.DANGER))
+        gravity = Gravity.CENTER
+        setPadding(dp(12), dp(6), dp(12), dp(6))
+        background = Glass.panel(context, dp(10))
+        isClickable = true
+        Glass.pressable(this)
+        setOnClickListener { onClick() }
+        layoutParams = LinearLayout.LayoutParams(WRAP, WRAP)
+    }
+
+    private fun divider(parent: LinearLayout) {
+        parent.addView(
+            View(context).apply { setBackgroundColor(Color.parseColor(Glass.PANEL_EDGE)) },
+            LinearLayout.LayoutParams(MATCH, dp(1)),
+        )
+    }
+
+    private fun dp(value: Int): Int = (value * context.resources.displayMetrics.density).toInt()
+
+    private fun matchWrap() = LinearLayout.LayoutParams(MATCH, WRAP)
+
+    /** 守卫 first, on both bodies: it is the one the user writes, and the card opens on it. */
+    private enum class Tab(@androidx.annotation.StringRes val label: Int) {
+        GUARD(R.string.notebook_tab_guard),
+        SELF(R.string.notebook_tab_self), CARES(R.string.notebook_tab_cares), DIARY(R.string.notebook_tab_diary),
+        PLAN(R.string.notebook_tab_plan), PEOPLE(R.string.notebook_tab_people), WIKI(R.string.notebook_tab_wiki),
+        MEMORIES(R.string.notebook_tab_memories), TODOS(R.string.notebook_tab_todos),
+    }
+
+    private companion object {
+        val TABS = Tab.values()
+        const val MATCH = LinearLayout.LayoutParams.MATCH_PARENT
+        const val WRAP = LinearLayout.LayoutParams.WRAP_CONTENT
+    }
+}
