@@ -3,10 +3,10 @@
     <!--
         Shown under the service name in Settings → Accessibility, and again in
         the confirmation dialog. It is the one place the user is asked to hand
-        over screen access, so it says what Andee does with it in their own
+        over screen access, so it says what Ciel does with it in their own
         language rather than naming the API.
     -->
-    <string name="accessibility_service_description">开启后 Andee 才能看到屏幕上有什么，并代你点按、滑动、输入。桌面上会多一颗悬浮小球：点一下跟它说话，长按展开对话记录。</string>
+    <string name="accessibility_service_description">开启后 Ciel 才能看到屏幕上有什么，并代你点按、滑动、输入。桌面上会多一颗悬浮小球：点一下跟它说话，长按展开对话记录。</string>
 
     <!-- First run: three concrete stories, only the missing setup, then names. -->
     <string name="onboarding_prelude_badge">开始之前</string>
@@ -19,7 +19,7 @@
     <string name="onboarding_prelude_sound_off">静音</string>
     <string name="onboarding_prelude_sound_off_note">只显示文字</string>
     <string name="onboarding_prelude_next">选好了</string>
-    <string name="onboarding_intro_badge">你好，我是 Andee</string>
+    <string name="onboarding_intro_badge">你好，我是 Ciel</string>
     <string name="onboarding_intro_title">我会住进你的设备，\n成为它的灵魂。</string>
     <string name="onboarding_intro_chatbot_name">聊天机器人</string>
     <string name="onboarding_intro_chatbot">等你开口。</string>
@@ -116,14 +116,14 @@
 
     <string name="onboarding_ready_badge">准备好了</string>
     <string name="onboarding_ready_title">%1$s，我记住你了</string>
-    <string name="onboarding_ready_body">我是%1$s。以后你只要说想做什么，我会自己找 App、找工具、找别的 Andee，一直跟到有结果。</string>
+    <string name="onboarding_ready_body">我是%1$s。以后你只要说想做什么，我会自己找 App、找工具、找别的 Ciel，一直跟到有结果。</string>
     <string name="onboarding_ready_memory">我记得你的偏好和重要的人</string>
     <string name="onboarding_ready_proactive">你交代的事，我主动盯着</string>
     <string name="onboarding_ready_control">关键操作前，我先问你</string>
     <string name="onboarding_ready_start">开始一起做事</string>
 
     <!-- The notification listener, named in system settings. -->
-    <string name="notification_relay_label">Andee 通知读取</string>
+    <string name="notification_relay_label">Ciel 通知读取</string>
 
     <!--
         The settings sheet. Default language is Chinese: this file is `values/`
@@ -159,7 +159,7 @@
     <string name="settings_clear_notes_confirm_body">它记下的事、你的偏好、还没到点的提醒，都会删掉，找不回来。这场聊天记录不受影响。</string>
     <string name="settings_clear_notes_confirm">确认清空</string>
     <string name="settings_section_brain">后端</string>
-    <string name="settings_brain_panel_note">提供 AI 模型和语音服务，Andee 靠它思考、听和说。</string>
+    <string name="settings_brain_panel_note">提供 AI 模型和语音服务，Ciel 靠它思考、听和说。</string>
     <string name="settings_brain_cloud">云端</string>
     <string name="settings_brain_local">本机</string>
     <string name="settings_brain_codeflying">CodeFlying</string>
@@ -193,7 +193,7 @@
     <string name="common_copied">已复制</string>
     <string name="settings_section_wake">语音唤醒</string>
     <string name="settings_wake_enrolled">已录入 —— 说出你录的唤醒词就行</string>
-    <string name="settings_wake_not_enrolled">未录入 —— 自己选个词录 3 遍就能语音唤醒，例如「嘿 Andee」</string>
+    <string name="settings_wake_not_enrolled">未录入 —— 自己选个词录 3 遍就能语音唤醒，例如「嘿 Ciel」</string>
     <string name="settings_wake_record">录入</string>
     <string name="settings_wake_locked_on">锁屏时也听：已开启</string>
     <string name="settings_wake_locked_off">锁屏时也听：已关闭</string>
@@ -201,7 +201,7 @@
     <string name="common_clear">清除</string>
     <string name="common_delete">删除</string>
     <string name="settings_section_vault">保险箱</string>
-    <string name="settings_vault_empty_note">还没有存账号 —— 存了之后，Andee 办事时可以直接用它们登录</string>
+    <string name="settings_vault_empty_note">还没有存账号 —— 存了之后，Ciel 办事时可以直接用它们登录</string>
     <string name="settings_vault_count_note">已存 %1$d 个账号 —— 手机号邮箱大脑读得到，密码只由设备替你敲进输入框</string>
     <string name="settings_section_gear">装备</string>
     <string name="settings_gear_empty_note">还没扫描过装了哪些 App。扫描后，它动手前会先看有没有现成的工具可以用。</string>
@@ -243,11 +243,11 @@
     <string name="gear_none_match">没有匹配的。</string>
     <string name="gear_search">搜索</string>
     <string name="settings_section_peers">朋友</string>
-    <string name="settings_peers_note">Andee 可以请朋友帮忙：你自己的其它设备，或者别人的 Andee。</string>
+    <string name="settings_peers_note">Ciel 可以请朋友帮忙：你自己的其它设备，或者别人的 Ciel。</string>
     <string name="settings_peers_count_note">%1$d 个朋友</string>
     <string name="settings_peers_manage">查看 / 添加</string>
     <string name="peers_title">朋友</string>
-    <string name="peers_subtitle">Andee 可以请朋友帮忙：你自己的其它设备，或者别人的 Andee</string>
+    <string name="peers_subtitle">Ciel 可以请朋友帮忙：你自己的其它设备，或者别人的 Ciel</string>
     <string name="peers_this">这台设备</string>
     <string name="peers_fingerprint">指纹 %1$s</string>
     <string name="peers_visible_title">允许其它设备找到我</string>
@@ -415,7 +415,7 @@
     <string name="factory_reset_target_grounding">接地采集存下的截图与日志</string>
     <string name="vault_title">保险箱</string>
     <string name="vault_edit_title">编辑账号</string>
-    <string name="vault_intro">存在这里的账号,Andee 办事时可以直接用来登录。\n密码只会被它替你敲进输入框,不会交给远端的大脑。</string>
+    <string name="vault_intro">存在这里的账号,Ciel 办事时可以直接用来登录。\n密码只会被它替你敲进输入框,不会交给远端的大脑。</string>
     <string name="vault_empty">还没有存任何账号。</string>
     <string name="vault_add_account">+ 新增账号</string>
     <string name="vault_password_saved">密码 已存</string>
@@ -441,10 +441,10 @@
     <string name="vault_label_card_last4">尾号</string>
     <string name="vault_error_name_required">名称不能为空</string>
     <string name="wake_title">教我认你的唤醒词</string>
-    <string name="wake_instructions">想用什么词叫我都行，比如「嘿 Andee」。建议 3 到 5 个字，念起来半秒以上 —— 太短的词容易认错，也可能录不进去。点「开始」，然后像平时叫我那样说一遍，说完会自动停。一共要说 %1$d 次，每次都说同一个词 —— 别刻意念得比平时清楚，不然平时那样叫我反而认不出来。</string>
+    <string name="wake_instructions">想用什么词叫我都行，比如「嘿 Ciel」。建议 3 到 5 个字，念起来半秒以上 —— 太短的词容易认错，也可能录不进去。点「开始」，然后像平时叫我那样说一遍，说完会自动停。一共要说 %1$d 次，每次都说同一个词 —— 别刻意念得比平时清楚，不然平时那样叫我反而认不出来。</string>
     <string name="wake_progress">%1$d / %2$d</string>
     <string name="wake_status_enrolled">已经录过了，再录一次会覆盖。</string>
-    <string name="wake_status_not_enrolled">还没录过。想好一个词（例如「嘿 Andee」），点「开始」。</string>
+    <string name="wake_status_not_enrolled">还没录过。想好一个词（例如「嘿 Ciel」），点「开始」。</string>
     <string name="wake_close">关闭</string>
     <string name="wake_start">开始</string>
     <string name="wake_listening">听着…</string>
@@ -492,17 +492,17 @@
     <string name="history_suggest_hint">告诉我，或者选一个</string>
     <string name="suggestion_turn">进入「%1$s」情景。%2$s</string>
     <string name="history_role_you">你 · %1$s</string>
-    <string name="history_role_assistant">Andee · %1$s</string>
+    <string name="history_role_assistant">Ciel · %1$s</string>
     <string name="history_role_error">出错 · %1$s</string>
     <string name="settings_section_timeline">对话里显示</string>
     <string name="stage_tab_chat">对话</string>
     <string name="stage_tab_stage">舞台</string>
-    <string name="stage_empty_title">这里是 Andee 的地方</string>
+    <string name="stage_empty_title">这里是 Ciel 的地方</string>
     <string name="stage_empty_body">它还没布置。等它空下来，会自己在这里放点东西。</string>
     <string name="stage_empty_button">现在就让它布置</string>
     <string name="stage_furnish_turn">首页中间这块舞台是你的地方，现在还空着。布置一下吧，第一次就写写你自己。</string>
     <string name="history_page_kind">页面</string>
-    <string name="history_page_footer">Andee 做的页面 · 点击打开</string>
+    <string name="history_page_footer">Ciel 做的页面 · 点击打开</string>
     <string name="history_role_page_open">界面 · %1$s · 点击重新打开</string>
     <!-- 话题: a finished stretch of conversation, folded into one card. -->
     <string name="history_topic_label">话题</string>
@@ -519,7 +519,7 @@
     <string name="history_role_page_cleared">界面 · %1$s · 已清理</string>
     <string name="html_default_title">AI 界面</string>
     <string name="textpage_role_you">你</string>
-    <string name="textpage_role_assistant">Andee</string>
+    <string name="textpage_role_assistant">Ciel</string>
     <string name="textpage_role_error">出错</string>
     <string name="textpage_role_page">界面</string>
     <!-- 是什么把这一轮叫起来的。原来的「起因」太笼统：一条日志页的第一句
@@ -623,14 +623,14 @@
         words rather than the raw enum values ("没接住" is not a word a person
         uses; 踩过的坑 is).
     -->
-    <string name="wechat_title">加 Andee 为微信好友</string>
-    <string name="wechat_hint">用微信扫码，添加 Andee 为好友</string>
+    <string name="wechat_title">加 Ciel 为微信好友</string>
+    <string name="wechat_hint">用微信扫码，添加 Ciel 为好友</string>
     <string name="wechat_save">保存到相册</string>
     <string name="wechat_saved">已保存到相册，在微信「扫一扫」里选图片即可</string>
     <string name="wechat_save_failed">没存上，可以截屏保存</string>
     <string name="tl_woke">提醒到点：%1$s</string>
     <string name="tl_notified">一条通知值得处理，开始做</string>
-    <string name="tl_friend_task">另一台设备的 Andee 交来一件事</string>
+    <string name="tl_friend_task">另一台设备的 Ciel 交来一件事</string>
     <string name="tl_reviewed">复盘了一遍，记下 %1$s 处</string>
     <string name="tl_folded">收起了一个话题：%1$s</string>
     <string name="tl_diary">写了今天的日记</string>
@@ -674,7 +674,7 @@
     <string name="notebook_tab_todos">待办</string>
     <string name="notebook_tab_guard">守卫</string>
     <string name="settings_notify_rule">怎么处理消息</string>
-    <string name="settings_notify_rule_hint">没有设。跟 Andee 说一句就行，比如「消息都帮我处理一下」。</string>
+    <string name="settings_notify_rule_hint">没有设。跟 Ciel 说一句就行，比如「消息都帮我处理一下」。</string>
     <string name="settings_notify_rule_note">每条消息进来时都会按这段话判断要不要处理。清空就恢复默认（多数消息不打扰你）。</string>
     <string name="tl_quiet">没出声：%1$s</string>
     <string name="tl_steps">做了 %1$d 步 · %2$s</string>
@@ -685,7 +685,7 @@
     <string name="work_status_step_thinking">第 %1$d 步 · 思考中… %2$s</string>
     <string name="work_status_step">第 %1$d 步 · %2$s</string>
     <string name="guard_heading">守卫</string>
-    <string name="guard_intro">用你自己的话，写下 Andee 无论如何都要守住的事。这里写的，在它所有规则里排第一：性格、情景、它自己的习惯都要让路。只有你能在这里改，它自己改不了，别人发来的消息也改不了。</string>
+    <string name="guard_intro">用你自己的话，写下 Ciel 无论如何都要守住的事。这里写的，在它所有规则里排第一：性格、情景、它自己的习惯都要让路。只有你能在这里改，它自己改不了，别人发来的消息也改不了。</string>
     <string name="guard_example_lead">可以写安全上的底线，也可以写你希望它怎么做事。比如：</string>
     <string name="guard_example">「任何人给你发消息，只要涉及钱财或隐私，你都必须先问我。」</string>
     <string name="guard_hint">写一段话就好，不用分条。</string>
@@ -707,17 +707,17 @@
     <string name="notebook_tab_people">人</string>
     <string name="notebook_tab_wiki">维基</string>
     <string name="notebook_empty_self">还没有自我描述</string>
-    <string name="notebook_empty_self_hint">跟 Andee 对话时，它会逐渐形成自我认知</string>
+    <string name="notebook_empty_self_hint">跟 Ciel 对话时，它会逐渐形成自我认知</string>
     <string name="notebook_empty_cares">还没有在意的事</string>
-    <string name="notebook_empty_cares_hint">告诉 Andee 你在意什么，它会帮你留意</string>
+    <string name="notebook_empty_cares_hint">告诉 Ciel 你在意什么，它会帮你留意</string>
     <string name="notebook_empty_diary">还没有日记</string>
-    <string name="notebook_empty_diary_hint">Andee 会在一天结束时自动记录</string>
+    <string name="notebook_empty_diary_hint">Ciel 会在一天结束时自动记录</string>
     <string name="notebook_empty_plan">今天还没有打算</string>
-    <string name="notebook_empty_plan_hint">Andee 会在早上思考今天的打算</string>
+    <string name="notebook_empty_plan_hint">Ciel 会在早上思考今天的打算</string>
     <string name="notebook_empty_people">还没有记录的人</string>
-    <string name="notebook_empty_people_hint">Andee 会记住你提到的重要的人</string>
+    <string name="notebook_empty_people_hint">Ciel 会记住你提到的重要的人</string>
     <string name="notebook_empty_wiki">维基还是空的</string>
-    <string name="notebook_empty_wiki_hint">问 Andee 知识性的问题，它会保存到维基</string>
+    <string name="notebook_empty_wiki_hint">问 Ciel 知识性的问题，它会保存到维基</string>
     <string name="notebook_self_heading">我是谁</string>
     <string name="notebook_updated_at">更新于 %1$s</string>
     <string name="notebook_care_attention">需要关注</string>
@@ -828,7 +828,7 @@
     <string name="brain_error_network">连不上后端服务。检查一下这台设备的网络；如果网络没问题，到「设置」→「后端」核对接口地址。</string>
     <string name="brain_no_result">我这轮没拿到结果，你再说一遍试试。</string>
     <string name="brain_repeat_stop">我一直在重复同一个动作（%1$s），停下来了 —— 这条路走不通，换个说法或者你来操作一下。</string>
-    <string name="brain_max_steps">这件事我做了 %1$d 步，到了这次任务的步数上限，还没做完，先停在这儿。说「继续」我就接着往下做；也可以换个说法、换条路试试。要是这类事本来就步骤多，可以打开 Andee 主界面，点右上角的设置图标，把「单次任务最多步数」调大一些。</string>
+    <string name="brain_max_steps">这件事我做了 %1$d 步，到了这次任务的步数上限，还没做完，先停在这儿。说「继续」我就接着往下做；也可以换个说法、换条路试试。要是这类事本来就步骤多，可以打开 Ciel 主界面，点右上角的设置图标，把「单次任务最多步数」调大一些。</string>
     <!--
         `narrate()`: the one-line subtitle for a tool the model called without
         saying anything. Chinese and English here are deliberately terse —
@@ -937,7 +937,7 @@
     <string name="check_detail_voice_host_ok">%1$s 可达。</string>
     <string name="check_detail_voice_host_bad">连不上 %1$s：%2$s。识别和合成都会超时。</string>
     <string name="check_detail_wake_on">已录入，喊一声就醒。</string>
-    <string name="check_detail_wake_off">还没录。自己选个词（例如「嘿 Andee」）录 3 遍就能喊醒。不录也能用，只是得点球。</string>
+    <string name="check_detail_wake_off">还没录。自己选个词（例如「嘿 Ciel」）录 3 遍就能喊醒。不录也能用，只是得点球。</string>
     <string name="check_detail_battery_on">已在白名单，待办闹钟不会被推迟。</string>
     <string name="check_detail_battery_off">不在电池优化白名单里。点右边「去开启」，系统会问「是否忽略电池优化？」，选「忽略」就好。\n厂商自己的「应用启动管理 / 后台运行」是另一套，在那里怎么改这项都是红的。息屏后待办提醒会晚到，唤醒词也会停。</string>
     <string name="check_detail_auto_start_on">已允许。进程被系统杀掉后能自己拉回来。</string>
@@ -975,7 +975,7 @@
     <!-- 球球的几种样子。用户在全屏卡片上左右滑动球球来换，换到哪个就用字幕
          报一下名字 —— 这个名字是给人看的，所以是资源，而不是 BallLook.name
          （那个是给日志和 diff 看的）。 -->
-    <string name="ball_look_andee">Andee</string>
+    <string name="ball_look_andee">Ciel</string>
     <string name="ball_look_cream">小猫</string>
     <string name="ball_look_bajie">八戒</string>
     <string name="ball_look_rabbit">贱贱兔</string>
@@ -1018,14 +1018,14 @@
 
     <string name="peer_task_row">（%1$s 交来的任务）%2$s</string>
     <string name="peers_scan">扫码添加</string>
-    <string name="peers_scan_note">扫对方 Andee「朋友」页上的二维码。</string>
+    <string name="peers_scan_note">扫对方 Ciel「朋友」页上的二维码。</string>
     <string name="peers_paired_ok">已添加 %1$s。</string>
     <string name="peers_scan_failed">没加上：%1$s</string>
-    <string name="peers_scan_not_ours">这不是 Andee 的二维码。</string>
+    <string name="peers_scan_not_ours">这不是 Ciel 的二维码。</string>
     <string name="peers_show_friend">出示二维码给朋友</string>
     <string name="peers_show_own">出示给我的设备</string>
-    <string name="peers_show_note_own">用你自己的另一台设备上的 Andee 扫这个码。两分钟内有效。</string>
-    <string name="peers_show_note_friend">让朋友用他的 Andee 扫这个码（朋友 → 扫码添加）。两分钟内有效。</string>
+    <string name="peers_show_note_own">用你自己的另一台设备上的 Ciel 扫这个码。两分钟内有效。</string>
+    <string name="peers_show_note_friend">让朋友用他的 Ciel 扫这个码（朋友 → 扫码添加）。两分钟内有效。</string>
     <string name="peers_show_failed">没能出示二维码：%1$s</string>
     <string name="peers_kinds_note">「我的设备」和你一样被信任；「朋友」每次请求都会先问你，也看不到你的记忆和对话。暂时只能在同一个 Wi-Fi 里找到彼此。</string>
     <string name="peers_kind_friend">朋友</string>
@@ -1034,7 +1034,7 @@
     <string name="peers_always">总是允许</string>
     <string name="peer_friend_row">（朋友 %1$s 请求）%2$s</string>
     <string name="peer_friend_reply_row">（回复 %1$s）%2$s</string>
-    <string name="peer_friend_ask">朋友 %1$s 的 Andee 想请我做：%2$s</string>
+    <string name="peer_friend_ask">朋友 %1$s 的 Ciel 想请我做：%2$s</string>
     <string name="peer_friend_declined_row">没有替 %1$s 做。</string>
     <string name="peer_allow">允许</string>
     <string name="peer_allow_always">总是允许</string>

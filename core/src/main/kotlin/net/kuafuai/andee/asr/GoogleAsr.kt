@@ -686,7 +686,7 @@ class GoogleAsr(
          * one with a measurement behind it: 500 was tried there and "cut the
          * sentence in half at a breath".
          */
-        private const val VAD_SILENCE_MS = 800
+        private const val VAD_SILENCE_MS = 500
 
         /** Waiting for `setupComplete`. Not getting one means the config is wrong. */
         private const val SETUP_TIMEOUT_S = 20L
@@ -697,7 +697,7 @@ class GoogleAsr(
          * [finishTurn]. The reference gateway's value, kept because it is the
          * one with a measurement behind it.
          */
-        private const val TAIL_SILENCE_MS = 1200
+        private const val TAIL_SILENCE_MS = 650
 
         /** One capture block: 100 ms of 16 kHz mono 16-bit. */
         private const val SILENCE_CHUNK_MS = 100

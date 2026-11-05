@@ -127,7 +127,7 @@ android {
     }
 
     defaultConfig {
-        applicationId "net.kuafuai.andee"
+        applicationId "ai.ciel.companion"
         minSdk 30
         targetSdk 34
         versionCode 23
