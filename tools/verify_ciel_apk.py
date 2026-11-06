@@ -38,10 +38,10 @@ def run_tool(command, include_stderr=False):
 
 
 def signer_certificates(output):
-    # Build Tools 36+ names v3 signers by SDK range; older releases use #1.
+    # SDKs identify signers by number, SDK range, or (Build Tools 37) scheme.
     # Match certificate digests only, never a public key or SourceStamp digest.
     return sorted(set(re.findall(
-        r"(?m)^Signer(?: #\d+| \(minSdkVersion=[^\r\n]*\)) certificate SHA-256 digest: "
+        r"(?m)^(?:Signer(?: #\d+| \(minSdkVersion=[^\r\n]*\))|V[1-4](?:\.\d+)? Signer:) certificate SHA-256 digest: "
         r"([a-fA-F0-9]{64})[ \t]*\r?$", output,
     )))
 

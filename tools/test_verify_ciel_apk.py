@@ -1,6 +1,7 @@
 """Signer-output compatibility checks for the APK release gate."""
 
 import unittest
+from pathlib import Path
 
 from verify_ciel_apk import signer_certificates
 
@@ -18,6 +19,10 @@ class SignerCertificatesTest(unittest.TestCase):
             for name in ("Signer (minSdkVersion=28, maxSdkVersion=2147483647)",
                          "Signer (minSdkVersion=33 (dev release=true), maxSdkVersion=2147483647)")
         )
+        self.assertEqual(signer_certificates(output), [self.fingerprint])
+
+    def test_actual_build_tools_37_report(self):
+        output = (Path(__file__).parent / "testdata" / "apksigner-37.txt").read_text()
         self.assertEqual(signer_certificates(output), [self.fingerprint])
 
     def test_other_digests_cannot_supply_the_application_signer(self):

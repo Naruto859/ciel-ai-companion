@@ -1,0 +1,19 @@
+Verifies
+Verified using v1 scheme (JAR signing): false
+Verified using v2 scheme (APK Signature Scheme v2): false
+Verified using v3 scheme (APK Signature Scheme v3): true
+Verified using v3.1 scheme (APK Signature Scheme v3.1): false
+Verified using v3.2 scheme (APK Signature Scheme v3.2): false
+Verified using v4 scheme (APK Signature Scheme v4): false
+Verified for SourceStamp: false
+Number of signers: 1
+V3.0 Signer: certificate DN: CN=Ciel Personal Build
+V3.0 Signer: certificate SHA-256 digest: 1e11584f8c081fc18f0ddaf6467a8268f59bf5a37c2b0bd55105bb7af0a17bac
+V3.0 Signer: certificate SHA-1 digest: 78186a5d76330ee1ba4bf53b9db5a056b26800e8
+V3.0 Signer: certificate MD5 digest: f3304b604b4078d00afaf641e02daf5f
+V3.0 Signer: key algorithm: RSA
+V3.0 Signer: key size (bits): 3072
+V3.0 Signer: public key SHA-256 digest: 4df25a08ad9e80c3bf0a71bfbf4fb3d2c6112d003d56e114b2221bfd9c5db345
+V3.0 Signer: public key SHA-1 digest: 72d0122aefc5ce2feb0a446053a79dd4a45c4f6d
+V3.0 Signer: public key MD5 digest: 2bbcc24e4060f49e26b961a45eb98142
+
