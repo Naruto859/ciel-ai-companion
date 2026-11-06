@@ -136,7 +136,7 @@
 
         <service
             android:name=".ScreenBodyService"
-            android:label="@string/app_name"
+            android:label="${cielAppLabel}"
             android:permission="android.permission.BIND_ACCESSIBILITY_SERVICE"
             android:exported="true"
             tools:ignore="ExportedService">
@@ -165,7 +165,7 @@
         -->
         <service
             android:name=".BodyCoreService"
-            android:label="@string/app_name"
+            android:label="${cielAppLabel}"
             android:exported="false"
             android:foregroundServiceType="specialUse|microphone|mediaProjection">
             <property
@@ -175,7 +175,7 @@
 
         <service
             android:name=".device.NotificationRelayService"
-            android:label="@string/notification_relay_label"
+            android:label="${cielAppLabel}"
             android:permission="android.permission.BIND_NOTIFICATION_LISTENER_SERVICE"
             android:exported="false">
             <intent-filter>

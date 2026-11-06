@@ -687,7 +687,7 @@ class CielHomeActivity : AppCompatActivity() {
         setTextColor(inkColor)
         if (bold) typeface = Typeface.create("sans-serif-medium", Typeface.NORMAL)
         includeFontPadding = false
-        breakStrategy = android.text.Layout.BREAK_STRATEGY_HIGH_QUALITY
+        breakStrategy = android.graphics.text.LineBreaker.BREAK_STRATEGY_HIGH_QUALITY
     }
     private fun body(value: String, size: Float = 15f) = label(value, size).apply { setTextColor(secondaryColor); setLineSpacing(dp(3).toFloat(), 1.05f) }
     private fun sectionTitle(value: String) = label(value, 18f, true).apply { isAccessibilityHeading = true }

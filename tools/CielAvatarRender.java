@@ -127,16 +127,22 @@ public final class CielAvatarRender {
             BufferedImage image = new BufferedImage(size, size, BufferedImage.TYPE_INT_ARGB_PRE);
             int[] argb = new int[size * size];
             int drawn = 0;
+            int invalidAlpha = 0;
+            int maxAlphaExcess = 0;
             for (int y = 0; y < size; y++) for (int x = 0; x < size; x++) {
                 int i = ((size - 1 - y) * size + x) * 4;
                 int a = rgba[i + 3] & 255;
                 if (a != 0) drawn++;
+                int excess = Math.max(rgba[i] & 255, Math.max(rgba[i + 1] & 255, rgba[i + 2] & 255)) - a;
+                maxAlphaExcess = Math.max(maxAlphaExcess, excess);
+                if (excess > 1) invalidAlpha++;
                 argb[y * size + x] = (a << 24) | ((rgba[i] & 255) << 16) | ((rgba[i + 1] & 255) << 8) | (rgba[i + 2] & 255);
             }
             if (drawn < size * size / 100) throw new IllegalStateException("Avatar frame is empty");
+            if (invalidAlpha != 0) throw new IllegalStateException("Invalid premultiplied alpha: " + invalidAlpha + " pixels, max excess " + maxAlphaExcess);
             image.getRaster().setDataElements(0, 0, size, size, argb);
             ImageIO.write(image, "png", output);
-            System.out.println(output + " pixels=" + drawn);
+            System.out.println(output + " pixels=" + drawn + " invalidAlpha=" + invalidAlpha);
         }
     }
     public static void main(String[] args) throws Exception {
