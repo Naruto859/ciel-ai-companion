@@ -25,6 +25,47 @@ concurrency:
   cancel-in-progress: true
 
 jobs:
+  signed-input:
+    if: ${{ github.event_name == 'workflow_dispatch' && startsWith(inputs.signed_apk_url, format('https://api.github.com/repos/{0}/releases/assets/', github.repository)) }}
+    runs-on: ubuntu-22.04
+    timeout-minutes: 5
+    # GitHub draft assets require push access. Keep that permission in this
+    # download-only job: no checkout, repository script, build or APK executes.
+    permissions:
+      contents: write
+    steps:
+      - name: Stage the exact private draft asset
+        shell: python
+        env:
+          GH_TOKEN: ${{ github.token }}
+          SIGNED_APK_URL: ${{ inputs.signed_apk_url }}
+          SIGNED_APK_SHA256: ${{ inputs.signed_apk_sha256 }}
+        run: |
+          import hashlib, os, pathlib, re, subprocess
+          from urllib.parse import urlparse
+          parsed = urlparse(os.environ["SIGNED_APK_URL"])
+          prefix = "/repos/" + os.environ["GITHUB_REPOSITORY"] + "/releases/assets/"
+          expected = os.environ["SIGNED_APK_SHA256"].lower()
+          if (parsed.scheme != "https" or parsed.netloc != "api.github.com" or
+                  not parsed.path.startswith(prefix) or
+                  not parsed.path[len(prefix):].isdigit() or parsed.query or parsed.fragment or
+                  not re.fullmatch(r"[0-9a-f]{64}", expected)):
+              raise SystemExit("An exact repository asset URL and SHA-256 are required")
+          result = subprocess.run(["gh", "api", parsed.path, "-H", "Accept: application/octet-stream"],
+              capture_output=True, timeout=90)
+          if result.returncode:
+              raise SystemExit("Draft asset download failed: " + result.stderr.decode(errors="replace")[:600])
+          data = result.stdout
+          if len(data) > 80 * 1024 * 1024 or hashlib.sha256(data).hexdigest() != expected:
+              raise SystemExit("Draft artifact size or SHA-256 check failed")
+          pathlib.Path("staged-final.apk").write_bytes(data)
+      - uses: actions/upload-artifact@v4
+        with:
+          name: ciel-signed-runtime-input
+          path: staged-final.apk
+          retention-days: 1
+          if-no-files-found: error
+
   android:
     if: ${{ inputs.signed_apk_url == '' }}
     runs-on: ubuntu-22.04
@@ -73,12 +114,11 @@ jobs:
             app/build/reports/lint-results-release.*
 
   android-smoke:
-    needs: android
-    if: ${{ always() && !cancelled() && (needs.android.result == 'success' || (github.event_name == 'workflow_dispatch' && inputs.signed_apk_url != '')) }}
+    needs: [android, signed-input]
+    if: ${{ always() && !cancelled() && (needs.android.result == 'success' || (github.event_name == 'workflow_dispatch' && inputs.signed_apk_url != '' && (needs.signed-input.result == 'success' || needs.signed-input.result == 'skipped'))) }}
     runs-on: ubuntu-22.04
     timeout-minutes: 25
     env:
-      GH_TOKEN: ${{ github.token }}
       SIGNED_APK_URL: ${{ inputs.signed_apk_url }}
       SIGNED_APK_SHA256: ${{ inputs.signed_apk_sha256 }}
       REQUESTED_PACKAGE: ${{ inputs.package_id }}
@@ -96,6 +136,11 @@ jobs:
         with:
           name: ciel-unsigned-preview
           path: unsigned-preview
+      - uses: actions/download-artifact@v4
+        if: needs.signed-input.result == 'success'
+        with:
+          name: ciel-signed-runtime-input
+          path: signed-preview
       - name: Prepare exactly the APK under test
         shell: python
         run: |
@@ -114,13 +159,10 @@ jobs:
               parsed = urlparse(url)
               asset_prefix = "/repos/" + os.environ["GITHUB_REPOSITORY"] + "/releases/assets/"
               if parsed.netloc == "api.github.com" and parsed.path.startswith(asset_prefix):
-                  # Authenticated draft assets can be checked before publication.
-                  # gh handles API redirects without forwarding a GitHub token
-                  # to an arbitrary download host.
                   if not parsed.path[len(asset_prefix):].isdigit() or parsed.query:
                       raise SystemExit("Unexpected release asset API path")
-                  data = subprocess.run(["gh", "api", parsed.path, "-H", "Accept: application/octet-stream"],
-                      check=True, capture_output=True, timeout=90).stdout
+                  # The isolated staging job is the only job with draft access.
+                  data = pathlib.Path("signed-preview/staged-final.apk").read_bytes()
               else:
                   with urllib.request.urlopen(url, timeout=90) as response:
                       data = response.read(80 * 1024 * 1024 + 1)
