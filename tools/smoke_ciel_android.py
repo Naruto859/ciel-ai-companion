@@ -9,7 +9,7 @@ Example:
 
 The target package must be absent, including retained uninstall data. Nothing is
 uninstalled or cleared. The exact supplied APK is installed and remains installed.
-Font/rotation/animation settings are restored, and the test app is stopped on exit.
+Font/viewport/rotation/animation settings are restored, and the test app is stopped on exit.
 Only Ciel UI controls are tapped. Voice, phone permissions, external links and
 device tools are never opened. A missing-key precondition precedes the setup test.
 
@@ -19,6 +19,8 @@ this script does not certify contrast, clipping, avatar beauty or audio latency.
 Use a disposable, booted emulator with no PIN. Each ADB command, search and the
 whole run has a deadline. Exit 0 means all automated checks passed, 1 a smoke
 failure, and 2 an invalid invocation. The output directory must be new or empty.
+Use --checks setup-layout to rerun only the setup and wide-viewport checks, with
+the same mandatory fresh install, exact-byte provenance, startup and crash checks.
 """
 
 import argparse
@@ -48,7 +50,6 @@ LABELS = {
     "setup_voice": ("Set up voice", "设置语音"),
     "key_field": ("Gemini API key", "Gemini API 密钥"),
     "save_key": ("Save and use Gemini Live", "保存并使用 Gemini Live"),
-    "key_error": ("Paste your Gemini API key to continue.", "请粘贴 Gemini API 密钥后继续。"),
 }
 CURRENT = (" · Current", " · 正在使用")
 PACKAGE = re.compile(r"[A-Za-z][A-Za-z0-9_]*(?:\.[A-Za-z][A-Za-z0-9_]*)+")
@@ -183,6 +184,7 @@ class Smoke:
         self.saved_settings = []
         self.saved_rotation = None
         self.saved_fixed_rotation = None
+        self.saved_size = None
         self.emulator_verified = False
         self.installed = False
         self.pids = set()
@@ -191,11 +193,13 @@ class Smoke:
         self.report = {
             "status": "running", "serial": args.serial, "package": args.package,
             "apk": str(args.apk.resolve()), "apk_sha256": digest(args.apk),
+            "check_scope": args.checks,
             "checks": [], "captures": [], "actions": [], "cleanup_errors": [],
             "visual_review_required": True, "audio_or_phone_control_verified": False,
             "limitations": ["Screenshots require visual review for rendering and clipped text.",
                             "Setup records UI hierarchy only; no screenshot is requested from the secure credential window.",
-                            "Landscape layout uses an explicit emulator window-manager rotation, not a physical sensor test.",
+                            "Landscape layout uses an explicit wide emulator viewport, not a physical rotation/sensor test.",
+                            "Blank-key rejection is checked through retained Setup and missing-key state, not the inline error caption.",
                             "No Gemini calls, microphone tests, phone tools or physical devices are exercised."],
         }
 
@@ -267,6 +271,14 @@ class Smoke:
         require(re.fullmatch(r"free|lock [0-3]", rotation), "Unknown emulator user-rotation state: " + rotation)
         require(fixed in ("default", "disabled", "enabled"), "Unknown fixed rotation state: " + fixed)
         self.saved_rotation, self.saved_fixed_rotation = rotation, fixed
+        sizes = self.shell("wm", "size")
+        physical = re.search(r"Physical size: (\d+)x(\d+)", sizes)
+        override = re.search(r"Override size: (\d+)x(\d+)", sizes)
+        require(physical is not None, "Unknown emulator display size: " + sizes)
+        self.saved_size = override.group(1) + "x" + override.group(2) if override else "reset"
+        effective = override or physical
+        self.report["initial_display"] = {"wm_size": sizes, "restore_size": self.saved_size,
+            "width": int(effective.group(1)), "height": int(effective.group(2))}
         # `free` omits the dormant last-locked angle. Keep its system preference
         # as well, so cleanup restores more than just the active WM mode.
         for key in ("accelerometer_rotation", "user_rotation"):
@@ -317,7 +329,7 @@ class Smoke:
             time.sleep(0.4)
         raise SmokeError("UIAutomator could not dump a live Ciel hierarchy after three attempts (possibly no idle window)")
 
-    def find(self, choices=None, *, predicate=None, scroll=True):
+    def find(self, choices=None, *, predicate=None, scroll=True, description=None):
         match = predicate or (lambda node: label_match(node, choices))
         previous = None
         for _ in range(11 if scroll else 3):
@@ -331,7 +343,13 @@ class Smoke:
             elif raw == previous or not self.swipe(tree, up=True):
                 break
             previous = raw
-        raise SmokeError("Visible UI control/text not found: " + (" / ".join(choices) if choices else "avatar state"))
+        filename = "failed-search-" + str(len(self.report.get("failed_searches", [])) + 1) + ".xml"
+        (self.args.output / filename).write_bytes(raw)
+        target = description or (" / ".join(choices) if choices else "matching UI state")
+        self.report.setdefault("failed_searches", []).append({"target": target, "xml": filename,
+            "xml_sha256": hashlib.sha256(raw).hexdigest()})
+        self.checkpoint()
+        raise SmokeError("Visible UI control/text not found: " + target + "; last hierarchy: " + filename)
 
     def tap(self, node):
         require(node.get("package") == self.args.package and node.get("enabled") == "true" and node.get("clickable") == "true", "Refusing a disabled or non-Ciel UI target")
@@ -342,7 +360,8 @@ class Smoke:
         time.sleep(0.4)
 
     def click(self, choices, scroll=True):
-        self.tap(self.find(predicate=lambda n: label_match(n, choices) and n.get("clickable") == "true", scroll=scroll))
+        self.tap(self.find(predicate=lambda n: label_match(n, choices) and n.get("clickable") == "true",
+                           scroll=scroll, description="clickable " + " / ".join(choices)))
 
     def swipe(self, tree, up):
         areas = [node for node in tree.iter("node") if node.get("package") == self.args.package and
@@ -410,8 +429,17 @@ class Smoke:
         self.find(LABELS["key_field"])
         self.capture("02-setup-empty", secure=True)
         self.click(LABELS["save_key"])
-        self.find(predicate=lambda n: any(expected in value for value in node_labels(n) for expected in LABELS["key_error"]), scroll=False)
-        self.capture("03-setup-key-error", secure=True)
+        # EditText.error is not consistently exposed by UIAutomator. Preserve
+        # the after-click hierarchy and assert the observable rejection instead.
+        self.capture("03-setup-after-empty-save", secure=True)
+        selected = self.find(LABELS["Setup"], scroll=False)
+        require(selected.get("selected") == "true", "Empty Save unexpectedly left Setup")
+        self.find(predicate=lambda n: n.get("class") == "android.widget.EditText" and
+                  label_match(n, LABELS["key_field"]), scroll=False, description="Gemini key input retained on Setup")
+        self.launch()
+        self.find(LABELS["missing_key"])
+        self.capture("03-home-after-empty-save")
+        self.report["blank_key_rejected_after_restart"] = True
 
     def avatar(self, name, current=None, selected=None):
         def match(node):
@@ -420,7 +448,7 @@ class Smoke:
             right_current = current is None or any(title.endswith(suffix) for suffix in CURRENT) == current
             right_selected = selected is None or (node.get("selected") == "true") == selected
             return node.get("clickable") == "true" and right_name and right_current and right_selected
-        return self.find(predicate=match)
+        return self.find(predicate=match, description="avatar " + name)
 
     def companion(self):
         self.launch()
@@ -454,18 +482,29 @@ class Smoke:
         self.top()
         self.capture("04-companion-original")
 
-    def layout(self, name, font, rotation):
+    def layout(self, name, font, landscape=False):
         self.shell("settings", "put", "system", "font_scale", font)
-        self.shell("wm", "user-rotation", "lock", rotation)
+        self.shell("wm", "user-rotation", "lock", "0")
+        original = self.report["initial_display"]
+        short, long = sorted((original["width"], original["height"]))
+        width, height = (long, short) if landscape else (short, long)
+        self.shell("wm", "size", str(width) + "x" + str(height))
+        diagnostics = {"wm_size": self.shell("wm", "size"),
+            "user_rotation": self.shell("wm", "user-rotation"),
+            "fixed_to_user_rotation": self.shell("wm", "fixed-to-user-rotation"),
+            "requested_viewport": [width, height]}
+        (self.args.output / (name + "-display.json")).write_text(json.dumps(diagnostics, indent=2) + "\n")
         self.launch()
-        def oriented():
-            width, height = png_size(self.command("exec-out", "screencap -p"))
-            return width > height if rotation == "1" else height > width
-        self.wait(oriented, "emulator display orientation " + rotation, seconds=20)
+        def resized():
+            png = self.command("exec-out", "screencap -p")
+            actual_width, actual_height = png_size(png)
+            # Retain the final probe even when the viewport wait fails.
+            (self.args.output / (name + "-viewport-probe.png")).write_bytes(png)
+            return (actual_width, actual_height) == (width, height)
+        self.wait(resized, "emulator viewport " + str(width) + "x" + str(height), seconds=20)
         self.top()
         size = self.capture(name + "-home")
-        if rotation == "1":
-            require(size[0] > size[1], "Emulator did not rotate to landscape")
+        require((size[0] > size[1]) == landscape, "Captured screen has the wrong viewport aspect ratio")
         for page in ("Companion", "Setup", "Home"):
             self.tab(page)
             if page != "Home":
@@ -502,6 +541,8 @@ class Smoke:
         commands = []
         if self.installed:
             commands.append(("am", "force-stop", self.args.package))
+        if self.saved_size is not None:
+            commands.append(("wm", "size", self.saved_size))
         for namespace, key, value in reversed(self.saved_settings):
             commands.append(("settings", "delete", namespace, key) if value == "null" else
                             ("settings", "put", namespace, key, value))
@@ -520,12 +561,13 @@ class Smoke:
         try:
             self.check("fresh emulator and exact APK provenance", self.prepare, fatal=True)
             self.check("Home launch, resumed PID and missing-key state", self.initial_home, fatal=True)
-            self.check("missing-key setup route and visible validation error", self.missing_key_setup)
-            self.check("original companion", self.original_companion)
-            self.check("Moss preview isolation and saved persistence", lambda: self.avatar_flow("Moss", "Ciel"))
-            self.check("Nova preview isolation and saved persistence", lambda: self.avatar_flow("Nova", "Moss"))
-            self.check("large-font portrait tabs", lambda: self.layout("large-font", "1.5", "0"))
-            self.check("landscape tabs", lambda: self.layout("landscape", "1.0", "1"))
+            self.check("missing-key setup route and blank-key rejection", self.missing_key_setup)
+            if self.args.checks == "full":
+                self.check("original companion", self.original_companion)
+                self.check("Moss preview isolation and saved persistence", lambda: self.avatar_flow("Moss", "Ciel"))
+                self.check("Nova preview isolation and saved persistence", lambda: self.avatar_flow("Nova", "Moss"))
+                self.check("large-font portrait tabs", lambda: self.layout("large-font", "1.5"))
+            self.check("landscape viewport tabs", lambda: self.layout("landscape", "1.0", landscape=True))
             self.check("app remains resumed without app FATAL/ANR", self.logs)
         except (SmokeError, OSError, subprocess.TimeoutExpired, ET.ParseError) as error:
             self.report["fatal_error"] = redact(str(error))[:800]
@@ -553,6 +595,8 @@ def main(argv=None):
     parser.add_argument("--package", required=True)
     parser.add_argument("--output", required=True, type=Path)
     parser.add_argument("--adb", help="ADB executable; otherwise PATH or the installed Android SDK is used")
+    parser.add_argument("--checks", choices=("full", "setup-layout"), default="full",
+                        help="Full suite, or setup/layout plus mandatory provenance/startup/crash checks")
     parser.add_argument("--timeout", type=int, default=1200, help="Overall deadline in seconds (1200 by default)")
     args = parser.parse_args(argv)
     try:

@@ -20,6 +20,13 @@ on:
         description: Skip CI-only signing smoke when final signed bytes will be validated separately
         type: boolean
         default: false
+      smoke_checks:
+        description: Full runtime suite, or a targeted setup/layout rerun of an exact signed APK
+        type: choice
+        options:
+          - full
+          - setup-layout
+        default: full
 
 permissions:
   contents: read
@@ -126,6 +133,7 @@ jobs:
       SIGNED_APK_URL: ${{ inputs.signed_apk_url }}
       SIGNED_APK_SHA256: ${{ inputs.signed_apk_sha256 }}
       REQUESTED_PACKAGE: ${{ inputs.package_id }}
+      SMOKE_CHECKS: ${{ inputs.smoke_checks || 'full' }}
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-java@v4
@@ -202,7 +210,7 @@ jobs:
           profile: pixel_2
           disable-animations: true
           emulator-options: -no-window -gpu swiftshader_indirect -noaudio -no-boot-anim -no-snapshot -camera-back none -cores 2 -memory 2048
-          script: python3 tools/smoke_ciel_android.py --serial emulator-5554 --apk smoke-apk.apk --package "$SMOKE_PACKAGE" --output smoke-evidence
+          script: python3 tools/smoke_ciel_android.py --serial emulator-5554 --apk smoke-apk.apk --package "$SMOKE_PACKAGE" --checks "$SMOKE_CHECKS" --output smoke-evidence
       - uses: actions/upload-artifact@v4
         if: always()
         with:
