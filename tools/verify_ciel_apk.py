@@ -30,11 +30,11 @@ def android_tool(name):
     raise RuntimeError(f"{name} is unavailable; set ANDROID_HOME to the installed SDK")
 
 
-def run_tool(command):
+def run_tool(command, include_stderr=False):
     result = subprocess.run(command, capture_output=True, text=True, timeout=180)
     if result.returncode:
         raise RuntimeError(f"{Path(command[0]).name} failed with exit {result.returncode}")
-    return result.stdout
+    return result.stdout + ("\n" + result.stderr if include_stderr else "")
 
 
 def signer_certificates(output):
@@ -68,7 +68,8 @@ def inspect(apk, package):
     if "arm64-v8a" not in native_abis:
         failures.append("ARM64 native libraries are missing")
 
-    signature = run_tool([android_tool("apksigner"), "verify", "--verbose", "--print-certs", str(apk)])
+    signing_tool = android_tool("apksigner")
+    signature = run_tool([signing_tool, "verify", "--verbose", "--print-certs", str(apk)], include_stderr=True)
     fingerprints = signer_certificates(signature)
     if len(fingerprints) != 1:
         failures.append("expected exactly one signer certificate identity")
@@ -109,6 +110,9 @@ def inspect(apk, package):
         "launcher": activity.group(1) if activity else None,
         "certificate_sha256": fingerprints[0].lower() if len(fingerprints) == 1 else None,
         "certificate_sha256_all": [value.lower() for value in fingerprints],
+        "signing_tool": signing_tool,
+        # apksigner's report contains public certificate metadata, not a key.
+        **({"signing_report": signature} if len(fingerprints) != 1 else {}),
         "signature_verified": True, "zip_alignment_verified": True,
         "credential_findings": suspicious, "failures": failures,
         "packaging_passed": not failures, "runtime_verified_by_this_script": False,
