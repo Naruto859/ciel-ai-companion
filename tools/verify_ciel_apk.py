@@ -37,6 +37,15 @@ def run_tool(command):
     return result.stdout
 
 
+def signer_certificates(output):
+    # Build Tools 36+ names v3 signers by SDK range; older releases use #1.
+    # Match certificate digests only, never a public key or SourceStamp digest.
+    return sorted(set(re.findall(
+        r"(?m)^Signer(?: #\d+| \(minSdkVersion=[^\r\n]*\)) certificate SHA-256 digest: "
+        r"([a-fA-F0-9]{64})[ \t]*\r?$", output,
+    )))
+
+
 def inspect(apk, package):
     failures = []
     with apk.open("rb") as stream:
@@ -60,9 +69,9 @@ def inspect(apk, package):
         failures.append("ARM64 native libraries are missing")
 
     signature = run_tool([android_tool("apksigner"), "verify", "--verbose", "--print-certs", str(apk)])
-    fingerprint = re.search(r"Signer #1 certificate SHA-256 digest: ([a-fA-F0-9]+)", signature)
-    if not fingerprint:
-        failures.append("signer certificate fingerprint is missing")
+    fingerprints = signer_certificates(signature)
+    if len(fingerprints) != 1:
+        failures.append("expected exactly one signer certificate identity")
     run_tool([android_tool("zipalign"), "-c", "4", str(apk)])
 
     # Provider key formats are checked inside compressed DEX/assets, not just
@@ -98,7 +107,8 @@ def inspect(apk, package):
         "package": app_id, "version_code": int(version_code), "version_name": version_name,
         "min_sdk": int(sdk.group(1)) if sdk else None, "native_abis": native_abis,
         "launcher": activity.group(1) if activity else None,
-        "certificate_sha256": fingerprint.group(1).lower() if fingerprint else None,
+        "certificate_sha256": fingerprints[0].lower() if len(fingerprints) == 1 else None,
+        "certificate_sha256_all": [value.lower() for value in fingerprints],
         "signature_verified": True, "zip_alignment_verified": True,
         "credential_findings": suspicious, "failures": failures,
         "packaging_passed": not failures, "runtime_verified_by_this_script": False,
