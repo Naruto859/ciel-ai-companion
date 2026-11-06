@@ -267,6 +267,10 @@ class Smoke:
         require(re.fullmatch(r"free|lock [0-3]", rotation), "Unknown emulator user-rotation state: " + rotation)
         require(fixed in ("default", "disabled", "enabled"), "Unknown fixed rotation state: " + fixed)
         self.saved_rotation, self.saved_fixed_rotation = rotation, fixed
+        # `free` omits the dormant last-locked angle. Keep its system preference
+        # as well, so cleanup restores more than just the active WM mode.
+        for key in ("accelerometer_rotation", "user_rotation"):
+            self.saved_settings.append(("system", key, self.shell("settings", "get", "system", key)))
         self.shell("wm", "fixed-to-user-rotation", "enabled")
         self.shell("wm", "user-rotation", "lock", "0")
         for namespace, key, value in (("system", "font_scale", "1.0"),
