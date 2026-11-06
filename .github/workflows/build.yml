@@ -16,6 +16,10 @@ on:
         description: Package of that signed artifact
         type: string
         default: ai.ciel.companion.preview
+      skip_unsigned_smoke:
+        description: Skip CI-only signing smoke when final signed bytes will be validated separately
+        type: boolean
+        default: false
 
 permissions:
   contents: read
@@ -115,7 +119,7 @@ jobs:
 
   android-smoke:
     needs: [android, signed-input]
-    if: ${{ always() && !cancelled() && (needs.android.result == 'success' || (github.event_name == 'workflow_dispatch' && inputs.signed_apk_url != '' && (needs.signed-input.result == 'success' || needs.signed-input.result == 'skipped'))) }}
+    if: ${{ always() && !cancelled() && ((needs.android.result == 'success' && !inputs.skip_unsigned_smoke) || (github.event_name == 'workflow_dispatch' && inputs.signed_apk_url != '' && (needs.signed-input.result == 'success' || needs.signed-input.result == 'skipped'))) }}
     runs-on: ubuntu-22.04
     timeout-minutes: 25
     env:

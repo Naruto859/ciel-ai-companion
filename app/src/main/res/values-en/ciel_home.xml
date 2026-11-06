@@ -51,7 +51,7 @@
     <string name="ciel_advanced_settings">Advanced settings</string>
     <string name="ciel_advanced_note">Models, connected devices, memory, notifications and developer options.</string>
     <string name="ciel_tab_home">Home</string>
-    <string name="ciel_tab_companion">Companion</string>
+    <string name="ciel_tab_companion">Avatar</string>
     <string name="ciel_tab_setup">Setup</string>
     <string name="ciel_selected">Selected</string>
     <string name="ciel_not_selected">Not selected</string>

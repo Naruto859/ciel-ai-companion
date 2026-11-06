@@ -13,8 +13,8 @@ Font/rotation/animation settings are restored, and the test app is stopped on ex
 Only Ciel UI controls are tapped. Voice, phone permissions, external links and
 device tools are never opened. A missing-key precondition precedes the setup test.
 
-PNG/XML files are actual ADB captures. Setup uses FLAG_SECURE: a blank/black Setup
-PNG is expected and is not a failure. Screen captures still need visual review;
+PNG/XML files are actual ADB captures. Setup uses FLAG_SECURE: record its UI
+hierarchy only, without requesting a screenshot. Screen captures need visual review;
 this script does not certify contrast, clipping, avatar beauty or audio latency.
 Use a disposable, booted emulator with no PIN. Each ADB command, search and the
 whole run has a deadline. Exit 0 means all automated checks passed, 1 a smoke
@@ -42,7 +42,7 @@ import zipfile
 ACTIVITY = "net.kuafuai.andee.ui.CielHomeActivity"
 LABELS = {
     "Home": ("Home", "主页"),
-    "Companion": ("Companion", "伙伴"),
+    "Companion": ("Avatar", "形象"),
     "Setup": ("Setup", "设置"),
     "missing_key": ("Add your Gemini key to begin", "添加 Gemini 密钥即可开始"),
     "setup_voice": ("Set up voice", "设置语音"),
@@ -181,6 +181,8 @@ class Smoke:
         self.started = time.monotonic()
         self.deadline = self.started + args.timeout
         self.saved_settings = []
+        self.saved_rotation = None
+        self.saved_fixed_rotation = None
         self.emulator_verified = False
         self.installed = False
         self.pids = set()
@@ -192,7 +194,8 @@ class Smoke:
             "checks": [], "captures": [], "actions": [], "cleanup_errors": [],
             "visual_review_required": True, "audio_or_phone_control_verified": False,
             "limitations": ["Screenshots require visual review for rendering and clipped text.",
-                            "Setup screenshots can be blank because the window is secure.",
+                            "Setup records UI hierarchy only; no screenshot is requested from the secure credential window.",
+                            "Landscape layout uses an explicit emulator window-manager rotation, not a physical sensor test.",
                             "No Gemini calls, microphone tests, phone tools or physical devices are exercised."],
         }
 
@@ -259,9 +262,14 @@ class Smoke:
             self.command("pull", paths[0][8:], str(pulled), timeout=150)
             self.report["installed_apk_sha256"] = digest(pulled)
         require(self.report["installed_apk_sha256"] == self.report["apk_sha256"], "Installed APK differs from the supplied APK")
+        rotation = self.shell("wm", "user-rotation")
+        fixed = self.shell("wm", "fixed-to-user-rotation")
+        require(re.fullmatch(r"free|lock [0-3]", rotation), "Unknown emulator user-rotation state: " + rotation)
+        require(fixed in ("default", "disabled", "enabled"), "Unknown fixed rotation state: " + fixed)
+        self.saved_rotation, self.saved_fixed_rotation = rotation, fixed
+        self.shell("wm", "fixed-to-user-rotation", "enabled")
+        self.shell("wm", "user-rotation", "lock", "0")
         for namespace, key, value in (("system", "font_scale", "1.0"),
-                                      ("system", "accelerometer_rotation", "0"),
-                                      ("system", "user_rotation", "0"),
                                       ("global", "window_animation_scale", "0"),
                                       ("global", "transition_animation_scale", "0"),
                                       ("global", "animator_duration_scale", "0")):
@@ -355,13 +363,23 @@ class Smoke:
         raise SmokeError("Could not reach the top within 14 UI-driven swipes")
 
     def capture(self, name, secure=False):
-        _, raw = self.tree()
+        tree, raw = self.tree()
+        (self.args.output / (name + ".xml")).write_bytes(raw)
+        if secure:
+            # Some emulator versions refuse screencap entirely for FLAG_SECURE,
+            # instead of returning a black PNG. Validate labels through the UI
+            # hierarchy while respecting the credential window's capture policy.
+            self.report["captures"].append({"name": name, "capture_kind": "hierarchy_only",
+                "xml_sha256": hashlib.sha256(raw).hexdigest(), "secure_window_expected": True,
+                "screenshot_omitted": "secure credential window"})
+            self.checkpoint()
+            x1, y1, x2, y2 = bounds(next(tree.iter("node")))
+            return x2 - x1, y2 - y1
         # Let the newly attached GL surface draw; its pixels are reviewed from
         # the actual capture, never synthesized from source-side expectations.
         time.sleep(1.0)
         png = self.command("exec-out", "screencap -p")
         width, height = png_size(png)
-        (self.args.output / (name + ".xml")).write_bytes(raw)
         (self.args.output / (name + ".png")).write_bytes(png)
         self.report["captures"].append({"name": name, "width": width, "height": height,
                                         "png_sha256": hashlib.sha256(png).hexdigest(),
@@ -434,8 +452,12 @@ class Smoke:
 
     def layout(self, name, font, rotation):
         self.shell("settings", "put", "system", "font_scale", font)
-        self.shell("settings", "put", "system", "user_rotation", rotation)
+        self.shell("wm", "user-rotation", "lock", rotation)
         self.launch()
+        def oriented():
+            width, height = png_size(self.command("exec-out", "screencap -p"))
+            return width > height if rotation == "1" else height > width
+        self.wait(oriented, "emulator display orientation " + rotation, seconds=20)
         self.top()
         size = self.capture(name + "-home")
         if rotation == "1":
@@ -479,6 +501,10 @@ class Smoke:
         for namespace, key, value in reversed(self.saved_settings):
             commands.append(("settings", "delete", namespace, key) if value == "null" else
                             ("settings", "put", namespace, key, value))
+        if self.saved_fixed_rotation is not None:
+            commands.append(("wm", "fixed-to-user-rotation", self.saved_fixed_rotation))
+        if self.saved_rotation is not None:
+            commands.append(("wm", "user-rotation", *self.saved_rotation.split()))
         commands.append(("rm", "-f", self.remote_xml))
         for command in commands:
             try:
