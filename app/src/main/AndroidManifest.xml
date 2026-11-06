@@ -53,6 +53,8 @@
     <!-- The eye: -->
     <uses-permission android:name="android.permission.CAMERA" />
     <uses-feature android:name="android.hardware.camera.any" android:required="false" />
+    <!-- Calls and SMS are optional tools; tablets and ChromeOS devices need no cellular modem. -->
+    <uses-feature android:name="android.hardware.telephony" android:required="false" />
     <!-- The dog: its dongle hangs off USB OTG, so this device needs to be a USB
          host. Optional on purpose — the app is fully usable on a tablet with no
          OTG port, and Play would otherwise refuse to install it there. The USB

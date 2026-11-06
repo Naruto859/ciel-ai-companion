@@ -824,6 +824,17 @@ class EmotionBallRenderer {
     // ---- Draws ----
 
     /**
+     * Shaders output straight RGB; the transparent surface stores premultiplied
+     * RGB and coverage. Alpha must not be multiplied by itself: a translucent
+     * rim over an opaque body otherwise lowers coverage to 1-a+a² and can leave
+     * RGB greater than alpha, corrupting composition and transparent PNGs.
+     * Keep each pass's existing RGB equation, including additive glow.
+     */
+    private fun setBlend(destination: Int) = GLES20.glBlendFuncSeparate(
+        GLES20.GL_SRC_ALPHA, destination, GLES20.GL_ONE, destination,
+    )
+
+    /**
      * The ball's fill: one opaque sphere, lit.
      *
      * It exists because the passes that used to give the ball a body are off,
@@ -852,7 +863,7 @@ class EmotionBallRenderer {
                     (state.nowColor[i] - LOOK.bodyBase[i]) * LOOK.bodyTint) * LOOK.bodyAlbedo
         }
 
-        GLES20.glBlendFunc(GLES20.GL_SRC_ALPHA, GLES20.GL_ONE_MINUS_SRC_ALPHA)
+        setBlend(GLES20.GL_ONE_MINUS_SRC_ALPHA)
         GLES20.glDepthMask(true)
         shellShader.use()
         GLES20.glUniformMatrix4fv(shellShader.uniform("uMVP"), 1, false, mvp, 0)
@@ -1105,7 +1116,7 @@ class EmotionBallRenderer {
     }
 
     private fun drawFace() {
-        GLES20.glBlendFunc(GLES20.GL_SRC_ALPHA, GLES20.GL_ONE_MINUS_SRC_ALPHA)
+        setBlend(GLES20.GL_ONE_MINUS_SRC_ALPHA)
         GLES20.glDepthMask(true)
         solidShader.use()
         val aPos = solidShader.attrib("aPos")
@@ -1632,7 +1643,7 @@ class EmotionBallRenderer {
         // 透明，所以不写深度；但深度**测试**照旧开着 —— 正是它挡住球体的
         // 后半颗，不让它从身体里透出来。画完把 mask 恢复，因为上面那一段
         // 是按"面是不透明的"写的。
-        GLES20.glBlendFunc(GLES20.GL_SRC_ALPHA, GLES20.GL_ONE_MINUS_SRC_ALPHA)
+        setBlend(GLES20.GL_ONE_MINUS_SRC_ALPHA)
         GLES20.glDepthMask(false)
         bubbleShader.use()
         GLES20.glUniformMatrix4fv(bubbleShader.uniform("uMVP"), 1, false, mvp, 0)
@@ -1818,8 +1829,7 @@ class EmotionBallRenderer {
         // Additive on a dark body reads as a warm patch; on a pale one it clips
         // straight to white and the warmth vanishes, so pale looks blend
         // normally instead.
-        GLES20.glBlendFunc(
-            GLES20.GL_SRC_ALPHA,
+        setBlend(
             if (LOOK.blushBlendNormal) GLES20.GL_ONE_MINUS_SRC_ALPHA else GLES20.GL_ONE,
         )
         GLES20.glDepthMask(false)
@@ -1855,7 +1865,7 @@ class EmotionBallRenderer {
     private fun drawHands() {
         val c = state.cling
         if (c < 0.02f) return
-        GLES20.glBlendFunc(GLES20.GL_SRC_ALPHA, GLES20.GL_ONE_MINUS_SRC_ALPHA)
+        setBlend(GLES20.GL_ONE_MINUS_SRC_ALPHA)
         GLES20.glDepthMask(true)
         solidShader.use()
         val uMVP = solidShader.uniform("uMVP")
@@ -2010,7 +2020,7 @@ class EmotionBallRenderer {
             // outline; a pale ball needs it to hold its edge over a pale app,
             // and a colour-additive glow cannot do that job on a white
             // background.
-            GLES20.glBlendFunc(GLES20.GL_SRC_ALPHA, GLES20.GL_ONE_MINUS_SRC_ALPHA)
+            setBlend(GLES20.GL_ONE_MINUS_SRC_ALPHA)
             for (i in 0..2) {
                 // Slightly blue-shifted so the outline reads as a shadow rather
                 // than as dirt.
@@ -2020,7 +2030,7 @@ class EmotionBallRenderer {
             GLES20.glUniform1f(rimShader.uniform("uIntensity"), LOOK.rimGain * 1.15f)
             GLES20.glUniform1f(rimShader.uniform("uCap"), RIM_DARK_CAP)
         } else {
-            GLES20.glBlendFunc(GLES20.GL_SRC_ALPHA, GLES20.GL_ONE)
+            setBlend(GLES20.GL_ONE)
             // A look with its own edge colour pulls the glow toward it. Partial,
             // so the work and alarm moods keep enough of their hue to be told apart.
             val tint = LOOK.rimTintMix
@@ -2042,7 +2052,7 @@ class EmotionBallRenderer {
         // over a pulsing outline — the outline's own alpha is capped, see
         // [RIM_DARK_CAP].
         if (LOOK.rimDark && state.thinkGlow > 0.01f) {
-            GLES20.glBlendFunc(GLES20.GL_SRC_ALPHA, GLES20.GL_ONE)
+            setBlend(GLES20.GL_ONE)
             GLES20.glUniform3fv(rimShader.uniform("uColor"), 1, state.nowColor, 0)
             GLES20.glUniform1f(rimShader.uniform("uIntensity"), state.thinkGlow * LOOK.rimGain)
             GLES20.glUniform1f(rimShader.uniform("uCap"), 1f)
@@ -2058,7 +2068,7 @@ class EmotionBallRenderer {
         Matrix.multiplyMM(mv, 0, view, 0, model, 0)
         Matrix.multiplyMM(mvp, 0, proj, 0, mv, 0)
 
-        GLES20.glBlendFunc(GLES20.GL_SRC_ALPHA, GLES20.GL_ONE)
+        setBlend(GLES20.GL_ONE)
         GLES20.glDepthMask(false)
         coreShader.use()
         GLES20.glUniformMatrix4fv(coreShader.uniform("uMVP"), 1, false, mvp, 0)
@@ -2069,7 +2079,7 @@ class EmotionBallRenderer {
     }
 
     private fun drawRings() {
-        GLES20.glBlendFunc(GLES20.GL_SRC_ALPHA, GLES20.GL_ONE)
+        setBlend(GLES20.GL_ONE)
         GLES20.glDepthMask(false)
         flowShader.use()
         val aPos = flowShader.attrib("aPos")
@@ -2115,7 +2125,7 @@ class EmotionBallRenderer {
         Matrix.multiplyMM(mv, 0, view, 0, model, 0)
         Matrix.multiplyMM(mvp, 0, proj, 0, mv, 0)
 
-        GLES20.glBlendFunc(GLES20.GL_SRC_ALPHA, GLES20.GL_ONE)
+        setBlend(GLES20.GL_ONE)
         GLES20.glDepthMask(false)
         pointsShader.use()
         GLES20.glUniformMatrix4fv(pointsShader.uniform("uMVP"), 1, false, mvp, 0)
@@ -2499,7 +2509,7 @@ class EmotionBallRenderer {
             varying vec3 vP;
             varying float vY;
             void main() {
-                float f = pow(1.0 - abs(dot(normalize(vN), normalize(-vP))), uPow);
+                float f = pow(max(0.0, 1.0 - abs(dot(normalize(vN), normalize(-vP)))), uPow);
                 float d = vY - uScanY;
                 float slope = d > 0.0 ? 7.5 : 4.2;
                 float band = pow(max(0.0, 1.0 - abs(d) * slope), 3.0);

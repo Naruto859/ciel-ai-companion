@@ -1,0 +1,9 @@
+{
+  "avd": "ciel-audit31-20261106",
+  "serial": "emulator-5582",
+  "elapsed": "24:46",
+  "adb_state": "offline",
+  "kvm_available": false,
+  "result": "harness_not_ready",
+  "cleanup": "SIGTERM sent to the owned emulator only"
+}

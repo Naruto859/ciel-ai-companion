@@ -96,6 +96,7 @@ class ScanActivity : net.kuafuai.andee.ui.StageActivity() {
         }
     }
 
+    @androidx.annotation.OptIn(markerClass = [androidx.camera.core.ExperimentalGetImage::class])
     private fun startCamera() {
         lctx = AppLocale.wrap(this)
         val root = stage
@@ -140,7 +141,7 @@ class ScanActivity : net.kuafuai.andee.ui.StageActivity() {
                 .build()
             val exec = Executors.newSingleThreadExecutor()
             analysis.setAnalyzer(exec) { proxy ->
-                @Suppress("DEPRECATION")
+                // ML Kit borrows the media image; ImageProxy remains its owner until completion.
                 val media = proxy.image
                 if (media != null) {
                     val input = InputImage.fromMediaImage(

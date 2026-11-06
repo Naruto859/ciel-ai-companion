@@ -2,6 +2,7 @@ package net.kuafuai.andee.desktop
 
 import net.kuafuai.andee.ui.ball.gl.GlBackend
 import org.lwjgl.opengl.GL11
+import org.lwjgl.opengl.GL14
 import org.lwjgl.opengl.GL15
 import org.lwjgl.opengl.GL20
 import java.nio.Buffer
@@ -21,6 +22,8 @@ object DesktopGl : GlBackend {
     override fun glAttachShader(program: Int, shader: Int) = GL20.glAttachShader(program, shader)
     override fun glBindBuffer(target: Int, buffer: Int) = GL15.glBindBuffer(target, buffer)
     override fun glBlendFunc(s: Int, d: Int) = GL11.glBlendFunc(s, d)
+    override fun glBlendFuncSeparate(srcRgb: Int, dstRgb: Int, srcAlpha: Int, dstAlpha: Int) =
+        GL14.glBlendFuncSeparate(srcRgb, dstRgb, srcAlpha, dstAlpha)
     override fun glBufferData(target: Int, size: Int, data: Buffer?, usage: Int) {
         // LWJGL has per-type overloads and infers size from remaining().
         if (data == null) {

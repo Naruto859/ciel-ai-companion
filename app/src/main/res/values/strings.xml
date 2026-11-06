@@ -1,4 +1,4 @@
-<resources>
+<resources xmlns:tools="http://schemas.android.com/tools" tools:locale="zh">
     <string name="app_name">Ciel</string>
     <!--
         Shown under the service name in Settings → Accessibility, and again in

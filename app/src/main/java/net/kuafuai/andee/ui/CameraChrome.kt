@@ -184,9 +184,9 @@ private fun pressAnimator(): StateListAnimator = StateListAnimator().apply {
         intArrayOf(android.R.attr.state_pressed),
         AnimatorSet().apply {
             playTogether(
-                ObjectAnimator.ofFloat(null, "scaleX", 0.94f),
-                ObjectAnimator.ofFloat(null, "scaleY", 0.94f),
-                ObjectAnimator.ofFloat(null, "alpha", 0.85f),
+                ObjectAnimator.ofFloat(null, View.SCALE_X, 0.94f),
+                ObjectAnimator.ofFloat(null, View.SCALE_Y, 0.94f),
+                ObjectAnimator.ofFloat(null, View.ALPHA, 0.85f),
             )
             duration = 90
         },
@@ -195,9 +195,9 @@ private fun pressAnimator(): StateListAnimator = StateListAnimator().apply {
         IntArray(0),
         AnimatorSet().apply {
             playTogether(
-                ObjectAnimator.ofFloat(null, "scaleX", 1f),
-                ObjectAnimator.ofFloat(null, "scaleY", 1f),
-                ObjectAnimator.ofFloat(null, "alpha", 1f),
+                ObjectAnimator.ofFloat(null, View.SCALE_X, 1f),
+                ObjectAnimator.ofFloat(null, View.SCALE_Y, 1f),
+                ObjectAnimator.ofFloat(null, View.ALPHA, 1f),
             )
             duration = 120
         },

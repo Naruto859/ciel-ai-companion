@@ -26,7 +26,7 @@ Scope: Android phone tools, their transport and cancellation boundaries, device 
 | Ciel contacted an upstream service and offered upgrades for the wrong application | `SelfCheck.probeVersion` sent version/model/brand/Android/language/device ID to `https://api.heyandee.com` and linked Andee/CodeFlying updates | Removed that automatic request and its client/constants. Readiness shows the installed Ciel version/build locally. |
 | Readiness treated Gemini Live like an OpenAI/legacy speech backend | Backend `/models` + bearer/chat fallback and separate legacy credentials | Direct authenticated Gemini model-metadata check with the key in a header. Success is a note that model metadata is available, not a claimed successful Live audio session. Accessibility/overlay are optional for in-app Live conversation. |
 
-## Verification to run centrally
+## Verification
 
 The phone scope adds 30 regression test methods:
 
@@ -39,7 +39,15 @@ The phone scope adds 30 regression test methods:
 - `PermissionOutcomeTest` (7): mixed grants, failed handoff, fine/coarse pairing, approximate-only access, request-ID isolation, early result, brightness route.
 - `SelfCheckMergeTest` (2 added): offline/missing-key facts replace stale probe success; local Ciel version replaces a stale upstream warning.
 
-Run `:core:test` and `:app:testDebugUnitTest` in the primary build process. `git diff --check` passed after these edits. The primary agent owns final compilation, test counts, signing and emulator verification; no device, SMS, call, calendar or remote-server action was performed during this audit.
+The primary agent confirmed CI run `42201498655` passed **423 unit tests: 328 core and 95 app**, including the phone regressions above. Its full release lint report then identified the follow-up items below. Their final central lint/build rerun is still pending; `git diff --check` and manifest XML validation pass. The primary agent owns final compilation, signing and emulator verification; no device, SMS, call, calendar or remote-server action was performed by this audit agent.
+
+## Release lint follow-up
+
+- Location now uses explicit fine/coarse permission checks and handles `SecurityException` separately, returning a permission result when access changes. Listener cleanup covers partial registration as well as interrupted waits.
+- API 33 accessibility input entry points now guard their Android version explicitly, and their private API 33 helpers declare `@RequiresApi`. The earlier connection guard already provided a runtime fallback; the new boundaries make that contract visible to lint.
+- Exact-alarm access checks no longer call the API 31 method on Android 11. A grant revoked between checking and scheduling falls back to an inexact reminder, and the log reports the actual path used.
+- The scanner explicitly opts into CameraX's `ExperimentalGetImage`; ML Kit borrows the image while `ImageProxy` retains ownership and is closed on completion.
+- The manifest declares cellular hardware optional, matching the app's optional call/SMS tools and allowing tablets and ChromeOS devices without a modem.
 
 ## Capability review and remaining runtime work
 

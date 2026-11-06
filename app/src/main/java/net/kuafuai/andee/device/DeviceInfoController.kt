@@ -89,8 +89,9 @@ class DeviceInfoController(private val context: Context) {
 
     fun location(timeoutMs: Long = 8000): JSONObject {
         require(timeoutMs in 1..20_000) { "location timeout_ms must be between 1 and 20000" }
-        val precise = ensurePermission(Manifest.permission.ACCESS_FINE_LOCATION)
-        if (!precise && !ensurePermission(Manifest.permission.ACCESS_COARSE_LOCATION)) {
+        val precise = context.checkSelfPermission(Manifest.permission.ACCESS_FINE_LOCATION) == PackageManager.PERMISSION_GRANTED
+        val approximate = context.checkSelfPermission(Manifest.permission.ACCESS_COARSE_LOCATION) == PackageManager.PERMISSION_GRANTED
+        if (!precise && !approximate) {
             return permissionDenied("location",
                 "Ask the user to grant Location to the body app once (Settings → Apps → Permissions), then retry.")
         }
@@ -100,7 +101,14 @@ class DeviceInfoController(private val context: Context) {
             else listOf(LocationManager.NETWORK_PROVIDER, LocationManager.PASSIVE_PROVIDER)
         var best: Location? = null
         for (p in providers) {
-            runCatching { lm.getLastKnownLocation(p) }?.getOrNull()?.let { loc ->
+            val loc = try {
+                lm.getLastKnownLocation(p)
+            } catch (_: SecurityException) {
+                return permissionDenied("location", "Location access changed while reading it. Grant Location, then retry.")
+            } catch (_: IllegalArgumentException) {
+                null // This device does not provide every LocationManager provider.
+            }
+            if (loc != null) {
                 if (best == null || loc.time > best!!.time) best = loc
             }
         }
@@ -117,19 +125,27 @@ class DeviceInfoController(private val context: Context) {
                 @Deprecated("required override on old APIs")
                 override fun onStatusChanged(provider: String?, status: Int, extras: Bundle?) {}
             }
-            val requested = providers.map { p ->
-                runCatching {
-                    check(lm.isProviderEnabled(p))
-                    lm.requestLocationUpdates(p, 0L, 0f, listener, Looper.getMainLooper())
-                }.isSuccess
-            }.any { it }
-            if (requested) {
-                try {
-                    latch.await(timeoutMs, TimeUnit.MILLISECONDS)
-                } finally {
-                    runCatching { lm.removeUpdates(listener) }
+            try {
+                var requested = false
+                for (p in providers) {
+                    try {
+                        if (lm.isProviderEnabled(p)) {
+                            lm.requestLocationUpdates(p, 0L, 0f, listener, Looper.getMainLooper())
+                            requested = true
+                        }
+                    } catch (_: IllegalArgumentException) {
+                        // An optional provider may disappear between enumeration and registration.
+                    }
                 }
-                best = got[0] ?: best
+                if (requested) {
+                    latch.await(timeoutMs, TimeUnit.MILLISECONDS)
+                    best = got[0] ?: best
+                }
+            } catch (_: SecurityException) {
+                return permissionDenied("location", "Location access changed while reading it. Grant Location, then retry.")
+            } finally {
+                // Covers partial registration, permission revocation and interrupted waits too.
+                runCatching { lm.removeUpdates(listener) }
             }
         }
         val b = best

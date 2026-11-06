@@ -5,6 +5,7 @@ import android.accessibilityservice.InputMethod
 import android.os.Build
 import android.os.SystemClock
 import android.view.inputmethod.EditorInfo
+import androidx.annotation.RequiresApi
 
 /**
  * Typing through **our own accessibility service's** input connection, which is
@@ -51,12 +52,14 @@ object A11yIme {
      * is a real failure and not a missing channel.
      */
     fun replace(service: AccessibilityService, text: String, beforeWrite: () -> Unit = {}): String? {
+        if (Build.VERSION.SDK_INT < Build.VERSION_CODES.TIRAMISU) return null
         val conn = awaitConnection(service) ?: return null
         return TextInputAttempt.replace(text, clear = { clear(conn) },
             commit = { conn.commitText(it, 1, null) }, beforeWrite = beforeWrite,
             readback = { awaitReadback(conn, text) })
     }
 
+    @RequiresApi(Build.VERSION_CODES.TIRAMISU)
     private fun awaitReadback(conn: InputMethod.AccessibilityInputConnection, text: String): String? {
         // commitText is a one-way call into the editor's process, so the value
         // is not readable the instant it returns — the same reason the ADB route
@@ -82,6 +85,7 @@ object A11yIme {
      * to `ACTION_IME_ENTER`.
      */
     fun editorAction(service: AccessibilityService, beforeWrite: () -> Unit = {}): Boolean {
+        if (Build.VERSION.SDK_INT < Build.VERSION_CODES.TIRAMISU) return false
         val conn = connection(service) ?: return false
         val info: EditorInfo = runCatching { service.inputMethod?.currentInputEditorInfo }
             .getOrNull() ?: return false
@@ -100,7 +104,8 @@ object A11yIme {
     }
 
     /** An editor is focused and bound to our input connection right now. */
-    fun editing(service: AccessibilityService): Boolean = connection(service) != null
+    fun editing(service: AccessibilityService): Boolean =
+        Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU && connection(service) != null
 
     /**
      * The focused editor says Enter must not act (`IME_FLAG_NO_ENTER_ACTION`) and
@@ -109,6 +114,7 @@ object A11yIme {
      * box, measured 2026-10-19).
      */
     fun sendsOnlyFromButton(service: AccessibilityService): Boolean {
+        if (Build.VERSION.SDK_INT < Build.VERSION_CODES.TIRAMISU) return false
         if (connection(service) == null) return false
         val info = runCatching { service.inputMethod?.currentInputEditorInfo }.getOrNull() ?: return false
         return info.actionId == 0 && info.imeOptions and EditorInfo.IME_FLAG_NO_ENTER_ACTION != 0
@@ -128,6 +134,7 @@ object A11yIme {
      * with no `WRITE_SECURE_SETTINGS` is the hard error this channel exists to
      * retire.
      */
+    @RequiresApi(Build.VERSION_CODES.TIRAMISU)
     private fun awaitConnection(service: AccessibilityService): InputMethod.AccessibilityInputConnection? {
         val deadline = SystemClock.uptimeMillis() + SESSION_WAIT_MS
         while (true) {
@@ -137,6 +144,7 @@ object A11yIme {
         }
     }
 
+    @RequiresApi(Build.VERSION_CODES.TIRAMISU)
     private fun connection(service: AccessibilityService): InputMethod.AccessibilityInputConnection? {
         if (Build.VERSION.SDK_INT < Build.VERSION_CODES.TIRAMISU) return null
         val im = runCatching { service.inputMethod }.getOrNull() ?: return null
@@ -156,6 +164,7 @@ object A11yIme {
      * route rather than a guess, because appending to a field the brain believes
      * it cleared is the failure that reads as the model typing twice.
      */
+    @RequiresApi(Build.VERSION_CODES.TIRAMISU)
     private fun clear(conn: InputMethod.AccessibilityInputConnection): Boolean {
         val st = conn.getSurroundingText(MAX_READ, MAX_READ, 0)
             ?: return false
@@ -175,6 +184,7 @@ object A11yIme {
     }
 
     /** The editor's current contents, or null when the connection died. */
+    @RequiresApi(Build.VERSION_CODES.TIRAMISU)
     private fun read(conn: InputMethod.AccessibilityInputConnection): String? {
         val st = runCatching { conn.getSurroundingText(MAX_READ, MAX_READ, 0) }.getOrNull()
             ?: return null

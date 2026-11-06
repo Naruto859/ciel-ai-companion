@@ -1,5 +1,6 @@
 package net.kuafuai.andee.ui
 
+import android.os.Build
 import android.view.View
 import android.view.WindowManager
 import java.util.concurrent.CopyOnWriteArrayList
@@ -47,17 +48,20 @@ object StandAside {
             for (e in entries) {
                 val v = e.view() ?: continue
                 val p = v.layoutParams as? WindowManager.LayoutParams ?: continue
-                saved += Saved(v, p.flags, p.alpha, p.blurBehindRadius)
+                val blur = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) p.blurBehindRadius else 0
+                saved += Saved(v, p.flags, p.alpha, blur)
                 p.alpha = 0f
                 p.flags = (p.flags or WindowManager.LayoutParams.FLAG_NOT_TOUCHABLE or WindowManager.LayoutParams.FLAG_NOT_FOCUSABLE) and
                     WindowManager.LayoutParams.FLAG_BLUR_BEHIND.inv()
-                p.blurBehindRadius = 0
+                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) p.blurBehindRadius = 0
                 runCatching { e.wm.updateViewLayout(v, p) }
             }
         } else {
             for (s in saved) {
                 val p = s.view.layoutParams as? WindowManager.LayoutParams ?: continue
-                p.flags = s.flags; p.alpha = s.alpha; p.blurBehindRadius = s.blur
+                p.flags = s.flags
+                p.alpha = s.alpha
+                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) p.blurBehindRadius = s.blur
                 val wm = entries.firstOrNull { it.view() === s.view }?.wm ?: continue   // closed meanwhile
                 runCatching { wm.updateViewLayout(s.view, p) }
             }

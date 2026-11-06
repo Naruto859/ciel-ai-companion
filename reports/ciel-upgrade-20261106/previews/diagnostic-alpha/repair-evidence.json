@@ -1,0 +1,58 @@
+{
+  "scope": "Diagnostic actual GLES2 frames from the previous passing CI core.jar; not verification of newly compiled source or Android UI.",
+  "backend": "Mesa EGL / llvmpipe (LLVM 21.1.8, 256 bits)",
+  "size": [
+    540,
+    540
+  ],
+  "mood": "CALM",
+  "base_core_jar": "/root/ciel-artifacts-20261106/ci-42201498655/core/build/libs/core.jar",
+  "base_core_sha256": "f3bde88471415b5bd9fa936f41a9403127dbd9c125d46608989d2e2cb6e7dfbd",
+  "diagnostic_java_outside_source": "/root/ciel-artifacts-20261106/renderer-alpha-diagnostic/CielAvatarRender.java",
+  "before": {
+    "pixels_rgb_greater_than_alpha": 8757,
+    "max_rgb_minus_alpha_8bit": 20,
+    "nonzero_alpha_pixels": 56848,
+    "image": "nova-before.png"
+  },
+  "forced_diagnostic": {
+    "pixels_rgb_greater_than_alpha": 0,
+    "max_rgb_minus_alpha_8bit": 0,
+    "nonzero_alpha_pixels": 58487,
+    "image": "nova-forced-blend-proposed-antennae.png",
+    "overrides": "Proxy replaces glBlendFunc(s,d) with glBlendFuncSeparate(s,d,GL_ONE,d); reflection applies the proposed CielLooks Nova horn settings before constructing the renderer.",
+    "nova_horns": {
+      "hornH": 0.44,
+      "hornR": 0.07,
+      "hornY": 0.7,
+      "hornTilt": 10,
+      "hornBend": -25,
+      "hornTaper": 3,
+      "hornShade": 0,
+      "hornColor": [
+        0.96,
+        0.68,
+        0.28
+      ],
+      "hornTipColor": [
+        1,
+        0.86,
+        0.53
+      ],
+      "hornTipMix": 0.55
+    }
+  },
+  "visual_inspection": "Diagnostic frame has clean lavender forehead and visible rounded golden antennae; no jagged yellow band.",
+  "original_avatar_declaration_sha256": "ef13f7926f4a58e791c3a41f99f2d6c1f2d13c439e0180adfeec795826a47926",
+  "pending": [
+    "CI compilation/tests of final source including DesktopGl contract",
+    "Actual current-core.jar render (without proxy or parameter overrides)",
+    "Android UI/runtime validation"
+  ],
+  "source_changes": [
+    "Separate-alpha API in shared, Android and desktop GL backends",
+    "Shared renderer preserves coverage with GL_ONE source alpha in all passes",
+    "Rim shader clamps fractional pow base to nonnegative",
+    "Nova uses raised rounded gold antennae; original look data unchanged"
+  ]
+}

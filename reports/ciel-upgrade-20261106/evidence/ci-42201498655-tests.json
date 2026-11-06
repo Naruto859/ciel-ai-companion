@@ -1,0 +1,23 @@
+{
+  "source_commit": "0fabde4d38c303ad48a158bffab4c10dcee813d1",
+  "ci_run": "https://github.com/Naruto859/ciel-ai-companion/actions/runs/42201498655",
+  "test_suites": {
+    "core": {
+      "classes": 55,
+      "tests": 328,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0
+    },
+    "app": {
+      "classes": 15,
+      "tests": 95,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0
+    }
+  },
+  "overall_run": "failed_lint",
+  "release_build_passed": false,
+  "core_jar_sha256": "f3bde88471415b5bd9fa936f41a9403127dbd9c125d46608989d2e2cb6e7dfbd"
+}

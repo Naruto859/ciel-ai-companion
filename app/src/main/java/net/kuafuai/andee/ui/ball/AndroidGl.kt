@@ -9,6 +9,8 @@ object AndroidGl : GlBackend {
     override fun glAttachShader(program: Int, shader: Int) = A.glAttachShader(program, shader)
     override fun glBindBuffer(target: Int, buffer: Int) = A.glBindBuffer(target, buffer)
     override fun glBlendFunc(s: Int, d: Int) = A.glBlendFunc(s, d)
+    override fun glBlendFuncSeparate(srcRgb: Int, dstRgb: Int, srcAlpha: Int, dstAlpha: Int) =
+        A.glBlendFuncSeparate(srcRgb, dstRgb, srcAlpha, dstAlpha)
     override fun glBufferData(target: Int, size: Int, data: Buffer?, usage: Int) = A.glBufferData(target, size, data, usage)
     override fun glBufferSubData(target: Int, offset: Int, size: Int, data: Buffer) = A.glBufferSubData(target, offset, size, data)
     override fun glClear(mask: Int) = A.glClear(mask)

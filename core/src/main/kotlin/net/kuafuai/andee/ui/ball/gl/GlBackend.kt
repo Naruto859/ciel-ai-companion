@@ -12,6 +12,7 @@ interface GlBackend {
     fun glAttachShader(program: Int, shader: Int)
     fun glBindBuffer(target: Int, buffer: Int)
     fun glBlendFunc(s: Int, d: Int)
+    fun glBlendFuncSeparate(srcRgb: Int, dstRgb: Int, srcAlpha: Int, dstAlpha: Int)
     fun glBufferData(target: Int, size: Int, data: Buffer?, usage: Int)
     fun glBufferSubData(target: Int, offset: Int, size: Int, data: Buffer)
     fun glClear(mask: Int)
@@ -82,6 +83,8 @@ object GLES20 {
     fun glAttachShader(p: Int, s: Int) = backend.glAttachShader(p, s)
     fun glBindBuffer(t: Int, b: Int) = backend.glBindBuffer(t, b)
     fun glBlendFunc(s: Int, d: Int) = backend.glBlendFunc(s, d)
+    fun glBlendFuncSeparate(srcRgb: Int, dstRgb: Int, srcAlpha: Int, dstAlpha: Int) =
+        backend.glBlendFuncSeparate(srcRgb, dstRgb, srcAlpha, dstAlpha)
     fun glBufferData(t: Int, size: Int, data: Buffer?, usage: Int) = backend.glBufferData(t, size, data, usage)
     fun glBufferSubData(t: Int, off: Int, size: Int, data: Buffer) = backend.glBufferSubData(t, off, size, data)
     fun glClear(m: Int) = backend.glClear(m)

@@ -532,13 +532,16 @@ class CielHomeActivity : AppCompatActivity() {
             "error" -> R.string.ciel_connection_failed
             else -> if (missingKey) R.string.ciel_add_key_first else R.string.ciel_ready
         }
-        status?.text = text(title)
-        talkButton?.text = text(when {
+        // Announce actual state changes, not every 350ms poll of this live region.
+        val titleText = text(title)
+        if (status?.text?.toString() != titleText) status?.text = titleText
+        val talkText = text(when {
             state == "meeting" -> R.string.ciel_stop_meeting
             active(state) -> R.string.ciel_stop
             missingKey -> R.string.ciel_setup_voice
             else -> R.string.ciel_talk
         })
+        if (talkButton?.text?.toString() != talkText) talkButton?.text = talkText
         val detail = notice.ifBlank {
             if (state == "meeting") text(R.string.ciel_meeting_explained) else svc?.lastConversationErrorForUser().orEmpty()
         }.ifBlank {

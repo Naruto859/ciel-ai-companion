@@ -6,6 +6,7 @@ import android.app.NotificationManager
 import android.app.PendingIntent
 import android.content.Context
 import android.content.Intent
+import android.os.Build
 import android.util.Log
 import net.kuafuai.andee.R
 import net.kuafuai.andee.i18n.AppLocale
@@ -83,9 +84,9 @@ object Scheduler {
     fun am(context: Context): AlarmManager =
         context.getSystemService(Context.ALARM_SERVICE) as AlarmManager
 
-    fun exactAllowed(context: Context): Boolean = runCatching {
-        am(context).canScheduleExactAlarms()
-    }.getOrDefault(false)
+    fun exactAllowed(context: Context): Boolean =
+        if (Build.VERSION.SDK_INT < Build.VERSION_CODES.S) true
+        else runCatching { am(context).canScheduleExactAlarms() }.getOrDefault(false)
 
     // ------------------------------------------------------------------
     // todos
@@ -102,21 +103,27 @@ object Scheduler {
         }
         val pending = todoIntent(context, todo.id)
         val trigger = todo.nextRunAt
+        val alarmManager = am(context)
+        var exact = exactAllowed(context)
         try {
-            if (exactAllowed(context)) {
-                am(context).setExactAndAllowWhileIdle(AlarmManager.RTC_WAKEUP, trigger, pending)
+            if (exact) {
+                try {
+                    alarmManager.setExactAndAllowWhileIdle(AlarmManager.RTC_WAKEUP, trigger, pending)
+                } catch (_: SecurityException) {
+                    // Access can be revoked after the check; keep the reminder as an inexact alarm.
+                    exact = false
+                    alarmManager.setAndAllowWhileIdle(AlarmManager.RTC_WAKEUP, trigger, pending)
+                }
             } else {
-                am(context).setAndAllowWhileIdle(AlarmManager.RTC_WAKEUP, trigger, pending)
+                alarmManager.setAndAllowWhileIdle(AlarmManager.RTC_WAKEUP, trigger, pending)
             }
             Log.i(
                 TAG,
                 "alarm armed for todo ${todo.id} at ${formatLocal(trigger)} " +
-                    "(exact=${exactAllowed(context)})",
+                    "(exact=$exact)",
             )
         } catch (t: Throwable) {
-            // SecurityException when a permission was revoked between the check
-            // and the call. Losing the alarm silently would mean the promise is
-            // forgotten; say so loudly instead.
+            // Report a failure of even the inexact fallback instead of losing a reminder silently.
             Log.e(TAG, "alarm arming failed for todo ${todo.id}", t)
         }
     }

@@ -26,6 +26,7 @@ concurrency:
 
 jobs:
   android:
+    if: ${{ inputs.signed_apk_url == '' }}
     runs-on: ubuntu-22.04
     timeout-minutes: 35
     steps:
@@ -38,10 +39,11 @@ jobs:
       - name: Tests, lint and canonical release
         run: >-
           ./gradlew --no-daemon --max-workers=2
-          -Dorg.gradle.jvmargs='-Xmx3g -XX:MaxMetaspaceSize=768m -Dfile.encoding=UTF-8'
+          -Dorg.gradle.jvmargs='-Xmx3g -XX:MaxMetaspaceSize=1536m -Dfile.encoding=UTF-8'
           -Pkotlin.compiler.execution.strategy=in-process
           -PuniversalApk=true -PdefaultLang=en
           :core:test :app:testDebugUnitTest :app:lintRelease :app:assembleRelease
+          :desktop:compileKotlin -x :desktop:buildNative -x :desktop:buildBridge -x :desktop:buildTrashTool
       - uses: actions/upload-artifact@v4
         with:
           name: ciel-unsigned-release
@@ -50,7 +52,7 @@ jobs:
       - name: Parallel-install preview package
         run: >-
           ./gradlew --no-daemon --max-workers=2
-          -Dorg.gradle.jvmargs='-Xmx3g -XX:MaxMetaspaceSize=768m -Dfile.encoding=UTF-8'
+          -Dorg.gradle.jvmargs='-Xmx3g -XX:MaxMetaspaceSize=1536m -Dfile.encoding=UTF-8'
           -Pkotlin.compiler.execution.strategy=in-process
           -PuniversalApk=true -PdefaultLang=en -PdbgSuffix=.preview :app:assembleRelease
       - uses: actions/upload-artifact@v4
@@ -72,9 +74,11 @@ jobs:
 
   android-smoke:
     needs: android
+    if: ${{ always() && !cancelled() && (needs.android.result == 'success' || (github.event_name == 'workflow_dispatch' && inputs.signed_apk_url != '')) }}
     runs-on: ubuntu-22.04
     timeout-minutes: 25
     env:
+      GH_TOKEN: ${{ github.token }}
       SIGNED_APK_URL: ${{ inputs.signed_apk_url }}
       SIGNED_APK_SHA256: ${{ inputs.signed_apk_sha256 }}
       REQUESTED_PACKAGE: ${{ inputs.package_id }}
@@ -107,8 +111,19 @@ jobs:
                   raise SystemExit("An HTTPS URL and exact SHA-256 are required")
               if package not in ("ai.ciel.companion", "ai.ciel.companion.preview"):
                   raise SystemExit("Unexpected Ciel application ID")
-              with urllib.request.urlopen(url, timeout=90) as response:
-                  data = response.read(80 * 1024 * 1024 + 1)
+              parsed = urlparse(url)
+              asset_prefix = "/repos/" + os.environ["GITHUB_REPOSITORY"] + "/releases/assets/"
+              if parsed.netloc == "api.github.com" and parsed.path.startswith(asset_prefix):
+                  # Authenticated draft assets can be checked before publication.
+                  # gh handles API redirects without forwarding a GitHub token
+                  # to an arbitrary download host.
+                  if not parsed.path[len(asset_prefix):].isdigit() or parsed.query:
+                      raise SystemExit("Unexpected release asset API path")
+                  data = subprocess.run(["gh", "api", parsed.path, "-H", "Accept: application/octet-stream"],
+                      check=True, capture_output=True, timeout=90).stdout
+              else:
+                  with urllib.request.urlopen(url, timeout=90) as response:
+                      data = response.read(80 * 1024 * 1024 + 1)
               if len(data) > 80 * 1024 * 1024 or hashlib.sha256(data).hexdigest() != expected:
                   raise SystemExit("Artifact size or SHA-256 check failed")
               out.write_bytes(data)
