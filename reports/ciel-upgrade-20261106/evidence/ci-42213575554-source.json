@@ -1,0 +1,54 @@
+{
+  "source_commit": "549ba53619e3d78ce0f3887dd291f10e5400033a",
+  "ci_run": "42213575554",
+  "url": "https://github.com/Naruto859/ciel-ai-companion/actions/runs/42213575554",
+  "source_job": "passed",
+  "runtime_job": "intentionally deferred to the exact final signed APK run",
+  "core": {
+    "tests": 328,
+    "failures": 0,
+    "errors": 0,
+    "skipped": 0,
+    "suites": 55
+  },
+  "android": {
+    "tests": 95,
+    "failures": 0,
+    "errors": 0,
+    "skipped": 0,
+    "suites": 15
+  },
+  "lint": {
+    "errors": 0,
+    "warnings": 513,
+    "counts": {
+      "MissingPermission": 1,
+      "ApplySharedPref": 5,
+      "AppBundleLocaleChanges": 1,
+      "BatteryLife": 2,
+      "HighSamplingRate": 1,
+      "AndroidGradlePluginVersion": 2,
+      "GradleDependency": 8,
+      "SwitchIntDef": 2,
+      "Untranslatable": 1,
+      "PluralsCandidate": 24,
+      "ObsoleteSdkInt": 1,
+      "StaticFieldLeak": 4,
+      "VectorPath": 4,
+      "UnusedResources": 73,
+      "IconXmlAndPng": 2,
+      "IconDuplicates": 5,
+      "ViewConstructor": 2,
+      "UseKtx": 371,
+      "ClickableViewAccessibility": 2,
+      "SetTextI18n": 2
+    },
+    "report_sha256": "d72130e5a48dd220a0fd5208e74e8e30ef25c7e48ecee1851b7d2db087e2585f"
+  },
+  "builds": {
+    "canonical_release": "passed",
+    "preview_release": "passed",
+    "desktop_kotlin_compile": "passed; desktop runtime untested"
+  },
+  "unsigned_preview_sha256": "04d8702155f70e076f430dec4dab68a88330269325a47f5512387a976f454f47"
+}

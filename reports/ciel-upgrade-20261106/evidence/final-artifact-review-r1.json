@@ -1,0 +1,144 @@
+{
+  "apk_sha256": "966180f919790ab16180833bd1371210070bc4616d073824619b9869f2fbf5f6",
+  "bytes": 16037798,
+  "frozen_files": 368,
+  "frozen_changes": [],
+  "unsigned_sha256": "0a704700f97a357ce2178170eeb10425ee30e4ef87a99603b6304837a4dd21d1",
+  "payload_changes": [],
+  "added_members": [
+    "META-INF/CIEL.RSA",
+    "META-INF/CIEL.SF",
+    "META-INF/MANIFEST.MF"
+  ],
+  "missing_members": [],
+  "notices_match_source": {
+    "LICENSE": true,
+    "THIRD_PARTY_NOTICES.md": true,
+    "CIEL_NOTICE.md": true
+  },
+  "native_libraries": [
+    {
+      "path": "lib/arm64-v8a/libbarhopper_v3.so",
+      "elf_class": 2,
+      "machine": 183,
+      "bytes": 4358080
+    },
+    {
+      "path": "lib/arm64-v8a/libimage_processing_util_jni.so",
+      "elf_class": 2,
+      "machine": 183,
+      "bytes": 28944
+    },
+    {
+      "path": "lib/armeabi-v7a/libbarhopper_v3.so",
+      "elf_class": 1,
+      "machine": 40,
+      "bytes": 2804512
+    },
+    {
+      "path": "lib/armeabi-v7a/libimage_processing_util_jni.so",
+      "elf_class": 1,
+      "machine": 40,
+      "bytes": 21692
+    },
+    {
+      "path": "lib/x86/libbarhopper_v3.so",
+      "elf_class": 1,
+      "machine": 3,
+      "bytes": 5489968
+    },
+    {
+      "path": "lib/x86/libimage_processing_util_jni.so",
+      "elf_class": 1,
+      "machine": 3,
+      "bytes": 35372
+    },
+    {
+      "path": "lib/x86_64/libbarhopper_v3.so",
+      "elf_class": 2,
+      "machine": 62,
+      "bytes": 5521032
+    },
+    {
+      "path": "lib/x86_64/libimage_processing_util_jni.so",
+      "elf_class": 2,
+      "machine": 62,
+      "bytes": 46200
+    }
+  ],
+  "credential_pattern_findings": [],
+  "bundled_key_empty": true,
+  "reviewer": "final_artifact_review",
+  "production_source_commit": "0afd4b1d82a4470d9007aea9cc3206433bcee11d",
+  "harness_commit_reviewed": "62a8b1d",
+  "package": "ai.ciel.companion.preview",
+  "version": "0.12.0 (24)",
+  "min_sdk": 30,
+  "target_sdk": 34,
+  "certificate_sha256": "1e11584f8c081fc18f0ddaf6467a8268f59bf5a37c2b0bd55105bb7af0a17bac",
+  "signature_v3_verified": true,
+  "zip_alignment_4_verified": true,
+  "provider_authorities": [
+    "ai.ciel.companion.preview.files",
+    "ai.ciel.companion.preview.mlkitinitprovider",
+    "ai.ciel.companion.preview.androidx-startup"
+  ],
+  "previous_package_provider_collision": false,
+  "shared_uid": false,
+  "required_split_flags": false,
+  "android_tests": {
+    "core": 328,
+    "app": 95,
+    "failures": 0,
+    "errors": 0,
+    "skipped": 0
+  },
+  "lint": {
+    "errors": 0,
+    "warnings": 513
+  },
+  "runtime_review": {
+    "run_id": "42211532681",
+    "report_sha256": "91e1def667cfed1fec31daafc646ad4e7be8b8a58c25ef5cf97ba72c57fb92f6",
+    "status": "failed",
+    "exact_installed_sha256": "966180f919790ab16180833bd1371210070bc4616d073824619b9869f2fbf5f6",
+    "passed_checks": [
+      "fresh emulator and exact APK provenance",
+      "Home launch, resumed PID and missing-key state",
+      "original companion",
+      "Moss preview isolation and saved persistence",
+      "Nova preview isolation and saved persistence",
+      "app remains resumed without app FATAL/ANR"
+    ],
+    "failed_checks": [
+      {
+        "name": "missing-key setup route and visible validation error",
+        "error": "ADB did not return a PNG"
+      },
+      {
+        "name": "large-font portrait tabs",
+        "error": "ADB did not return a PNG"
+      },
+      {
+        "name": "landscape tabs",
+        "error": "Emulator did not rotate to landscape"
+      }
+    ],
+    "app_fatal_or_anr": [],
+    "cleanup_errors": [],
+    "visual_finding": "Companion navigation word wraps at font scale 1.5."
+  },
+  "p0_p1_findings": [],
+  "artifact_status": "Superseded unpublished candidate; replacement artifact review pending.",
+  "follow_up_source_review": {
+    "commit": "549ba53619e3d78ce0f3887dd291f10e5400033a",
+    "packaged_changes": [
+      "values/ciel_home.xml: 伙伴 → 形象",
+      "values-en/ciel_home.xml: Companion → Avatar"
+    ],
+    "p0_p1_findings": [],
+    "harness_syntax": "Android 14 AOSP confirms WM query and restore syntax. Secure captures use hierarchy only. Landscape requires actual PNG dimensions.",
+    "replacement_apk_reviewed": false,
+    "harness_followup_reviewed": "549787aa62aa56a64ece9a8f39cb6d8e24056d48: snapshot dormant rotation preferences before WM mutations; cleanup includes them."
+  }
+}

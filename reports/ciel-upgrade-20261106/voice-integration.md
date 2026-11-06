@@ -1,6 +1,6 @@
 # Ciel native Live voice integration
 
-Status on 2026-11-06: implementation frozen for the parent's authoritative Android/core build. `git diff --check` passes. This report does not claim that a physical phone or a successful Gemini Live session has been tested.
+Status on 2026-11-06: the final application source `549ba53` passed all 423 core/Android unit tests, release lint and both release builds in CI run `42213575554`. This report does not claim that a physical phone or a successful Gemini Live session has been tested. Exact APK runtime status is maintained in the [central ledger](README.md).
 
 ## What changed
 
@@ -36,11 +36,11 @@ Twenty new core tests were added for the Live path:
 | `LiveRequestGateTest` | 1 | Queued Talk/text followed by Stop cannot create/send; a new request can |
 | `LiveScheduledTurnTest` | 3 | Original trust/repeat semantics, Stop during quiet wait, supported scheduling/omitted legacy tools |
 
-The parent owns the central `:core:test`, `:app:testDebugUnitTest`, APK build, and artifact checks. Their final output is authoritative; this agent did not run a competing Gradle build.
+The central `:core:test` and `:app:testDebugUnitTest` results include every new test above. [Recorded final-source counts](evidence/ci-42213575554-source.json) are authoritative; no competing local Gradle build was used as proof.
 
 The parent's bounded network probe reached Google's socket, then Google closed with code 1007: `API key not valid. Please pass a valid API key.` This occurred before `setupComplete`, so model availability, tool-schema acceptance, audio, and response latency remain unverified. No real phone tool was executed by that probe.
 
-`research/live-setup-validation.json` contains 92 built-in declarations for a device with no runtime call extension or paired peers. Its provenance file records how the final availability filter was applied and explicitly requires comparison with the compiled implementation. It contains no API key.
+`research/live-setup-validation.json` contains **90** built-in declarations for a device with no runtime extension or paired peers. The final CI-produced `core.jar` generated a structurally identical setup through `ToolSchemas.subset`, `LiveToolAvailability.supports` and `GeminiLiveProtocol.setup`. This corrected two stale research-fixture entries (`tap_target` and `fold_topic`); the application's filter already excluded them. [Provenance](research/live-setup-validation-provenance.json) records the exact compiled artifact. The fixture contains no API key, and equality does not establish Google's acceptance.
 
 Physical-device validation still needs microphone capture, speaker echo/interruption, background/foreground behavior, permission-denied paths, meeting Stop, and representative phone actions using a working key.
 

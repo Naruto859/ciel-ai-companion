@@ -1,0 +1,63 @@
+{
+  "source_commit": "0afd4b1d82a4470d9007aea9cc3206433bcee11d",
+  "ci_run": "42207831775",
+  "url": "https://github.com/Naruto859/ciel-ai-companion/actions/runs/42207831775",
+  "source_job": "passed",
+  "runtime_job": "blocked before installation by old signer-output parser; replaced by exact signed-artifact run",
+  "core": {
+    "tests": 328,
+    "failures": 0,
+    "errors": 0,
+    "skipped": 0,
+    "suites": 55
+  },
+  "android": {
+    "tests": 95,
+    "failures": 0,
+    "errors": 0,
+    "skipped": 0,
+    "suites": 15
+  },
+  "lint": {
+    "errors": 0,
+    "warnings": 513,
+    "counts": {
+      "MissingPermission": 1,
+      "ApplySharedPref": 5,
+      "AppBundleLocaleChanges": 1,
+      "BatteryLife": 2,
+      "HighSamplingRate": 1,
+      "AndroidGradlePluginVersion": 2,
+      "GradleDependency": 8,
+      "SwitchIntDef": 2,
+      "Untranslatable": 1,
+      "PluralsCandidate": 24,
+      "ObsoleteSdkInt": 1,
+      "StaticFieldLeak": 4,
+      "VectorPath": 4,
+      "UnusedResources": 73,
+      "IconXmlAndPng": 2,
+      "IconDuplicates": 5,
+      "ViewConstructor": 2,
+      "UseKtx": 371,
+      "ClickableViewAccessibility": 2,
+      "SetTextI18n": 2
+    },
+    "report_sha256": "d72130e5a48dd220a0fd5208e74e8e30ef25c7e48ecee1851b7d2db087e2585f"
+  },
+  "builds": {
+    "canonical_release": "passed",
+    "preview_release": "passed",
+    "desktop_kotlin_compile": "passed; desktop runtime untested"
+  },
+  "apk_inputs": {
+    "ciel-unsigned-preview/app-armeabi-v7a-release-unsigned.apk": "d8d339d6522a0f6e24f6a7f6dc421b049417e0f5f15aa3ebfe44a09e1e0fcf8b",
+    "ciel-unsigned-preview/app-arm64-v8a-release-unsigned.apk": "aabb70347357d3bf72abedbbf844d0d3be5e410387d5a7d0f79419ecc9cbf426",
+    "ciel-unsigned-preview/app-universal-release-unsigned.apk": "0a704700f97a357ce2178170eeb10425ee30e4ef87a99603b6304837a4dd21d1",
+    "ciel-unsigned-preview/app-x86_64-release-unsigned.apk": "e2ac9f6a4be4c99c31bb4c38b6808648d0d4adcc72b8adfddc8224ee717ffaeb",
+    "ciel-unsigned-release/app-armeabi-v7a-release-unsigned.apk": "dfd783aa09f06df66694afb1e620fcc185fa04bccf1fa567da9ffadf04f9f836",
+    "ciel-unsigned-release/app-arm64-v8a-release-unsigned.apk": "18b72ab8dcad13c32e6e96191a4806f9bc5efa29ef159545dd664e88688914fb",
+    "ciel-unsigned-release/app-universal-release-unsigned.apk": "8db51472e9ca18c01e498d1af913376952fab98ac4dc84c7ed18064327803ff0",
+    "ciel-unsigned-release/app-x86_64-release-unsigned.apk": "7905bba6b2d26128310e61b21f4b254648c97ea891c8c15f14699f7cfcac4649"
+  }
+}

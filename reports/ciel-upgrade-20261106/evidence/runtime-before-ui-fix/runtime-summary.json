@@ -1,0 +1,75 @@
+{
+  "status": "failed",
+  "apk_sha256": "966180f919790ab16180833bd1371210070bc4616d073824619b9869f2fbf5f6",
+  "installed_apk_sha256": "966180f919790ab16180833bd1371210070bc4616d073824619b9869f2fbf5f6",
+  "checks": [
+    {
+      "name": "fresh emulator and exact APK provenance",
+      "status": "passed",
+      "seconds": 10.39
+    },
+    {
+      "name": "Home launch, resumed PID and missing-key state",
+      "status": "passed",
+      "seconds": 17.26
+    },
+    {
+      "name": "missing-key setup route and visible validation error",
+      "status": "failed",
+      "error": "ADB did not return a PNG",
+      "seconds": 17.78
+    },
+    {
+      "name": "original companion",
+      "status": "passed",
+      "seconds": 29.3
+    },
+    {
+      "name": "Moss preview isolation and saved persistence",
+      "status": "passed",
+      "seconds": 118.18
+    },
+    {
+      "name": "Nova preview isolation and saved persistence",
+      "status": "passed",
+      "seconds": 110.74
+    },
+    {
+      "name": "large-font portrait tabs",
+      "status": "failed",
+      "error": "ADB did not return a PNG",
+      "seconds": 46.41
+    },
+    {
+      "name": "landscape tabs",
+      "status": "failed",
+      "error": "Emulator did not rotate to landscape",
+      "seconds": 15.97
+    },
+    {
+      "name": "app remains resumed without app FATAL/ANR",
+      "status": "passed",
+      "seconds": 1.42
+    }
+  ],
+  "device": {
+    "ro.build.version.sdk": "34",
+    "ro.product.model": "sdk_gphone64_x86_64",
+    "ro.product.cpu.abi": "x86_64",
+    "ro.build.fingerprint": "google/sdk_gphone64_x86_64/emu64xa:14/UE1A.230829.050/12077443:userdebug/dev-keys"
+  },
+  "app_fatal_or_anr": [],
+  "last_resumed_activity": [
+    "topResumedActivity=ActivityRecord{2c09ec5 u0 ai.ciel.companion.preview/net.kuafuai.andee.ui.CielHomeActivity t18}"
+  ],
+  "cleanup_errors": [],
+  "seconds": 368.28,
+  "source_commit": "0afd4b1d82a4470d9007aea9cc3206433bcee11d",
+  "ci_run": "42211532681",
+  "candidate": "superseded; not published",
+  "classification": {
+    "setup_capture": "The capture harness required PNG bytes from the FLAG_SECURE window; new harness records its real hierarchy without requesting screenshots.",
+    "rotation": "Legacy system settings did not rotate the emulator; new harness uses explicit WM rotation with original state restoration.",
+    "ui": "Actual screenshot shows Companion splitting across two lines at 1.5 font. Source 549ba53 changes that tab to Avatar, with matching Chinese wording."
+  }
+}

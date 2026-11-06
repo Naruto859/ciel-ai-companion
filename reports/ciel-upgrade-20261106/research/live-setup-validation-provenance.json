@@ -1,14 +1,24 @@
 {
   "artifact": "live-setup-validation.json",
-  "purpose": "Credential-free direct Gemini Live setup for the default built-in Android tool surface, without paired peers or runtime call extensions.",
+  "purpose": "Credential-free direct Gemini Live setup for the default built-in Android tool surface, without paired peers or runtime extensions.",
   "model": "models/gemini-3.8-live",
-  "function_declarations": 92,
-  "final_filter_removed": [
-    "ask_user",
-    "alert_user",
-    "notify_rule"
+  "function_declarations": 90,
+  "generation": "Executed compiled ToolSchemas.subset with LiveToolAvailability.supports, then GeminiLiveProtocol.setup. The fixed application filter is used; no declaration was edited by hand.",
+  "core_source_commit": "0afd4b1d82a4470d9007aea9cc3206433bcee11d",
+  "core_ci_run": "42207831775",
+  "corrected_stale_fixture_entries": [
+    "fold_topic",
+    "tap_target"
   ],
-  "generation": "Updated existing protocol-generated fixture by applying final LiveToolAvailability exclusions; requires compiled-fixture comparison after the central build.",
-  "sha256": "5cf80fb76cc351d83bf969ab9c0544303cb5707673d6ee10a68a2081dbdf5681",
-  "provider_acceptance": "Unverified: the available API key was rejected before setupComplete."
+  "sha256": "603e6fb72c5ee43b3d62ea85430e84d21eb5d1cc17e5279e088c98d7bc755d70",
+  "provider_acceptance": "Unverified: the available API key was rejected before setupComplete.",
+  "compiled_structural_comparison": "Exact JSON equality, ignoring object-key ordering, after preserving the existing fixture formatting.",
+  "core_jar_sha256": "760981b4d20914ae5328d412fd77651ce98949b6e94b48b226920e24dbfe54d4",
+  "replacement_build_class_comparison": {
+    "source_commit": "549ba53619e3d78ce0f3887dd291f10e5400033a",
+    "ci_run": "42213575554",
+    "classes_compared": 338,
+    "all_class_bytes_identical": true,
+    "core_jar_sha256": "89fba7ad82451bdbcdf8608cd3b27ca047847653312993ab1e03c8209eba2586"
+  }
 }

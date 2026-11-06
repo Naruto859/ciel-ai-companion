@@ -1,0 +1,9 @@
+{
+  "wm_size": "Physical size: 1080x1920\nOverride size: 1920x1080",
+  "user_rotation": "lock 0",
+  "fixed_to_user_rotation": "enabled",
+  "requested_viewport": [
+    1920,
+    1080
+  ]
+}

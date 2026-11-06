@@ -1,0 +1,2 @@
+# Keep Android's raw log bytes, including platform-generated trailing spaces.
+**/app-logcat.txt -whitespace

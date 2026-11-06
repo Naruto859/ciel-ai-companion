@@ -1,0 +1,27 @@
+{
+  "apk": "/home/runner/work/ciel-ai-companion/ciel-ai-companion/smoke-apk.apk",
+  "sha256": "a2695f68f8151d4c44680e8b6d980a4ab9d96241c39ec185267c63c6d2211726",
+  "bytes": 16037798,
+  "package": "ai.ciel.companion.preview",
+  "version_code": 24,
+  "version_name": "0.12.0",
+  "min_sdk": 30,
+  "native_abis": [
+    "arm64-v8a",
+    "armeabi-v7a",
+    "x86",
+    "x86_64"
+  ],
+  "launcher": "net.kuafuai.andee.ui.CielHomeActivity",
+  "certificate_sha256": "1e11584f8c081fc18f0ddaf6467a8268f59bf5a37c2b0bd55105bb7af0a17bac",
+  "certificate_sha256_all": [
+    "1e11584f8c081fc18f0ddaf6467a8268f59bf5a37c2b0bd55105bb7af0a17bac"
+  ],
+  "signing_tool": "/usr/local/lib/android/sdk/build-tools/37.0.0/apksigner",
+  "signature_verified": true,
+  "zip_alignment_verified": true,
+  "credential_findings": [],
+  "failures": [],
+  "packaging_passed": true,
+  "runtime_verified_by_this_script": false
+}

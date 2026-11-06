@@ -77,28 +77,6 @@
             "behavior": "BLOCKING"
           },
           {
-            "name": "tap_target",
-            "description": "Tap something you can SEE but that has no e-number — an icon, a button in an app that hides its\nelement tree (WeChat), anything on a canvas, mini-program or web page — by describing it in words.\nThe device takes a fresh screenshot, a vision model trained to point finds the element, and the\ndevice taps its centre. You never give a coordinate, so nothing can be off by your arithmetic.\n\nUse it INSTEAD of tap_by_coordinates whenever there is no e-number for the target; tap_by_coordinates\nand zoom are the fallback for when this says it cannot find the target.\n\nDescribe the one element you mean so that nothing else on the screen fits: its visible text or icon,\nand where it is (\"the 发送 button right of the comment box at the bottom\", \"the 「··」 button at the\nright end of 好友3's post\", \"the red 删除 in the menu that just opened\"). Name what it looks like,\nnot what it will do. Relational words alone (\"the second one\") are where it errs most.\n\nThe result has `located` (0-1000), `saw` (what the element it tapped shows), `after_shot` with a\nmagenta ring where it tapped, and `screen_changed` where the device can tell. If `saw` is not what\nyou meant, the tap went to the wrong thing — look before you go on. `found: false` means the model looked and does not see\nit — do not repeat the same words; look at the screen and describe it differently, or scroll.",
-            "parametersJsonSchema": {
-              "type": "object",
-              "properties": {
-                "long": {
-                  "default": false,
-                  "description": "Long-press (phone) / right-click (Mac) instead of a tap. Default false.",
-                  "type": "boolean"
-                },
-                "target": {
-                  "description": "The one element to tap, described by its visible text or icon and where it is, in any language.",
-                  "type": "string"
-                }
-              },
-              "required": [
-                "target"
-              ]
-            },
-            "behavior": "BLOCKING"
-          },
-          {
             "name": "tap_by_coordinates",
             "description": "[LAST RESORT] Tap a point on the screen. Aim in ONE of two ways:\n\n1. **By grid cell + part** (preferred whenever you are looking at an\n   image): {\"cell\": \"D7\", \"part\": \"bottom-right\"}. The cell is one of\n   the aim grid drawn on the screenshot you were shown, columns A-H\n   left to right, rows 1-12 top to bottom. The letters are printed\n   along the TOP edge and the numbers down the LEFT edge, like a map's\n   rulers — nothing is printed inside a cell, so the target is never\n   covered. Follow the target's column up and its row left. Then `part`\n   says which third of that cell the\n   target is in, across and down: top-left, top, top-right, left,\n   center, right, bottom-left, bottom, bottom-right (omit it for the\n   centre). The device converts both to pixels itself; there is no\n   arithmetic for you to do. A cell is too coarse to tap with on its\n   own — always give the part unless the target fills the cell.\n   If the target straddles two cells, pick the one holding most of it.\n   For anything not clearly bigger than a cell (an icon, a ✕ close\n   button, a small chip), CHECK FIRST: zoom_screen_region with the\n   same cell and part shows a magenta crosshair exactly where this tap\n   would land. On target → send this tap with the same arguments.\n   Off target → aim off that magnified image: its labels are\n   LOWERCASE and you must say so — {\"cell\": \"d7\", \"part\": \"left\",\n   \"on\": \"zoom\"}. A lowercase label sent as if it were a full-screen\n   cell will be about 120 units off.\n   **On an app that hides its tree (get_screen_element came back empty\n   / withheld — WeChat often does), zooming first is not optional**:\n   a tap or long-press is refused unless its point lies inside a zoom\n   taken after your last gesture. So the rhythm there is always\n   zoom → tap, one zoom per screen.\n\n2. **By coordinate** {\"x\": …, \"y\": …} — RELATIVE 0-1000 integers\n   ((0,0) top-left, (1000,1000) bottom-right; the device converts to real\n   pixels for any screen size). With {\"on\": \"zoom\"} these numbers are\n   0-1000 *within the last magnified image* instead of the whole screen,\n   and the device maps them back — so you never add region.left or divide\n   by scale_x yourself. Values outside 0-1000 are rejected, not clamped.\n\nUse this only when the target has no e-number: self-drawn panes\n(mini-program, WebView, game), images, pure-visual content. If a\nget_screen_element list exists for this screen, use tap_screen_element.\n\nWhen the app hides its element tree and your point lands on blank\nbackground right beside one small isolated shape (an icon, a \"··\"\nbutton), the device taps that shape's centre instead and says so with\n`snapped_from` / `snapped_to`. Check after_shot as usual — if the shape\nwas not what you meant, aim again further away from it.",
             "parametersJsonSchema": {
@@ -2077,38 +2055,6 @@
               },
               "required": [
                 "action"
-              ]
-            },
-            "behavior": "BLOCKING"
-          },
-          {
-            "name": "fold_topic",
-            "description": "Put a finished topic of this conversation away, so it stops costing context and can be read\nback later with `get_topic`.\n\n**Reviews only.** This is offered to the quiet-hour review, and any other turn that calls it is\nrefused — folding is irreversible from your side, and a request is not the moment to spend it.\nThe review's prompt lists the user's turns as U0, U1, …; a normal turn has no such list.\n\n- `from_turn` / `to_turn`: the first and last U-number of the topic, inclusive, from that list.\n  **Use those numbers.** Do not describe a range of messages and do not count them — everything\n  said between those two turns, yours and the tools', goes with them.\n- `title`: what it was about, in the user's words where you have them.\n- `summary`: what it was about / where it got to / how it ended / **what you left out**.\n  The last line is the point. It is what tells future-you that this paragraph is not the whole\n  story, so a question about a detail gets answered by reading the topic back instead of from\n  memory. A summary that reads complete is one whose details are lost.\n\nThe device refuses, with a reason, when: a number is not in the list; `to_turn` is the latest\nturn (nothing has started after it, so there is no way to tell it ended); something in it is\nstill waiting on an answer; it overlaps a topic already put away; it is too short; or a scene is\nactive. The reason names the condition — do not retry the same numbers.\n\nUp to three topics per review. They are put away when the review ends, not when you call this.",
-            "parametersJsonSchema": {
-              "type": "object",
-              "properties": {
-                "summary": {
-                  "description": "Four lines: what it was / where it got to / how it ended / what you left out",
-                  "type": "string"
-                },
-                "to_turn": {
-                  "description": "The U-number of the topic's last turn; must come before the latest turn",
-                  "type": "integer"
-                },
-                "title": {
-                  "description": "What this was about, ≤40 characters",
-                  "type": "string"
-                },
-                "from_turn": {
-                  "description": "The U-number of the topic's first turn",
-                  "type": "integer"
-                }
-              },
-              "required": [
-                "from_turn",
-                "to_turn",
-                "title",
-                "summary"
               ]
             },
             "behavior": "BLOCKING"

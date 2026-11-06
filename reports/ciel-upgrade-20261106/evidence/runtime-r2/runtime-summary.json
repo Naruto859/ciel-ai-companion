@@ -1,0 +1,141 @@
+{
+  "apk_sha256": "a2695f68f8151d4c44680e8b6d980a4ab9d96241c39ec185267c63c6d2211726",
+  "status": "scoped UI and installation checks passed across two runs of identical signed bytes",
+  "full_suite_rerun": false,
+  "runs": [
+    {
+      "id": 42215450664,
+      "url": "https://github.com/Naruto859/ciel-ai-companion/actions/runs/42215450664",
+      "harness_commit": "549787aa62aa56a64ece9a8f39cb6d8e24056d48",
+      "scope": "full",
+      "result": "failed",
+      "passed": 7,
+      "total": 9,
+      "checks": [
+        {
+          "name": "fresh emulator and exact APK provenance",
+          "status": "passed",
+          "seconds": 7.75
+        },
+        {
+          "name": "Home launch, resumed PID and missing-key state",
+          "status": "passed",
+          "seconds": 15.39
+        },
+        {
+          "name": "missing-key setup route and visible validation error",
+          "status": "failed",
+          "error": "Visible UI control/text not found: avatar state",
+          "seconds": 28.47
+        },
+        {
+          "name": "original companion",
+          "status": "passed",
+          "seconds": 25.2
+        },
+        {
+          "name": "Moss preview isolation and saved persistence",
+          "status": "passed",
+          "seconds": 114.29
+        },
+        {
+          "name": "Nova preview isolation and saved persistence",
+          "status": "passed",
+          "seconds": 95.68
+        },
+        {
+          "name": "large-font portrait tabs",
+          "status": "passed",
+          "seconds": 49.17
+        },
+        {
+          "name": "landscape tabs",
+          "status": "failed",
+          "error": "Timed out: emulator display orientation 1",
+          "seconds": 24.99
+        },
+        {
+          "name": "app remains resumed without app FATAL/ANR",
+          "status": "passed",
+          "seconds": 1.29
+        }
+      ],
+      "report_sha256": "07f0043339fc0e96a3b0337780fb4e7408516984042f92e331e591aaf0c79de8"
+    },
+    {
+      "id": 42217850551,
+      "url": "https://github.com/Naruto859/ciel-ai-companion/actions/runs/42217850551",
+      "harness_commit": "1debaf38ee004c83a6e41f233c8a99394245fc38",
+      "scope": "setup-layout",
+      "result": "passed",
+      "passed": 5,
+      "total": 5,
+      "checks": [
+        {
+          "name": "fresh emulator and exact APK provenance",
+          "status": "passed",
+          "seconds": 6.72
+        },
+        {
+          "name": "Home launch, resumed PID and missing-key state",
+          "status": "passed",
+          "seconds": 14.95
+        },
+        {
+          "name": "missing-key setup route and blank-key rejection",
+          "status": "passed",
+          "seconds": 36.4
+        },
+        {
+          "name": "landscape viewport tabs",
+          "status": "passed",
+          "seconds": 56.01
+        },
+        {
+          "name": "app remains resumed without app FATAL/ANR",
+          "status": "passed",
+          "seconds": 0.88
+        }
+      ],
+      "report_sha256": "71a4b53fa67f70ae771bd1eb40e9f06a24ae0d6eeedd41412f74098964b3e675"
+    }
+  ],
+  "covered_checks": [
+    "fresh install and installed-APK digest equality",
+    "resumed Home and missing-key state",
+    "blank-key rejection retained after process restart",
+    "original avatar",
+    "Moss preview isolation and saved persistence",
+    "Nova preview isolation and saved persistence",
+    "large-font portrait navigation",
+    "1920x1080 landscape viewport navigation",
+    "no app FATAL/ANR during either run"
+  ],
+  "blank_key_validation": {
+    "observable_rejection_passed": true,
+    "inline_error_caption_observed": false
+  },
+  "landscape_validation": {
+    "viewport": [
+      1920,
+      1080
+    ],
+    "method": "wm size with rotation locked to zero",
+    "navigation_in_bounds": true,
+    "physical_rotation_or_sensor_verified": false,
+    "all_scroll_content_visible_at_once": false
+  },
+  "ui_visual_review": "Actual Home, original/Moss/Nova, 1.5-font navigation and wide viewport captures inspected. Tall page content remains scrollable; screenshots do not certify every layout or accessibility path.",
+  "capture_locations": {
+    "full_png_and_xml": "../../previews/android/",
+    "full_secure_xml": "full/",
+    "targeted_png_and_xml": "setup-layout/"
+  },
+  "audio_or_phone_control_verified": false,
+  "limitations": [
+    "Setup captures are hierarchy-only because the credential screen is secure.",
+    "The original full run retains its two failed assertions; targeted checks validate blank-key rejection and a wide viewport with revised evidence criteria.",
+    "This is not a successful single full-suite rerun or physical rotation test.",
+    "No live microphone, valid-key Gemini session, permission dialog or actual phone tool was exercised."
+  ]
+}

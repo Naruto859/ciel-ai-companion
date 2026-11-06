@@ -2,9 +2,13 @@
 
 Ciel is a personal Android companion based on [Andee](https://github.com/kuafuai/andee). This fork adds a native home screen, direct Gemini Live conversation, new procedural companions, and repairs to Android control and cancellation.
 
+[Download Ciel Preview 0.12.0](https://github.com/Naruto859/ciel-ai-companion/releases/download/ciel-preview-v0.12.0-24/ciel-preview-0.12.0-24-r2-universal.apk) · [Actual UI](reports/ciel-upgrade-20261106/previews/ciel-android-ui.png) · [Avatar previews](reports/ciel-upgrade-20261106/previews/ciel-companions.png)
+
+This Android 11+ preview has passed 423 unit tests and scoped installation/UI checks on Android 14. A new valid Gemini key is still needed to verify real voice conversation; physical-phone control and response latency remain unverified.
+
 ## Start talking
 
-1. Open **Ciel → Setup**.
+1. Open **Ciel Preview → Setup**.
 2. Create your own Gemini API key in [Google AI Studio](https://aistudio.google.com/apikey), paste it into **Gemini API key**, and tap **Save and use Gemini Live**. Keep the default model and voice unless you want to change them.
 3. On **Home**, tap **Talk to Ciel** and allow microphone access.
 4. Tap **Stop** to finish the conversation or cancel the current task. Meeting recordings also show a visible Stop control.
@@ -32,7 +36,7 @@ Stop invalidates queued work, interrupts long waits and blocks subsequent action
 
 ## Choose a companion
 
-Open **Companion**. The first, original Ciel design is preserved. **Moss** and **Nova** replace the old alternative choices.
+Open **Avatar**. The first, original Ciel design is preserved. **Moss** and **Nova** replace the old alternative choices.
 
 Selecting a character previews it. Tap **Use Moss**, **Use Nova** or **Use Ciel** to save your choice. Expression buttons and **Play all expressions** demonstrate the existing 19 moods and gestures without opening the microphone. The characters also share the engine's idle motion, body gestures and speaking animation.
 
@@ -70,4 +74,6 @@ python3 tools/smoke_ciel_android.py --serial emulator-5554 \
   --apk /path/to/Ciel-preview.apk --package ai.ciel.companion.preview --output /path/to/new-evidence
 ```
 
-The smoke harness requires a disposable emulator with no existing installation of that package. It never clears an existing app's data or contacts Gemini. Its screenshots require visual review, and its result must not be presented as voice or physical-phone validation.
+The smoke harness requires a disposable emulator with no existing installation of that package. It never clears an existing app's data or contacts Gemini. Setup records its UI hierarchy without requesting a screenshot of the secure credential window. Blank-key rejection requires the app to retain Setup and still show a missing key after restart; it does not assert that UIAutomator exposes Android's inline error caption. Landscape uses an actual wide viewport through `wm size`, with previous size, rotation, font and animation settings restored afterward. This checks layout rather than physical rotation or sensors.
+
+The default is the full suite. `--checks setup-layout` reruns only setup and wide layout, retaining mandatory fresh installation, exact-APK SHA verification, startup and crash checks. Report subset coverage explicitly. The final r2 evidence combines seven passing checks from [the full run](https://github.com/Naruto859/ciel-ai-companion/actions/runs/42215450664) with all five checks from [the targeted run](https://github.com/Naruto859/ciel-ai-companion/actions/runs/42217850551), both on the same signed APK. The earlier full run's two failures remain recorded. Its screenshots require visual review, and these results do not establish voice or physical-phone behavior.

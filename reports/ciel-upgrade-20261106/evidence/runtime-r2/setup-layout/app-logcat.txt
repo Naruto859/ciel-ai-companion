@@ -1,0 +1,488 @@
+11-06 12:29:57.427   519   800 I SdkSandboxManager: No SDKs used. Skipping SDK data reconcilation for CallingInfo{mUid=10192, mPackageName='ai.ciel.companion.preview, mAppProcessToken='null'}
+11-06 12:29:57.819   835   835 I SafetyLabelChangedBroadcastReceiver: received broadcast packageName: ai.ciel.companion.preview, current user: UserHandle{0}, packageChangeEvent: NEW_INSTALL, intent user: UserHandle{0}
+11-06 12:29:57.826   519   519 I notification_cancel_all: [1000,519,ai.ciel.companion.preview,0,0,0,5,NULL]
+11-06 12:29:58.039   519  2681 I ActivityManager: Force stopping ai.ciel.companion.preview appid=10192 user=0: from pid 3409
+11-06 12:29:58.158  1043  1043 D CarrierSvcBindHelper: onPackageAdded: ai.ciel.companion.preview
+11-06 12:29:58.177   519   519 I notification_cancel_all: [1000,519,ai.ciel.companion.preview,0,0,0,5,NULL]
+11-06 12:29:58.227  1043  1362 D ImsResolver: maybeAddedImsService, packageName: ai.ciel.companion.preview
+11-06 12:29:58.242   519  2121 I wm_create_activity: [0,82213315,8,ai.ciel.companion.preview/net.kuafuai.andee.ui.CielHomeActivity,NULL,NULL,NULL,268435456]
+11-06 12:29:58.243   519  2121 V SplashScreenExceptionList: SplashScreen checking exception for package ai.ciel.companion.preview (target sdk:34) -> false
+11-06 12:29:58.343   830   867 V WindowManagerShell: Transition requested: android.os.BinderProxy@9ca61a4 TransitionRequestInfo { type = OPEN, triggerTask = TaskInfo{userId=0 taskId=8 displayId=0 isRunning=true baseIntent=Intent { flg=0x10000000 cmp=ai.ciel.companion.preview/net.kuafuai.andee.ui.CielHomeActivity } baseActivity=ComponentInfo{ai.ciel.companion.preview/net.kuafuai.andee.ui.CielHomeActivity} topActivity=ComponentInfo{ai.ciel.companion.preview/net.kuafuai.andee.ui.CielHomeActivity} origActivity=null realActivity=ComponentInfo{ai.ciel.companion.preview/net.kuafuai.andee.ui.CielHomeActivity} numActivities=1 lastActiveTime=42524 supportsMultiWindow=true resizeMode=1 isResizeable=true minWidth=-1 minHeight=-1 defaultMinSize=220 token=WCT{android.window.IWindowContainerToken$Stub$Proxy@dc3bb0d} topActivityType=1 pictureInPictureParams=null shouldDockBigOverlays=false launchIntoPipHostTaskId=-1 lastParentTaskIdBeforePip=-1 displayCutoutSafeInsets=null topActivityInfo=ActivityInfo{862cac2 net.kuafuai.andee.ui.CielHomeActivity} launchCookies=[] positionInParent=Point(0, 0) parentTaskId=-1 isFocused=false isVisible=false isVisibleRequested=false isSleeping=false topActivityInSizeCompat=false topActivityEligibleForLetterboxEducation= false topActivityLetterboxed= false isFromDoubleTap= false topActivityLetterboxVerticalPosition= -1 topActivityLetterboxHorizontalPosition= -1 topActivityLetterboxWidth=-1 topActivityLetterboxHeight=-1 locusId=null displayAreaFeatureId=1 cameraCompatControlState=hidden}, remoteTransition = null, displayChange = null }
+11-06 12:29:58.693   519  2121 I ActivityTaskManager: START u0 {flg=0x10000000 cmp=ai.ciel.companion.preview/net.kuafuai.andee.ui.CielHomeActivity} with LAUNCH_MULTIPLE from uid 2000 (BAL_ALLOW_PERMISSION) result code=0
+11-06 12:29:58.776   519  2682 D CoreBackPreview: Window{94db508 u0 Splash Screen ai.ciel.companion.preview}: Setting back callback OnBackInvokedCallbackInfo{mCallback=android.window.IOnBackInvokedCallback$Stub$Proxy@48c8026, mPriority=0, mIsAnimationCallback=false}
+11-06 12:29:58.838   519   549 I am_proc_start: [0,3497,10192,ai.ciel.companion.preview,next-top-activity,{ai.ciel.companion.preview/net.kuafuai.andee.ui.CielHomeActivity}]
+11-06 12:29:58.838   519   549 I ActivityManager: Start proc 3497:ai.ciel.companion.preview/u0a192 for next-top-activity {ai.ciel.companion.preview/net.kuafuai.andee.ui.CielHomeActivity}
+11-06 12:29:58.861  3497  3497 I mpanion.preview: Using CollectorTypeCC GC.
+11-06 12:29:58.862  3497  3497 W mpanion.preview: Unexpected CPU variant for x86: x86_64.
+11-06 12:29:58.862  3497  3497 W mpanion.preview: Known variants: atom, sandybridge, silvermont, goldmont, goldmont-plus, tremont, kabylake, default
+11-06 12:29:58.870  3497  3497 E mpanion.preview: Not starting debugger since process cannot load the jdwp agent.
+11-06 12:29:58.885   519  2824 I am_proc_bound: [0,3497,ai.ciel.companion.preview]
+11-06 12:29:58.891   519  2824 I wm_restart_activity: [0,82213315,8,ai.ciel.companion.preview/net.kuafuai.andee.ui.CielHomeActivity]
+11-06 12:29:58.898   519  2824 I wm_set_resumed_activity: [0,ai.ciel.companion.preview/net.kuafuai.andee.ui.CielHomeActivity,minimalResumeActivityLocked - onActivityStateChanged]
+11-06 12:29:58.979   519   536 V WindowManager: Sent Transition #7 createdAt=11-06 12:29:58.177 via request=TransitionRequestInfo { type = OPEN, triggerTask = TaskInfo{userId=0 taskId=8 displayId=0 isRunning=true baseIntent=Intent { flg=0x10000000 cmp=ai.ciel.companion.preview/net.kuafuai.andee.ui.CielHomeActivity } baseActivity=ComponentInfo{ai.ciel.companion.preview/net.kuafuai.andee.ui.CielHomeActivity} topActivity=ComponentInfo{ai.ciel.companion.preview/net.kuafuai.andee.ui.CielHomeActivity} origActivity=null realActivity=ComponentInfo{ai.ciel.companion.preview/net.kuafuai.andee.ui.CielHomeActivity} numActivities=1 lastActiveTime=42524 supportsMultiWindow=true resizeMode=1 isResizeable=true minWidth=-1 minHeight=-1 defaultMinSize=220 token=WCT{RemoteToken{8023812 Task{706fcca #8 type=standard A=10192:ai.ciel.companion.preview}}} topActivityType=1 pictureInPictureParams=null shouldDockBigOverlays=false launchIntoPipHostTaskId=-1 lastParentTaskIdBeforePip=-1 displayCutoutSafeInsets=null topActivityInfo=ActivityInfo{5f38be3 net.kuafuai.andee.ui.CielHomeActivity} launchCookies=[] positionInParent=Point(0, 0) parentTaskId=-1 isFocused=false isVisible=false isVisibleRequested=false isSleeping=false topActivityInSizeCompat=false topActivityEligibleForLetterboxEducation= false topActivityLetterboxed= false isFromDoubleTap= false topActivityLetterboxVerticalPosition= -1 topActivityLetterboxHorizontalPosition= -1 topActivityLetterboxWidth=-1 topActivityLetterboxHeight=-1 locusId=null displayAreaFeatureId=1 cameraCompatControlState=hidden}, remoteTransition = null, displayChange = null }
+11-06 12:29:58.979   519   536 V WindowManager:     info={id=7 t=OPEN f=0x0 trk=0 r=[0@Point(0, 0)] c=[{WCT{RemoteToken{8023812 Task{706fcca #8 type=standard A=10192:ai.ciel.companion.preview}}} m=OPEN f=NONE leash=Surface(name=Task=8)/@0x4d9a74 sb=Rect(0, 0 - 1080, 1920) eb=Rect(0, 0 - 1080, 1920) d=0},{WCT{RemoteToken{1e3e9e0 Task{efbe7ae #1 type=home}}} m=TO_BACK f=SHOW_WALLPAPER leash=Surface(name=Task=1)/@0x8d3d754 sb=Rect(0, 0 - 1080, 1920) eb=Rect(0, 0 - 1080, 1920) d=0}]}
+11-06 12:29:58.982  3497  3497 D CompatibilityChangeReporter: Compat change id reported: 171979766; UID 10192; state: ENABLED
+11-06 12:29:58.982  3497  3497 D CompatibilityChangeReporter: Compat change id reported: 242716250; UID 10192; state: ENABLED
+11-06 12:29:59.225  3497  3497 D nativeloader: Configuring clns-6 for other apk /data/app/~~xX1QRQIHuv6PyAVBt8dhbg==/ai.ciel.companion.preview-sPl6Hmtk9kC3yFMI_ePwyw==/base.apk. target_sdk_version=34, uses_libraries=, library_path=/data/app/~~xX1QRQIHuv6PyAVBt8dhbg==/ai.ciel.companion.preview-sPl6Hmtk9kC3yFMI_ePwyw==/lib/x86_64:/data/app/~~xX1QRQIHuv6PyAVBt8dhbg==/ai.ciel.companion.preview-sPl6Hmtk9kC3yFMI_ePwyw==/base.apk!/lib/x86_64, permitted_path=/data:/mnt/expand:/data/user/0/ai.ciel.companion.preview
+11-06 12:29:59.243  3497  3497 V GraphicsEnvironment: Currently set values for:
+11-06 12:29:59.243  3497  3497 V GraphicsEnvironment:   angle_gl_driver_selection_pkgs=[]
+11-06 12:29:59.243  3497  3497 V GraphicsEnvironment:   angle_gl_driver_selection_values=[]
+11-06 12:29:59.258  3497  3497 V GraphicsEnvironment: ANGLE GameManagerService for ai.ciel.companion.preview: false
+11-06 12:29:59.258  3497  3497 V GraphicsEnvironment: ai.ciel.companion.preview is not listed in per-application setting
+11-06 12:29:59.258  3497  3497 V GraphicsEnvironment: Neither updatable production driver nor prerelease driver is supported.
+11-06 12:29:59.510  3497  3497 D AppCompatDelegate: Checking for metadata for AppLocalesMetadataHolderService : Service not found
+11-06 12:29:59.529  3497  3567 D libEGL  : loaded /vendor/lib64/egl/libEGL_emulation.so
+11-06 12:29:59.533  3497  3567 D libEGL  : loaded /vendor/lib64/egl/libGLESv1_CM_emulation.so
+11-06 12:29:59.541  3497  3567 D libEGL  : loaded /vendor/lib64/egl/libGLESv2_emulation.so
+11-06 12:29:59.941  1043  1043 D CarrierSvcBindHelper: onHandleForceStop: [ai.ciel.companion.preview]
+11-06 12:29:59.941  1043  1043 D CarrierSvcBindHelper: onPackageModified: ai.ciel.companion.preview
+11-06 12:29:59.963  1043  1362 D ImsResolver: maybeAddedImsService, packageName: ai.ciel.companion.preview
+11-06 12:30:00.297  3497  3497 D CompatibilityChangeReporter: Compat change id reported: 210923482; UID 10192; state: ENABLED
+11-06 12:30:00.302  3497  3497 D CompatibilityChangeReporter: Compat change id reported: 171228096; UID 10192; state: ENABLED
+11-06 12:30:00.325  3497  3497 I wm_on_create_called: [82213315,net.kuafuai.andee.ui.CielHomeActivity,performCreate,474]
+11-06 12:30:00.325  3497  3497 I wm_on_start_called: [82213315,net.kuafuai.andee.ui.CielHomeActivity,handleStartActivity,0]
+11-06 12:30:00.328  3497  3497 I wm_on_resume_called: [82213315,net.kuafuai.andee.ui.CielHomeActivity,RESUME_ACTIVITY,0]
+11-06 12:30:00.329  3497  3497 D CompatibilityChangeReporter: Compat change id reported: 237531167; UID 10192; state: DISABLED
+11-06 12:30:00.329  3497  3497 W OpenGLRenderer: Unknown dataspace 0
+11-06 12:30:00.393  3497  3497 I wm_on_top_resumed_gained_called: [82213315,net.kuafuai.andee.ui.CielHomeActivity,topStateChangedWhenResumed]
+11-06 12:30:00.393  3497  3497 I Choreographer: Skipped 62 frames!  The application may be doing too much work on its main thread.
+11-06 12:30:00.422  3497  3497 D AutofillManager: view not autofillable - not passing ime action check
+11-06 12:30:00.422  3497  3497 D AutofillManager: view not autofillable - not passing ime action check
+11-06 12:30:00.424   519  2651 D CoreBackPreview: Window{3eb3cbc u0 ai.ciel.companion.preview/net.kuafuai.andee.ui.CielHomeActivity}: Setting back callback OnBackInvokedCallbackInfo{mCallback=android.window.IOnBackInvokedCallback$Stub$Proxy@9f69b4a, mPriority=0, mIsAnimationCallback=false}
+11-06 12:30:00.453   519   540 I input_focus: [Focus request 3eb3cbc ai.ciel.companion.preview/net.kuafuai.andee.ui.CielHomeActivity,reason=UpdateInputWindows]
+11-06 12:30:00.470  3497  3556 W OpenGLRenderer: Failed to initialize 101010-2 format, error = EGL_SUCCESS
+11-06 12:30:00.530  3497  3556 I Gralloc4: mapper 4.x is not supported
+11-06 12:30:01.139  3497  3497 I Choreographer: Skipped 42 frames!  The application may be doing too much work on its main thread.
+11-06 12:30:01.162  3497  3511 I OpenGLRenderer: Davey! duration=1785ms; Flags=1, FrameTimelineVsyncId=4171, IntendedVsync=43541647116, Vsync=44574980408, InputEventId=0, HandleInputStart=44607694726, AnimationStart=44607695071, PerformTraversalsStart=44607777205, DrawStart=44764666054, FrameDeadline=43558313782, FrameInterval=44584007737, FrameStartTime=16666666, SyncQueued=44776391730, SyncStart=44778801048, IssueDrawCommandsStart=44805644779, SwapBuffers=45204683748, FrameCompleted=45329412229, DequeueBufferDuration=5082, QueueBufferDuration=754750, GpuCompleted=45329343494, SwapBuffersCompleted=45329412229, DisplayPresentTime=0, CommandSubmissionCompleted=45204683748, 
+11-06 12:30:01.174   519   536 I sysui_multi_action: [319,867,321,842,322,3052,325,42,757,761,758,7,759,1,806,ai.ciel.companion.preview,871,net.kuafuai.andee.ui.CielHomeActivity,904,com.android.shell,905,0,945,775,1320,4,1321,4]
+11-06 12:30:01.175   519   536 I wm_activity_launch_time: [0,82213315,ai.ciel.companion.preview/net.kuafuai.andee.ui.CielHomeActivity,3052]
+11-06 12:30:01.175   519   536 I ActivityTaskManager: Displayed ai.ciel.companion.preview/net.kuafuai.andee.ui.CielHomeActivity for user 0: +3s52ms
+11-06 12:30:01.220   519   620 I input_focus: [Focus entering 3eb3cbc ai.ciel.companion.preview/net.kuafuai.andee.ui.CielHomeActivity (server),reason=Window became focusable. Previous reason: NOT_VISIBLE]
+11-06 12:30:01.305  3497  3511 I OpenGLRenderer: Davey! duration=764ms; Flags=0, FrameTimelineVsyncId=4323, IntendedVsync=44624980406, Vsync=45324980378, InputEventId=0, HandleInputStart=45340830008, AnimationStart=45340830754, PerformTraversalsStart=45341000195, DrawStart=45341092136, FrameDeadline=45358313710, FrameInterval=45330131069, FrameStartTime=16666666, SyncQueued=45341427929, SyncStart=45380048336, IssueDrawCommandsStart=45383181684, SwapBuffers=45384020828, FrameCompleted=45428181244, DequeueBufferDuration=3756, QueueBufferDuration=595802, GpuCompleted=45428133116, SwapBuffersCompleted=45428181244, DisplayPresentTime=0, CommandSubmissionCompleted=45384020828, 
+11-06 12:30:01.311   519  2506 I ImeTracker: ai.ciel.companion.preview:735a8f0a: onRequestHide at ORIGIN_SERVER_HIDE_INPUT reason HIDE_UNSPECIFIED_WINDOW
+11-06 12:30:01.311   519  2506 I ImeTracker: ai.ciel.companion.preview:735a8f0a: onCancelled at PHASE_SERVER_SHOULD_HIDE
+11-06 12:30:01.341   519  2294 D CoreBackPreview: Window{94db508 u0 Splash Screen ai.ciel.companion.preview EXITING}: Setting back callback null
+11-06 12:30:01.346   519   901 W InputManager-JNI: Input channel object '94db508 Splash Screen ai.ciel.companion.preview (client)' was disposed without first being removed with the input manager!
+11-06 12:30:01.356  1560  1560 I GoogleInputMethodService: GoogleInputMethodService.onStartInput():1877 onStartInput(EditorInfo{inputType=0x0(NULL) imeOptions=0x0 privateImeOptions=null actionName=UNSPECIFIED actionLabel=null actionId=0 initialSelStart=-1 initialSelEnd=-1 initialCapsMode=0x0 hintText=null label=null packageName=ai.ciel.companion.preview fieldId=0 fieldName=null extras=null}, false)
+11-06 12:30:02.306  3497  3556 D EGL_emulation: app_time_stats: avg=233.43ms min=62.99ms max=815.13ms count=5
+11-06 12:30:03.262  3497  3624 D EGL_emulation: app_time_stats: avg=58.79ms min=35.04ms max=122.01ms count=19
+11-06 12:30:03.355  3497  3556 D EGL_emulation: app_time_stats: avg=56.89ms min=15.72ms max=112.75ms count=18
+11-06 12:30:04.262  3497  3624 D EGL_emulation: app_time_stats: avg=45.06ms min=30.79ms max=71.55ms count=22
+11-06 12:30:04.385  3497  3556 D EGL_emulation: app_time_stats: avg=48.21ms min=11.33ms max=114.03ms count=21
+11-06 12:30:05.282  3497  3624 D EGL_emulation: app_time_stats: avg=46.31ms min=31.09ms max=73.52ms count=22
+11-06 12:30:05.400  3497  3556 D EGL_emulation: app_time_stats: avg=46.11ms min=32.16ms max=80.73ms count=22
+11-06 12:30:06.072  3497  3883 D ProfileInstaller: Installing profile for ai.ciel.companion.preview
+11-06 12:30:06.316  3497  3624 D EGL_emulation: app_time_stats: avg=46.51ms min=27.97ms max=75.29ms count=22
+11-06 12:30:06.411  3497  3556 D EGL_emulation: app_time_stats: avg=43.95ms min=17.52ms max=82.49ms count=22
+11-06 12:30:07.381  3497  3624 D EGL_emulation: app_time_stats: avg=45.49ms min=29.18ms max=80.51ms count=23
+11-06 12:30:07.441  3497  3556 D EGL_emulation: app_time_stats: avg=46.82ms min=25.98ms max=86.69ms count=22
+11-06 12:30:08.381  3497  3624 D EGL_emulation: app_time_stats: avg=43.03ms min=29.69ms max=60.09ms count=22
+11-06 12:30:08.443  3497  3556 D EGL_emulation: app_time_stats: avg=44.71ms min=9.12ms max=66.94ms count=22
+11-06 12:30:09.387  3497  3624 D EGL_emulation: app_time_stats: avg=41.13ms min=25.97ms max=75.95ms count=24
+11-06 12:30:09.480  3497  3556 D EGL_emulation: app_time_stats: avg=48.31ms min=31.02ms max=76.14ms count=16
+11-06 12:30:10.418  3497  3624 D EGL_emulation: app_time_stats: avg=44.81ms min=28.99ms max=66.25ms count=23
+11-06 12:30:10.489  3497  3556 D EGL_emulation: app_time_stats: avg=43.81ms min=17.21ms max=66.89ms count=23
+11-06 12:30:11.429  3497  3624 D EGL_emulation: app_time_stats: avg=45.96ms min=31.97ms max=96.91ms count=22
+11-06 12:30:11.494  3497  3556 D EGL_emulation: app_time_stats: avg=45.68ms min=33.37ms max=88.14ms count=22
+11-06 12:30:12.443  3497  3624 D EGL_emulation: app_time_stats: avg=47.20ms min=25.76ms max=104.88ms count=21
+11-06 12:30:12.516  3497  3556 D EGL_emulation: app_time_stats: avg=50.04ms min=22.78ms max=99.36ms count=20
+11-06 12:30:13.076   519  2644 I ActivityManager: Force stopping ai.ciel.companion.preview appid=10192 user=0: from pid 4205
+11-06 12:30:13.086   519  2644 I ActivityManager: Killing 3497:ai.ciel.companion.preview/u0a192 (adj 0): stop ai.ciel.companion.preview due to from pid 4205
+11-06 12:30:13.086   519  2644 I am_kill : [0,3497,ai.ciel.companion.preview,0,stop ai.ciel.companion.preview due to from pid 4205]
+11-06 12:30:13.088   519  2644 W ActivityTaskManager: Force removing ActivityRecord{4e679c3 u0 ai.ciel.companion.preview/net.kuafuai.andee.ui.CielHomeActivity t8 f}}: app died, no saved state
+11-06 12:30:13.088   519  2644 I wm_finish_activity: [0,82213315,8,ai.ciel.companion.preview/net.kuafuai.andee.ui.CielHomeActivity,proc died without state saved]
+11-06 12:30:13.092   830   867 V WindowManagerShell: Transition requested: android.os.BinderProxy@5d3b7e5 TransitionRequestInfo { type = CLOSE, triggerTask = TaskInfo{userId=0 taskId=8 displayId=0 isRunning=false baseIntent=Intent { flg=0x10000000 cmp=ai.ciel.companion.preview/net.kuafuai.andee.ui.CielHomeActivity } baseActivity=null topActivity=null origActivity=null realActivity=ComponentInfo{ai.ciel.companion.preview/net.kuafuai.andee.ui.CielHomeActivity} numActivities=0 lastActiveTime=43081 supportsMultiWindow=true resizeMode=1 isResizeable=true minWidth=-1 minHeight=-1 defaultMinSize=220 token=WCT{android.window.IWindowContainerToken$Stub$Proxy@d4b42ba} topActivityType=1 pictureInPictureParams=null shouldDockBigOverlays=false launchIntoPipHostTaskId=-1 lastParentTaskIdBeforePip=-1 displayCutoutSafeInsets=null topActivityInfo=null launchCookies=[] positionInParent=Point(0, 0) parentTaskId=-1 isFocused=true isVisible=true isVisibleRequested=true isSleeping=false topActivityInSizeCompat=false topActivityEligibleForLetterboxEducation= false topActivityLetterboxed= false isFromDoubleTap= false topActivityLetterboxVerticalPosition= -1 topActivityLetterboxHorizontalPosition= -1 topActivityLetterboxWidth=-1 topActivityLetterboxHeight=-1 locusId=null displayAreaFeatureId=1 cameraCompatControlState=hidden}, remoteTransition = null, displayChange = null }
+11-06 12:30:13.098   519   532 I ImeTracker: ai.ciel.companion.preview:a058791b: onRequestHide at ORIGIN_SERVER_HIDE_INPUT reason HIDE_REMOVE_CLIENT
+11-06 12:30:13.098   519   532 I ImeTracker: ai.ciel.companion.preview:a058791b: onCancelled at PHASE_SERVER_SHOULD_HIDE
+11-06 12:30:13.103   519  2099 I WindowManager: WIN DEATH: Window{3eb3cbc u0 ai.ciel.companion.preview/net.kuafuai.andee.ui.CielHomeActivity}
+11-06 12:30:13.104   519  2099 W InputManager-JNI: Input channel object '3eb3cbc ai.ciel.companion.preview/net.kuafuai.andee.ui.CielHomeActivity (client)' was disposed without first being removed with the input manager!
+11-06 12:30:13.157   519   590 V ActivityManager: Got obituary of 3497:ai.ciel.companion.preview
+11-06 12:30:13.171   519   519 I notification_cancel_all: [1000,519,ai.ciel.companion.preview,0,0,0,5,NULL]
+11-06 12:30:13.184  1043  1043 D CarrierSvcBindHelper: onHandleForceStop: [ai.ciel.companion.preview]
+11-06 12:30:13.314   519   817 I wm_create_activity: [0,180679936,9,ai.ciel.companion.preview/net.kuafuai.andee.ui.CielHomeActivity,NULL,NULL,NULL,268435456]
+11-06 12:30:13.315   519   817 V SplashScreenExceptionList: SplashScreen checking exception for package ai.ciel.companion.preview (target sdk:34) -> false
+11-06 12:30:13.328   519   817 I ActivityTaskManager: Add Task{706fcca #8 type=standard A=10192:ai.ciel.companion.preview} to hidden list because adding Task{406937e #9 type=standard A=10192:ai.ciel.companion.preview}
+11-06 12:30:13.329   519   817 I ActivityTaskManager: START u0 {flg=0x10000000 cmp=ai.ciel.companion.preview/net.kuafuai.andee.ui.CielHomeActivity} with LAUNCH_MULTIPLE from uid 2000 (BAL_ALLOW_PERMISSION) result code=0
+11-06 12:30:13.333   519   540 W WindowManager: Failed to deliver inset control state change to w=Window{3eb3cbc u0 ai.ciel.companion.preview/net.kuafuai.andee.ui.CielHomeActivity EXITING}
+11-06 12:30:13.350   519   549 I am_proc_start: [0,4233,10192,ai.ciel.companion.preview,next-top-activity,{ai.ciel.companion.preview/net.kuafuai.andee.ui.CielHomeActivity}]
+11-06 12:30:13.359   519  2955 D CoreBackPreview: Window{f4043db u0 Splash Screen ai.ciel.companion.preview}: Setting back callback OnBackInvokedCallbackInfo{mCallback=android.window.IOnBackInvokedCallback$Stub$Proxy@49fa951, mPriority=0, mIsAnimationCallback=false}
+11-06 12:30:13.364   519   549 I ActivityManager: Start proc 4233:ai.ciel.companion.preview/u0a192 for next-top-activity {ai.ciel.companion.preview/net.kuafuai.andee.ui.CielHomeActivity}
+11-06 12:30:13.528  4233  4233 I mpanion.preview: Using CollectorTypeCC GC.
+11-06 12:30:13.529  4233  4233 W mpanion.preview: Unexpected CPU variant for x86: x86_64.
+11-06 12:30:13.529  4233  4233 W mpanion.preview: Known variants: atom, sandybridge, silvermont, goldmont, goldmont-plus, tremont, kabylake, default
+11-06 12:30:13.531  4233  4233 E mpanion.preview: Not starting debugger since process cannot load the jdwp agent.
+11-06 12:30:13.542   519  2955 I am_proc_bound: [0,4233,ai.ciel.companion.preview]
+11-06 12:30:13.556   519  2955 I wm_restart_activity: [0,180679936,9,ai.ciel.companion.preview/net.kuafuai.andee.ui.CielHomeActivity]
+11-06 12:30:13.612   519  2955 I wm_set_resumed_activity: [0,ai.ciel.companion.preview/net.kuafuai.andee.ui.CielHomeActivity,minimalResumeActivityLocked - onActivityStateChanged]
+11-06 12:30:13.619   519   540 W WindowManager: Failed to deliver inset control state change to w=Window{3eb3cbc u0 ai.ciel.companion.preview/net.kuafuai.andee.ui.CielHomeActivity EXITING}
+11-06 12:30:13.620  4233  4233 D CompatibilityChangeReporter: Compat change id reported: 171979766; UID 10192; state: ENABLED
+11-06 12:30:13.620  4233  4233 D CompatibilityChangeReporter: Compat change id reported: 242716250; UID 10192; state: ENABLED
+11-06 12:30:13.654  4233  4233 D nativeloader: Configuring clns-6 for other apk /data/app/~~xX1QRQIHuv6PyAVBt8dhbg==/ai.ciel.companion.preview-sPl6Hmtk9kC3yFMI_ePwyw==/base.apk. target_sdk_version=34, uses_libraries=, library_path=/data/app/~~xX1QRQIHuv6PyAVBt8dhbg==/ai.ciel.companion.preview-sPl6Hmtk9kC3yFMI_ePwyw==/lib/x86_64:/data/app/~~xX1QRQIHuv6PyAVBt8dhbg==/ai.ciel.companion.preview-sPl6Hmtk9kC3yFMI_ePwyw==/base.apk!/lib/x86_64, permitted_path=/data:/mnt/expand:/data/user/0/ai.ciel.companion.preview
+11-06 12:30:13.671  4233  4233 V GraphicsEnvironment: Currently set values for:
+11-06 12:30:13.671  4233  4233 V GraphicsEnvironment:   angle_gl_driver_selection_pkgs=[]
+11-06 12:30:13.671  4233  4233 V GraphicsEnvironment:   angle_gl_driver_selection_values=[]
+11-06 12:30:13.671  4233  4233 V GraphicsEnvironment: ANGLE GameManagerService for ai.ciel.companion.preview: false
+11-06 12:30:13.671  4233  4233 V GraphicsEnvironment: ai.ciel.companion.preview is not listed in per-application setting
+11-06 12:30:13.671  4233  4233 V GraphicsEnvironment: Neither updatable production driver nor prerelease driver is supported.
+11-06 12:30:13.701   519   536 V WindowManager: Sent Transition #8 createdAt=11-06 12:30:13.088 via request=TransitionRequestInfo { type = CLOSE, triggerTask = TaskInfo{userId=0 taskId=8 displayId=0 isRunning=false baseIntent=Intent { flg=0x10000000 cmp=ai.ciel.companion.preview/net.kuafuai.andee.ui.CielHomeActivity } baseActivity=null topActivity=null origActivity=null realActivity=ComponentInfo{ai.ciel.companion.preview/net.kuafuai.andee.ui.CielHomeActivity} numActivities=0 lastActiveTime=43081 supportsMultiWindow=true resizeMode=1 isResizeable=true minWidth=-1 minHeight=-1 defaultMinSize=220 token=WCT{RemoteToken{8023812 Task{706fcca #8 type=standard A=10192:ai.ciel.companion.preview}}} topActivityType=1 pictureInPictureParams=null shouldDockBigOverlays=false launchIntoPipHostTaskId=-1 lastParentTaskIdBeforePip=-1 displayCutoutSafeInsets=null topActivityInfo=null launchCookies=[] positionInParent=Point(0, 0) parentTaskId=-1 isFocused=true isVisible=true isVisibleRequested=true isSleeping=false topActivityInSizeCompat=false topActivityEligibleForLetterboxEducation= false topActivityLetterboxed= false isFromDoubleTap= false topActivityLetterboxVerticalPosition= -1 topActivityLetterboxHorizontalPosition= -1 topActivityLetterboxWidth=-1 topActivityLetterboxHeight=-1 locusId=null displayAreaFeatureId=1 cameraCompatControlState=hidden}, remoteTransition = null, displayChange = null }
+11-06 12:30:13.701   519   536 V WindowManager:     info={id=8 t=CLOSE f=0x0 trk=0 r=[0@Point(0, 0)] c=[{WCT{RemoteToken{bbed70c Task{406937e #9 type=standard A=10192:ai.ciel.companion.preview}}} m=OPEN f=MOVE_TO_TOP leash=Surface(name=Task=9)/@0x571ae3 sb=Rect(0, 0 - 1080, 1920) eb=Rect(0, 0 - 1080, 1920) d=0},{WCT{RemoteToken{8023812 Task{706fcca #8 type=standard A=10192:ai.ciel.companion.preview}}} m=CLOSE f=NONE leash=Surface(name=Task=8)/@0x4d9a74 sb=Rect(0, 0 - 1080, 1920) eb=Rect(0, 0 - 1080, 1920) d=0}]}
+11-06 12:30:13.729  4233  4233 D AppCompatDelegate: Checking for metadata for AppLocalesMetadataHolderService : Service not found
+11-06 12:30:13.730   519  2684 W WindowManager: Exception thrown during dispatchAppVisibility Window{3eb3cbc u0 ai.ciel.companion.preview/net.kuafuai.andee.ui.CielHomeActivity EXITING}
+11-06 12:30:13.732  4233  4278 D libEGL  : loaded /vendor/lib64/egl/libEGL_emulation.so
+11-06 12:30:13.733  4233  4278 D libEGL  : loaded /vendor/lib64/egl/libGLESv1_CM_emulation.so
+11-06 12:30:13.744  4233  4278 D libEGL  : loaded /vendor/lib64/egl/libGLESv2_emulation.so
+11-06 12:30:13.750   519  2684 W WindowManager: Failed to deliver inset control state change to w=Window{3eb3cbc u0 ai.ciel.companion.preview/net.kuafuai.andee.ui.CielHomeActivity EXITING}
+11-06 12:30:13.759   519  2684 I wm_task_removed: [8,8,0,removeChild, last child = ActivityRecord{4e679c3 u0 ai.ciel.companion.preview/net.kuafuai.andee.ui.CielHomeActivity t-1 f}} in Task{706fcca #8 type=standard A=10192:ai.ciel.companion.preview}]
+11-06 12:30:13.803  4233  4233 D CompatibilityChangeReporter: Compat change id reported: 210923482; UID 10192; state: ENABLED
+11-06 12:30:13.808  4233  4233 D CompatibilityChangeReporter: Compat change id reported: 171228096; UID 10192; state: ENABLED
+11-06 12:30:13.827  4233  4233 I wm_on_create_called: [180679936,net.kuafuai.andee.ui.CielHomeActivity,performCreate,66]
+11-06 12:30:13.828  4233  4233 I wm_on_start_called: [180679936,net.kuafuai.andee.ui.CielHomeActivity,handleStartActivity,0]
+11-06 12:30:13.828  4233  4233 I wm_on_resume_called: [180679936,net.kuafuai.andee.ui.CielHomeActivity,RESUME_ACTIVITY,1]
+11-06 12:30:13.829  4233  4233 D CompatibilityChangeReporter: Compat change id reported: 237531167; UID 10192; state: DISABLED
+11-06 12:30:13.830  4233  4233 W OpenGLRenderer: Unknown dataspace 0
+11-06 12:30:13.834  4233  4233 I wm_on_top_resumed_gained_called: [180679936,net.kuafuai.andee.ui.CielHomeActivity,topStateChangedWhenResumed]
+11-06 12:30:13.845  4233  4233 D AutofillManager: view not autofillable - not passing ime action check
+11-06 12:30:13.845  4233  4233 D AutofillManager: view not autofillable - not passing ime action check
+11-06 12:30:13.880   519  2955 D CoreBackPreview: Window{2a6b1d2 u0 ai.ciel.companion.preview/net.kuafuai.andee.ui.CielHomeActivity}: Setting back callback OnBackInvokedCallbackInfo{mCallback=android.window.IOnBackInvokedCallback$Stub$Proxy@9b02800, mPriority=0, mIsAnimationCallback=false}
+11-06 12:30:13.908   519   540 I input_focus: [Focus request 2a6b1d2 ai.ciel.companion.preview/net.kuafuai.andee.ui.CielHomeActivity,reason=UpdateInputWindows]
+11-06 12:30:13.934  4233  4276 W OpenGLRenderer: Failed to initialize 101010-2 format, error = EGL_SUCCESS
+11-06 12:30:13.980  4233  4276 I Gralloc4: mapper 4.x is not supported
+11-06 12:30:14.049  1477  4124 I BlockstoreStorage: Clearing Blockstore Data for package ai.ciel.companion.preview [CONTEXT service_id=258 ]
+11-06 12:30:14.406  4233  4233 I Choreographer: Skipped 33 frames!  The application may be doing too much work on its main thread.
+11-06 12:30:14.446  4233  4263 I OpenGLRenderer: Davey! duration=704ms; Flags=1, FrameTimelineVsyncId=6812, IntendedVsync=57891646542, Vsync=58024979870, InputEventId=0, HandleInputStart=58025973922, AnimationStart=58025974403, PerformTraversalsStart=58026017719, DrawStart=58202117348, FrameDeadline=57908313208, FrameInterval=58025768223, FrameStartTime=16666666, SyncQueued=58204341460, SyncStart=58204544893, IssueDrawCommandsStart=58210134854, SwapBuffers=58495908976, FrameCompleted=58596244553, DequeueBufferDuration=5952, QueueBufferDuration=5808266, GpuCompleted=58596119859, SwapBuffersCompleted=58596244553, DisplayPresentTime=0, CommandSubmissionCompleted=58495908976, 
+11-06 12:30:14.448   519   536 I sysui_multi_action: [319,526,321,256,322,1274,325,57,757,761,758,7,759,1,806,ai.ciel.companion.preview,871,net.kuafuai.andee.ui.CielHomeActivity,904,com.android.shell,905,0,945,379,1320,4,1321,4]
+11-06 12:30:14.452   519   620 I input_focus: [Focus entering 2a6b1d2 ai.ciel.companion.preview/net.kuafuai.andee.ui.CielHomeActivity (server),reason=Window became focusable. Previous reason: NOT_VISIBLE]
+11-06 12:30:14.453   519   536 I wm_activity_launch_time: [0,180679936,ai.ciel.companion.preview/net.kuafuai.andee.ui.CielHomeActivity,1274]
+11-06 12:30:14.453   519   536 I ActivityTaskManager: Displayed ai.ciel.companion.preview/net.kuafuai.andee.ui.CielHomeActivity for user 0: +1s274ms
+11-06 12:30:14.479   519  2955 I ImeTracker: ai.ciel.companion.preview:8339ea5f: onRequestHide at ORIGIN_SERVER_HIDE_INPUT reason HIDE_UNSPECIFIED_WINDOW
+11-06 12:30:14.479   519  2955 I ImeTracker: ai.ciel.companion.preview:8339ea5f: onCancelled at PHASE_SERVER_SHOULD_HIDE
+11-06 12:30:14.515   519   590 D CoreBackPreview: Window{f4043db u0 Splash Screen ai.ciel.companion.preview EXITING}: Setting back callback null
+11-06 12:30:14.518   519  2684 W InputManager-JNI: Input channel object 'f4043db Splash Screen ai.ciel.companion.preview (client)' was disposed without first being removed with the input manager!
+11-06 12:30:14.559  1560  1560 I GoogleInputMethodService: GoogleInputMethodService.onStartInput():1877 onStartInput(EditorInfo{inputType=0x0(NULL) imeOptions=0x0 privateImeOptions=null actionName=UNSPECIFIED actionLabel=null actionId=0 initialSelStart=-1 initialSelEnd=-1 initialCapsMode=0x0 hintText=null label=null packageName=ai.ciel.companion.preview fieldId=0 fieldName=null extras=null}, false)
+11-06 12:30:15.499  4233  4276 D EGL_emulation: app_time_stats: avg=133.34ms min=17.26ms max=577.06ms count=8
+11-06 12:30:16.226  4233  4304 D EGL_emulation: app_time_stats: avg=52.80ms min=30.87ms max=101.54ms count=19
+11-06 12:30:16.515  4233  4276 D EGL_emulation: app_time_stats: avg=47.27ms min=12.84ms max=84.49ms count=21
+11-06 12:30:17.250  4233  4304 D EGL_emulation: app_time_stats: avg=42.66ms min=31.63ms max=71.76ms count=24
+11-06 12:30:17.545  4233  4276 D EGL_emulation: app_time_stats: avg=43.81ms min=28.33ms max=73.44ms count=23
+11-06 12:30:18.266  4233  4304 D EGL_emulation: app_time_stats: avg=44.08ms min=26.10ms max=75.59ms count=23
+11-06 12:30:18.573  4233  4276 D EGL_emulation: app_time_stats: avg=44.66ms min=19.18ms max=93.63ms count=23
+11-06 12:30:19.277  4233  4304 D EGL_emulation: app_time_stats: avg=45.85ms min=30.25ms max=80.47ms count=22
+11-06 12:30:19.456  4233  4500 D ProfileInstaller: Installing profile for ai.ciel.companion.preview
+11-06 12:30:19.610  4233  4276 D EGL_emulation: app_time_stats: avg=49.23ms min=24.97ms max=79.70ms count=21
+11-06 12:30:20.298  4233  4304 D EGL_emulation: app_time_stats: avg=46.40ms min=30.49ms max=72.77ms count=22
+11-06 12:30:20.649  4233  4276 D EGL_emulation: app_time_stats: avg=45.59ms min=26.80ms max=78.80ms count=22
+11-06 12:30:21.310  4233  4304 D EGL_emulation: app_time_stats: avg=48.16ms min=30.84ms max=61.52ms count=21
+11-06 12:30:21.659  4233  4276 D EGL_emulation: app_time_stats: avg=45.90ms min=21.04ms max=69.88ms count=22
+11-06 12:30:21.894   519   620 I input_interaction: Interaction with: 2a6b1d2 ai.ciel.companion.preview/net.kuafuai.andee.ui.CielHomeActivity (server), [Gesture Monitor] swipe-up (server), [Gesture Monitor] edge-swipe (server), PointerEventDispatcher0 (server), 
+11-06 12:30:21.972  4233  4233 I ImeTracker: ai.ciel.companion.preview:ab3d0b85: onRequestHide at ORIGIN_CLIENT_HIDE_SOFT_INPUT reason HIDE_SOFT_INPUT
+11-06 12:30:21.973   519  2651 I ImeTracker: ai.ciel.companion.preview:ab3d0b85: onCancelled at PHASE_SERVER_SHOULD_HIDE
+11-06 12:30:22.138  4233  4233 D AutofillManager: view not autofillable - not passing ime action check
+11-06 12:30:22.138  4233  4233 D AutofillManager: view not autofillable - not passing ime action check
+11-06 12:30:22.145  4233  4304 E BufferQueueProducer: [SurfaceTexture-0-4233-0](id:108900000001,api:1,p:4233,c:4233) cancelBuffer: BufferQueue has been abandoned
+11-06 12:30:22.251  4233  4233 D AutofillManager: notifyViewEnteredForFillDialog:1073741825
+11-06 12:30:24.355  1622  1622 I AiAiEcho: AppFetcherImplV2 updateApps package:[ai.ciel.companion.preview], userId:[0], reason:[package is added.].
+11-06 12:30:24.976  1622  2212 I AiAiEcho: AppIndexer Package:[ai.ciel.companion.preview] UserProfile:[0] Enabled:[true].
+11-06 12:30:24.976  1622  2212 I AiAiEcho: AppFetcherImplV2 updateApps package:[ai.ciel.companion.preview], userId:[0], reason:[package is updated.].
+11-06 12:30:25.400   519   547 I am_pss  : [4233,10192,ai.ciel.companion.preview,33717248,27922432,347136,134127616,0,2,2]
+11-06 12:30:30.246  4233  4276 D EGL_emulation: app_time_stats: avg=858.68ms min=29.77ms max=7815.18ms count=10
+11-06 12:30:30.289   519   901 I sysui_multi_action: [757,906,758,4,806,ai.ciel.companion.preview,871,,908,com.google.android.gms,1452,4,1456,2123731924]
+11-06 12:30:30.493  1560  1560 I GoogleInputMethodService: GoogleInputMethodService.onStartInput():1877 onStartInput(EditorInfo{inputType=0x81(Password) imeOptions=0x6 privateImeOptions=null actionName=DONE actionLabel=null actionId=0 initialSelStart=0 initialSelEnd=0 initialCapsMode=0x0 hintText=non-empty label=null packageName=ai.ciel.companion.preview fieldId=-1 fieldName=null extras=null}, false)
+11-06 12:30:30.499  4233  4233 D CompatibilityChangeReporter: Compat change id reported: 163400105; UID 10192; state: ENABLED
+11-06 12:30:30.511  4233  4233 I AssistStructure: Flattened final assist data: 5396 bytes, containing 2 windows, 43 views
+11-06 12:30:30.517   519   901 D ContentCapturePerUserService: Notified activity assist data for activity: Token{1608cd7 ActivityRecord{ac4f500 u0 ai.ciel.companion.preview/net.kuafuai.andee.ui.CielHomeActivity t9}} without a session Id
+11-06 12:30:31.272  4233  4276 D EGL_emulation: app_time_stats: avg=201.45ms min=32.37ms max=425.51ms count=5
+11-06 12:30:32.289  4233  4276 D EGL_emulation: app_time_stats: avg=508.44ms min=500.20ms max=516.68ms count=2
+11-06 12:30:33.710   519   547 I am_pss  : [4233,10192,ai.ciel.companion.preview,34454528,28975104,346112,134639616,0,2,2]
+11-06 12:30:33.772  4233  4276 D EGL_emulation: app_time_stats: avg=494.27ms min=482.87ms max=504.93ms count=3
+11-06 12:30:34.789  4233  4276 D EGL_emulation: app_time_stats: avg=508.74ms min=502.88ms max=514.60ms count=2
+11-06 12:30:36.272  4233  4276 D EGL_emulation: app_time_stats: avg=494.09ms min=484.36ms max=499.69ms count=3
+11-06 12:30:37.272  4233  4276 D EGL_emulation: app_time_stats: avg=500.27ms min=486.30ms max=514.23ms count=2
+11-06 12:30:37.431   519   895 I ActivityManager: Force stopping ai.ciel.companion.preview appid=10192 user=0: from pid 5150
+11-06 12:30:37.433   519   895 I ActivityManager: Killing 4233:ai.ciel.companion.preview/u0a192 (adj 0): stop ai.ciel.companion.preview due to from pid 5150
+11-06 12:30:37.433   519   895 I am_kill : [0,4233,ai.ciel.companion.preview,0,stop ai.ciel.companion.preview due to from pid 5150]
+11-06 12:30:37.435   519   895 W ActivityTaskManager: Force removing ActivityRecord{ac4f500 u0 ai.ciel.companion.preview/net.kuafuai.andee.ui.CielHomeActivity t9 f}}: app died, no saved state
+11-06 12:30:37.435   519   895 I wm_finish_activity: [0,180679936,9,ai.ciel.companion.preview/net.kuafuai.andee.ui.CielHomeActivity,proc died without state saved]
+11-06 12:30:37.438   519   539 I ImeTracker: ai.ciel.companion.preview:3b0a8e31: onRequestHide at ORIGIN_SERVER_HIDE_INPUT reason HIDE_WHEN_INPUT_TARGET_INVISIBLE
+11-06 12:30:37.438   519   539 I ImeTracker: ai.ciel.companion.preview:3b0a8e31: onCancelled at PHASE_SERVER_SHOULD_HIDE
+11-06 12:30:37.441   830   867 V WindowManagerShell: Transition requested: android.os.BinderProxy@557ee15 TransitionRequestInfo { type = CLOSE, triggerTask = TaskInfo{userId=0 taskId=9 displayId=0 isRunning=false baseIntent=Intent { flg=0x10000000 cmp=ai.ciel.companion.preview/net.kuafuai.andee.ui.CielHomeActivity } baseActivity=null topActivity=null origActivity=null realActivity=ComponentInfo{ai.ciel.companion.preview/net.kuafuai.andee.ui.CielHomeActivity} numActivities=0 lastActiveTime=57751 supportsMultiWindow=true resizeMode=1 isResizeable=true minWidth=-1 minHeight=-1 defaultMinSize=220 token=WCT{android.window.IWindowContainerToken$Stub$Proxy@a38f52a} topActivityType=1 pictureInPictureParams=null shouldDockBigOverlays=false launchIntoPipHostTaskId=-1 lastParentTaskIdBeforePip=-1 displayCutoutSafeInsets=null topActivityInfo=null launchCookies=[] positionInParent=Point(0, 0) parentTaskId=-1 isFocused=true isVisible=true isVisibleRequested=true isSleeping=false topActivityInSizeCompat=false topActivityEligibleForLetterboxEducation= false topActivityLetterboxed= false isFromDoubleTap= false topActivityLetterboxVerticalPosition= -1 topActivityLetterboxHorizontalPosition= -1 topActivityLetterboxWidth=-1 topActivityLetterboxHeight=-1 locusId=null displayAreaFeatureId=1 cameraCompatControlState=hidden}, remoteTransition = null, displayChange = null }
+11-06 12:30:37.449   519   590 I WindowManager: WIN DEATH: Window{2a6b1d2 u0 ai.ciel.companion.preview/net.kuafuai.andee.ui.CielHomeActivity}
+11-06 12:30:37.461   519  2121 D AutofillSession: handling death of Token{1608cd7 ActivityRecord{ac4f500 u0 ai.ciel.companion.preview/net.kuafuai.andee.ui.CielHomeActivity t9 f} isExiting}} when saving=false
+11-06 12:30:37.462   519   590 W InputManager-JNI: Input channel object '2a6b1d2 ai.ciel.companion.preview/net.kuafuai.andee.ui.CielHomeActivity (client)' was disposed without first being removed with the input manager!
+11-06 12:30:37.462   519  2651 I ImeTracker: ai.ciel.companion.preview:6057f99f: onRequestHide at ORIGIN_SERVER_HIDE_INPUT reason HIDE_REMOVE_CLIENT
+11-06 12:30:37.462   519  2651 I ImeTracker: ai.ciel.companion.preview:6057f99f: onCancelled at PHASE_SERVER_SHOULD_HIDE
+11-06 12:30:37.478   519   540 W WindowManager: Failed to deliver inset control state change to w=Window{2a6b1d2 u0 ai.ciel.companion.preview/net.kuafuai.andee.ui.CielHomeActivity EXITING}
+11-06 12:30:37.478   519   886 V ActivityManager: Got obituary of 4233:ai.ciel.companion.preview
+11-06 12:30:37.739   519   536 V WindowManager: Sent Transition #9 createdAt=11-06 12:30:37.435 via request=TransitionRequestInfo { type = CLOSE, triggerTask = TaskInfo{userId=0 taskId=9 displayId=0 isRunning=false baseIntent=Intent { flg=0x10000000 cmp=ai.ciel.companion.preview/net.kuafuai.andee.ui.CielHomeActivity } baseActivity=null topActivity=null origActivity=null realActivity=ComponentInfo{ai.ciel.companion.preview/net.kuafuai.andee.ui.CielHomeActivity} numActivities=0 lastActiveTime=57751 supportsMultiWindow=true resizeMode=1 isResizeable=true minWidth=-1 minHeight=-1 defaultMinSize=220 token=WCT{RemoteToken{bbed70c Task{406937e #9 type=standard A=10192:ai.ciel.companion.preview}}} topActivityType=1 pictureInPictureParams=null shouldDockBigOverlays=false launchIntoPipHostTaskId=-1 lastParentTaskIdBeforePip=-1 displayCutoutSafeInsets=null topActivityInfo=null launchCookies=[] positionInParent=Point(0, 0) parentTaskId=-1 isFocused=true isVisible=true isVisibleRequested=true isSleeping=false topActivityInSizeCompat=false topActivityEligibleForLetterboxEducation= false topActivityLetterboxed= false isFromDoubleTap= false topActivityLetterboxVerticalPosition= -1 topActivityLetterboxHorizontalPosition= -1 topActivityLetterboxWidth=-1 topActivityLetterboxHeight=-1 locusId=null displayAreaFeatureId=1 cameraCompatControlState=hidden}, remoteTransition = null, displayChange = null }
+11-06 12:30:37.739   519   536 V WindowManager:     info={id=9 t=CLOSE f=0x0 trk=0 r=[0@Point(0, 0)] c=[{WCT{RemoteToken{bbed70c Task{406937e #9 type=standard A=10192:ai.ciel.companion.preview}}} m=CLOSE f=NONE leash=Surface(name=Task=9)/@0x571ae3 sb=Rect(0, 0 - 1080, 1920) eb=Rect(0, 0 - 1080, 1920) d=0},{WCT{RemoteToken{1e3e9e0 Task{efbe7ae #1 type=home}}} m=TO_FRONT f=SHOW_WALLPAPER leash=Surface(name=Task=1)/@0x8d3d754 sb=Rect(0, 0 - 1080, 1920) eb=Rect(0, 0 - 1080, 1920) d=0},{null m=TO_FRONT f=IS_WALLPAPER leash=Surface(name=WallpaperWindowToken{3dab7c5 token=android.os.Binder@5f6e110})/@0x1abbdfc sb=Rect(0, 0 - 1080, 1920) eb=Rect(0, 0 - 1080, 1920) d=0}]}
+11-06 12:30:37.768   519  2506 I wm_create_activity: [0,163188082,10,ai.ciel.companion.preview/net.kuafuai.andee.ui.CielHomeActivity,NULL,NULL,NULL,268435456]
+11-06 12:30:37.774   519  2506 V SplashScreenExceptionList: SplashScreen checking exception for package ai.ciel.companion.preview (target sdk:34) -> false
+11-06 12:30:37.774   519  2506 I ActivityTaskManager: Add Task{406937e #9 type=standard A=10192:ai.ciel.companion.preview} to hidden list because adding Task{c7ca5c3 #10 type=standard A=10192:ai.ciel.companion.preview}
+11-06 12:30:37.775   519  2506 I ActivityTaskManager: START u0 {flg=0x10000000 cmp=ai.ciel.companion.preview/net.kuafuai.andee.ui.CielHomeActivity} with LAUNCH_MULTIPLE from uid 2000 (BAL_ALLOW_PERMISSION) result code=0
+11-06 12:30:37.780   830   867 V WindowManagerShell: Transition requested: android.os.BinderProxy@3d18685 TransitionRequestInfo { type = OPEN, triggerTask = TaskInfo{userId=0 taskId=10 displayId=0 isRunning=true baseIntent=Intent { flg=0x10000000 cmp=ai.ciel.companion.preview/net.kuafuai.andee.ui.CielHomeActivity } baseActivity=ComponentInfo{ai.ciel.companion.preview/net.kuafuai.andee.ui.CielHomeActivity} topActivity=ComponentInfo{ai.ciel.companion.preview/net.kuafuai.andee.ui.CielHomeActivity} origActivity=null realActivity=ComponentInfo{ai.ciel.companion.preview/net.kuafuai.andee.ui.CielHomeActivity} numActivities=1 lastActiveTime=81965 supportsMultiWindow=true resizeMode=1 isResizeable=true minWidth=-1 minHeight=-1 defaultMinSize=220 token=WCT{android.window.IWindowContainerToken$Stub$Proxy@710fcda} topActivityType=1 pictureInPictureParams=null shouldDockBigOverlays=false launchIntoPipHostTaskId=-1 lastParentTaskIdBeforePip=-1 displayCutoutSafeInsets=null topActivityInfo=ActivityInfo{9e2450b net.kuafuai.andee.ui.CielHomeActivity} launchCookies=[] positionInParent=Point(0, 0) parentTaskId=-1 isFocused=false isVisible=false isVisibleRequested=false isSleeping=false topActivityInSizeCompat=false topActivityEligibleForLetterboxEducation= false topActivityLetterboxed= false isFromDoubleTap= false topActivityLetterboxVerticalPosition= -1 topActivityLetterboxHorizontalPosition= -1 topActivityLetterboxWidth=-1 topActivityLetterboxHeight=-1 locusId=null displayAreaFeatureId=1 cameraCompatControlState=hidden}, remoteTransition = null, displayChange = null }
+11-06 12:30:37.795   519   886 W WindowManager: Exception thrown during dispatchAppVisibility Window{2a6b1d2 u0 ai.ciel.companion.preview/net.kuafuai.andee.ui.CielHomeActivity EXITING}
+11-06 12:30:37.800   519   886 I wm_task_removed: [9,9,0,removeChild, last child = ActivityRecord{ac4f500 u0 ai.ciel.companion.preview/net.kuafuai.andee.ui.CielHomeActivity t-1 f} isExiting} in Task{406937e #9 type=standard A=10192:ai.ciel.companion.preview}]
+11-06 12:30:37.828   519   549 I am_proc_start: [0,5171,10192,ai.ciel.companion.preview,next-top-activity,{ai.ciel.companion.preview/net.kuafuai.andee.ui.CielHomeActivity}]
+11-06 12:30:37.828   519   549 I ActivityManager: Start proc 5171:ai.ciel.companion.preview/u0a192 for next-top-activity {ai.ciel.companion.preview/net.kuafuai.andee.ui.CielHomeActivity}
+11-06 12:30:37.878   519  2294 D CoreBackPreview: Window{cd38558 u0 Splash Screen ai.ciel.companion.preview}: Setting back callback OnBackInvokedCallbackInfo{mCallback=android.window.IOnBackInvokedCallback$Stub$Proxy@64285b3, mPriority=0, mIsAnimationCallback=false}
+11-06 12:30:37.911  5171  5171 I mpanion.preview: Using CollectorTypeCC GC.
+11-06 12:30:37.912  5171  5171 W mpanion.preview: Unexpected CPU variant for x86: x86_64.
+11-06 12:30:37.912  5171  5171 W mpanion.preview: Known variants: atom, sandybridge, silvermont, goldmont, goldmont-plus, tremont, kabylake, default
+11-06 12:30:37.979  5171  5171 E mpanion.preview: Not starting debugger since process cannot load the jdwp agent.
+11-06 12:30:38.089   519   895 I am_proc_bound: [0,5171,ai.ciel.companion.preview]
+11-06 12:30:38.090   519   895 I wm_restart_activity: [0,163188082,10,ai.ciel.companion.preview/net.kuafuai.andee.ui.CielHomeActivity]
+11-06 12:30:38.114   519   536 V WindowManager: Sent Transition #10 createdAt=11-06 12:30:37.761 via request=TransitionRequestInfo { type = OPEN, triggerTask = TaskInfo{userId=0 taskId=10 displayId=0 isRunning=true baseIntent=Intent { flg=0x10000000 cmp=ai.ciel.companion.preview/net.kuafuai.andee.ui.CielHomeActivity } baseActivity=ComponentInfo{ai.ciel.companion.preview/net.kuafuai.andee.ui.CielHomeActivity} topActivity=ComponentInfo{ai.ciel.companion.preview/net.kuafuai.andee.ui.CielHomeActivity} origActivity=null realActivity=ComponentInfo{ai.ciel.companion.preview/net.kuafuai.andee.ui.CielHomeActivity} numActivities=1 lastActiveTime=81965 supportsMultiWindow=true resizeMode=1 isResizeable=true minWidth=-1 minHeight=-1 defaultMinSize=220 token=WCT{RemoteToken{bf83246 Task{c7ca5c3 #10 type=standard A=10192:ai.ciel.companion.preview}}} topActivityType=1 pictureInPictureParams=null shouldDockBigOverlays=false launchIntoPipHostTaskId=-1 lastParentTaskIdBeforePip=-1 displayCutoutSafeInsets=null topActivityInfo=ActivityInfo{22ec07 net.kuafuai.andee.ui.CielHomeActivity} launchCookies=[] positionInParent=Point(0, 0) parentTaskId=-1 isFocused=false isVisible=false isVisibleRequested=false isSleeping=false topActivityInSizeCompat=false topActivityEligibleForLetterboxEducation= false topActivityLetterboxed= false isFromDoubleTap= false topActivityLetterboxVerticalPosition= -1 topActivityLetterboxHorizontalPosition= -1 topActivityLetterboxWidth=-1 topActivityLetterboxHeight=-1 locusId=null displayAreaFeatureId=1 cameraCompatControlState=hidden}, remoteTransition = null, displayChange = null }
+11-06 12:30:38.114   519   536 V WindowManager:     info={id=10 t=OPEN f=0x0 trk=1 r=[0@Point(0, 0)] c=[{WCT{RemoteToken{bf83246 Task{c7ca5c3 #10 type=standard A=10192:ai.ciel.companion.preview}}} m=OPEN f=NONE leash=Surface(name=Task=10)/@0x6a3236e sb=Rect(0, 0 - 1080, 1920) eb=Rect(0, 0 - 1080, 1920) d=0},{WCT{RemoteToken{1e3e9e0 Task{efbe7ae #1 type=home}}} m=TO_BACK f=SHOW_WALLPAPER leash=Surface(name=Task=1)/@0x8d3d754 sb=Rect(0, 0 - 1080, 1920) eb=Rect(0, 0 - 1080, 1920) d=0}]}
+11-06 12:30:38.147   519   895 I wm_set_resumed_activity: [0,ai.ciel.companion.preview/net.kuafuai.andee.ui.CielHomeActivity,minimalResumeActivityLocked - onActivityStateChanged]
+11-06 12:30:38.196  5171  5171 D CompatibilityChangeReporter: Compat change id reported: 171979766; UID 10192; state: ENABLED
+11-06 12:30:38.196  5171  5171 D CompatibilityChangeReporter: Compat change id reported: 242716250; UID 10192; state: ENABLED
+11-06 12:30:38.260  5171  5171 D nativeloader: Configuring clns-6 for other apk /data/app/~~xX1QRQIHuv6PyAVBt8dhbg==/ai.ciel.companion.preview-sPl6Hmtk9kC3yFMI_ePwyw==/base.apk. target_sdk_version=34, uses_libraries=, library_path=/data/app/~~xX1QRQIHuv6PyAVBt8dhbg==/ai.ciel.companion.preview-sPl6Hmtk9kC3yFMI_ePwyw==/lib/x86_64:/data/app/~~xX1QRQIHuv6PyAVBt8dhbg==/ai.ciel.companion.preview-sPl6Hmtk9kC3yFMI_ePwyw==/base.apk!/lib/x86_64, permitted_path=/data:/mnt/expand:/data/user/0/ai.ciel.companion.preview
+11-06 12:30:38.292  5171  5171 V GraphicsEnvironment: Currently set values for:
+11-06 12:30:38.292  5171  5171 V GraphicsEnvironment:   angle_gl_driver_selection_pkgs=[]
+11-06 12:30:38.292  5171  5171 V GraphicsEnvironment:   angle_gl_driver_selection_values=[]
+11-06 12:30:38.293  5171  5171 V GraphicsEnvironment: ANGLE GameManagerService for ai.ciel.companion.preview: false
+11-06 12:30:38.293  5171  5171 V GraphicsEnvironment: ai.ciel.companion.preview is not listed in per-application setting
+11-06 12:30:38.293  5171  5171 V GraphicsEnvironment: Neither updatable production driver nor prerelease driver is supported.
+11-06 12:30:38.302  5171  5171 D AppCompatDelegate: Checking for metadata for AppLocalesMetadataHolderService : Service not found
+11-06 12:30:38.308  5171  5189 D libEGL  : loaded /vendor/lib64/egl/libEGL_emulation.so
+11-06 12:30:38.310  5171  5189 D libEGL  : loaded /vendor/lib64/egl/libGLESv1_CM_emulation.so
+11-06 12:30:38.312  5171  5189 D libEGL  : loaded /vendor/lib64/egl/libGLESv2_emulation.so
+11-06 12:30:38.357  5171  5171 D CompatibilityChangeReporter: Compat change id reported: 210923482; UID 10192; state: ENABLED
+11-06 12:30:38.359  5171  5171 D CompatibilityChangeReporter: Compat change id reported: 171228096; UID 10192; state: ENABLED
+11-06 12:30:38.374  5171  5171 I wm_on_create_called: [163188082,net.kuafuai.andee.ui.CielHomeActivity,performCreate,66]
+11-06 12:30:38.374  5171  5171 I wm_on_start_called: [163188082,net.kuafuai.andee.ui.CielHomeActivity,handleStartActivity,0]
+11-06 12:30:38.375  5171  5171 I wm_on_resume_called: [163188082,net.kuafuai.andee.ui.CielHomeActivity,RESUME_ACTIVITY,0]
+11-06 12:30:38.376  5171  5171 D CompatibilityChangeReporter: Compat change id reported: 237531167; UID 10192; state: DISABLED
+11-06 12:30:38.376  5171  5171 W OpenGLRenderer: Unknown dataspace 0
+11-06 12:30:38.379  5171  5171 I wm_on_top_resumed_gained_called: [163188082,net.kuafuai.andee.ui.CielHomeActivity,topStateChangedWhenResumed]
+11-06 12:30:38.380  5171  5171 D AutofillManager: view not autofillable - not passing ime action check
+11-06 12:30:38.380  5171  5171 D AutofillManager: view not autofillable - not passing ime action check
+11-06 12:30:38.382   519  2651 D CoreBackPreview: Window{274bda u0 ai.ciel.companion.preview/net.kuafuai.andee.ui.CielHomeActivity}: Setting back callback OnBackInvokedCallbackInfo{mCallback=android.window.IOnBackInvokedCallback$Stub$Proxy@7f2e101, mPriority=0, mIsAnimationCallback=false}
+11-06 12:30:38.452   519   540 I input_focus: [Focus request 274bda ai.ciel.companion.preview/net.kuafuai.andee.ui.CielHomeActivity,reason=UpdateInputWindows]
+11-06 12:30:38.510  5171  5187 W OpenGLRenderer: Failed to initialize 101010-2 format, error = EGL_SUCCESS
+11-06 12:30:38.540  5171  5187 I Gralloc4: mapper 4.x is not supported
+11-06 12:30:38.908  5171  5171 I Choreographer: Skipped 31 frames!  The application may be doing too much work on its main thread.
+11-06 12:30:38.914   519   536 I sysui_multi_action: [319,276,321,249,322,1173,325,81,757,761,758,7,759,1,806,ai.ciel.companion.preview,871,net.kuafuai.andee.ui.CielHomeActivity,904,com.android.shell,905,0,945,352,1320,4,1321,4]
+11-06 12:30:38.917   519   536 I wm_activity_launch_time: [0,163188082,ai.ciel.companion.preview/net.kuafuai.andee.ui.CielHomeActivity,1173]
+11-06 12:30:38.917   519   536 I ActivityTaskManager: Displayed ai.ciel.companion.preview/net.kuafuai.andee.ui.CielHomeActivity for user 0: +1s173ms
+11-06 12:30:38.922   519   620 I input_focus: [Focus entering 274bda ai.ciel.companion.preview/net.kuafuai.andee.ui.CielHomeActivity (server),reason=Window became focusable. Previous reason: NOT_VISIBLE]
+11-06 12:30:38.939   519   886 I ImeTracker: ai.ciel.companion.preview:572e3953: onRequestHide at ORIGIN_SERVER_HIDE_INPUT reason HIDE_UNSPECIFIED_WINDOW
+11-06 12:30:38.939   519   886 I ImeTracker: ai.ciel.companion.preview:572e3953: onCancelled at PHASE_SERVER_SHOULD_HIDE
+11-06 12:30:38.945  1560  1560 I GoogleInputMethodService: GoogleInputMethodService.onStartInput():1877 onStartInput(EditorInfo{inputType=0x0(NULL) imeOptions=0x0 privateImeOptions=null actionName=UNSPECIFIED actionLabel=null actionId=0 initialSelStart=-1 initialSelEnd=-1 initialCapsMode=0x0 hintText=null label=null packageName=ai.ciel.companion.preview fieldId=0 fieldName=null extras=null}, false)
+11-06 12:30:39.076   519  2121 W InputManager-JNI: Input channel object 'cd38558 Splash Screen ai.ciel.companion.preview (client)' was disposed without first being removed with the input manager!
+11-06 12:30:39.946  5171  5187 D EGL_emulation: app_time_stats: avg=76.95ms min=15.52ms max=498.98ms count=13
+11-06 12:30:40.560  5171  5195 D EGL_emulation: app_time_stats: avg=41.67ms min=26.64ms max=79.89ms count=26
+11-06 12:30:40.974  5171  5187 D EGL_emulation: app_time_stats: avg=38.58ms min=11.28ms max=67.73ms count=26
+11-06 12:30:41.581  5171  5195 D EGL_emulation: app_time_stats: avg=42.14ms min=26.43ms max=60.88ms count=24
+11-06 12:30:41.994  5171  5187 D EGL_emulation: app_time_stats: avg=42.47ms min=21.34ms max=75.06ms count=24
+11-06 12:30:42.618  5171  5195 D EGL_emulation: app_time_stats: avg=47.15ms min=32.75ms max=84.05ms count=22
+11-06 12:30:43.010  5171  5187 D EGL_emulation: app_time_stats: avg=48.32ms min=23.31ms max=88.38ms count=21
+11-06 12:30:43.646  5171  5195 D EGL_emulation: app_time_stats: avg=43.97ms min=26.94ms max=63.72ms count=23
+11-06 12:30:44.041  5171  5187 D EGL_emulation: app_time_stats: avg=41.01ms min=13.02ms max=100.81ms count=24
+11-06 12:30:44.141  5171  5307 D ProfileInstaller: Installing profile for ai.ciel.companion.preview
+11-06 12:30:44.663  5171  5195 D EGL_emulation: app_time_stats: avg=39.09ms min=27.17ms max=55.04ms count=26
+11-06 12:30:45.074  5171  5187 D EGL_emulation: app_time_stats: avg=38.81ms min=16.84ms max=61.63ms count=26
+11-06 12:30:45.705  5171  5195 D EGL_emulation: app_time_stats: avg=41.65ms min=27.61ms max=68.13ms count=25
+11-06 12:30:46.097  5171  5187 D EGL_emulation: app_time_stats: avg=42.58ms min=25.15ms max=72.72ms count=24
+11-06 12:30:46.715  5171  5195 D EGL_emulation: app_time_stats: avg=45.89ms min=32.50ms max=63.15ms count=22
+11-06 12:30:46.763  1043  1043 D CarrierSvcBindHelper: onHandleForceStop: [ai.ciel.companion.preview]
+11-06 12:30:46.784   519   519 I notification_cancel_all: [1000,519,ai.ciel.companion.preview,0,0,0,5,NULL]
+11-06 12:30:47.115  5171  5187 D EGL_emulation: app_time_stats: avg=45.71ms min=19.07ms max=76.06ms count=22
+11-06 12:30:47.744  5171  5195 D EGL_emulation: app_time_stats: avg=41.17ms min=31.68ms max=53.13ms count=25
+11-06 12:30:48.066  5171  5178 I mpanion.preview: Background concurrent copying GC freed 189060(6497KB) AllocSpace objects, 90(3632KB) LOS objects, 49% free, 2881KB/5763KB, paused 29us,9us total 109.645ms
+11-06 12:30:48.128  5171  5187 D EGL_emulation: app_time_stats: avg=39.44ms min=14.51ms max=59.85ms count=25
+11-06 12:30:48.786  5171  5195 D EGL_emulation: app_time_stats: avg=45.30ms min=26.56ms max=71.37ms count=23
+11-06 12:30:49.156  5171  5187 D EGL_emulation: app_time_stats: avg=46.70ms min=35.05ms max=63.32ms count=22
+11-06 12:30:49.731   519  2684 I wm_relaunch_resume_activity: [0,163188082,10,ai.ciel.companion.preview/net.kuafuai.andee.ui.CielHomeActivity,480]
+11-06 12:30:49.737  5171  5171 I wm_on_top_resumed_lost_called: [163188082,net.kuafuai.andee.ui.CielHomeActivity,pausing]
+11-06 12:30:49.737  5171  5171 I wm_on_paused_called: [163188082,net.kuafuai.andee.ui.CielHomeActivity,performPause,1]
+11-06 12:30:49.827  1560  1560 I GoogleInputMethodService: GoogleInputMethodService.onStartInput():1877 onStartInput(EditorInfo{inputType=0x0(NULL) imeOptions=0x0 privateImeOptions=null actionName=UNSPECIFIED actionLabel=null actionId=0 initialSelStart=-1 initialSelEnd=-1 initialCapsMode=0x0 hintText=null label=null packageName=ai.ciel.companion.preview fieldId=0 fieldName=null extras=null}, true)
+11-06 12:30:49.845  5171  5171 I wm_on_stop_called: [163188082,net.kuafuai.andee.ui.CielHomeActivity,handleRelaunchActivity,0]
+11-06 12:30:49.845  5171  5171 I wm_on_destroy_called: [163188082,net.kuafuai.andee.ui.CielHomeActivity,performDestroy,0]
+11-06 12:30:49.845  5171  5171 W WindowOnBackDispatcher: sendCancelIfRunning: isInProgress=falsecallback=android.view.ViewRootImpl$$ExternalSyntheticLambda17@c324e43
+11-06 12:30:49.846  5171  5171 D AutofillManager: view not autofillable - not passing ime action check
+11-06 12:30:49.846  5171  5171 D AutofillManager: view not autofillable - not passing ime action check
+11-06 12:30:49.848   519  2651 W InputManager-JNI: Input channel object '274bda ai.ciel.companion.preview/net.kuafuai.andee.ui.CielHomeActivity (client)' was disposed without first being removed with the input manager!
+11-06 12:30:49.850  5171  5195 E BufferQueueProducer: [SurfaceTexture-0-5171-0](id:143300000001,api:1,p:5171,c:5171) cancelBuffer: BufferQueue has been abandoned
+11-06 12:30:49.855   519   817 I WindowManager: setOnBackInvokedCallback(): No window state for package:ai.ciel.companion.preview
+11-06 12:30:49.888  5171  5171 D AutofillManager: Fill dialog is enabled:false, hints=[]
+11-06 12:30:49.889  5171  5171 I wm_on_create_called: [163188082,net.kuafuai.andee.ui.CielHomeActivity,performCreate,15]
+11-06 12:30:49.890  5171  5171 I wm_on_start_called: [163188082,net.kuafuai.andee.ui.CielHomeActivity,handleStartActivity,0]
+11-06 12:30:49.891  5171  5171 I wm_on_resume_called: [163188082,net.kuafuai.andee.ui.CielHomeActivity,RESUME_ACTIVITY,0]
+11-06 12:30:49.891  5171  5171 I wm_on_top_resumed_gained_called: [163188082,net.kuafuai.andee.ui.CielHomeActivity,topWhenResuming]
+11-06 12:30:49.893  5171  5171 D AutofillManager: view not autofillable - not passing ime action check
+11-06 12:30:49.893  5171  5171 D AutofillManager: view not autofillable - not passing ime action check
+11-06 12:30:49.893   519   817 D CoreBackPreview: Window{3d69174 u0 ai.ciel.companion.preview/net.kuafuai.andee.ui.CielHomeActivity}: Setting back callback OnBackInvokedCallbackInfo{mCallback=android.window.IOnBackInvokedCallback$Stub$Proxy@dc58712, mPriority=0, mIsAnimationCallback=false}
+11-06 12:30:49.907   519   540 I input_focus: [Focus request 3d69174 ai.ciel.companion.preview/net.kuafuai.andee.ui.CielHomeActivity,reason=UpdateInputWindows]
+11-06 12:30:49.978   519   817 I WindowManager: finishDrawing of relaunch: Window{3d69174 u0 ai.ciel.companion.preview/net.kuafuai.andee.ui.CielHomeActivity} 238ms
+11-06 12:30:50.144   519   536 V WindowManager:     info={id=11 t=CHANGE f=0x0 trk=0 r=[0@Point(0, 0)] c=[{null m=CHANGE f=TRANSLUCENT|FLAG_IS_SYSTEM_WINDOW p=WCT{RemoteToken{4abb8b3 Display{#0 state=ON size=1920x1080 ROTATION_0}}} leash=Surface(name=WindowToken{7d1c3eb type=2019 android.os.BinderProxy@f2c7265})/@0x3c557ed sb=Rect(0, 0 - 1080, 1920) eb=Rect(0, 0 - 1920, 1080) d=0},{null m=CHANGE f=TRANSLUCENT|FLAG_IS_SYSTEM_WINDOW p=WCT{RemoteToken{4abb8b3 Display{#0 state=ON size=1920x1080 ROTATION_0}}} leash=Surface(name=WindowToken{617a235 type=2000 android.os.BinderProxy@1fef11f})/@0x14ee604 sb=Rect(0, 0 - 1080, 1920) eb=Rect(0, 0 - 1920, 1080) d=0},{WCT{RemoteToken{bf83246 Task{c7ca5c3 #10 type=standard A=10192:ai.ciel.companion.preview}}} m=CHANGE f=NONE p=WCT{RemoteToken{cd65e70 DefaultTaskDisplayArea@53442135}} leash=Surface(name=Task=10)/@0x6a3236e sb=Rect(0, 0 - 1080, 1920) eb=Rect(0, 0 - 1920, 1080) d=0},{WCT{RemoteToken{cd65e70 DefaultTaskDisplayArea@53442135}} m=CHANGE f=NONE p=WCT{RemoteToken{4abb8b3 Display{#0 state=ON size=1920x1080 ROTATION_0}}} leash=Surface(name=DefaultTaskDisplayArea)/@0x269b6a7 sb=Rect(0, 0 - 1080, 1920) eb=Rect(0, 0 - 1920, 1080) d=0},{WCT{RemoteToken{4abb8b3 Display{#0 state=ON size=1920x1080 ROTATION_0}}} m=CHANGE f=IS_DISPLAY leash=Surface(name=WindowedMagnification:0:31)/@0x7b875aa sb=Rect(0, 0 - 1080, 1920) eb=Rect(0, 0 - 1920, 1080) d=0}]}
+11-06 12:30:50.160   519   909 I ActivityManager: Force stopping ai.ciel.companion.preview appid=10192 user=0: from pid 5458
+11-06 12:30:50.163   519   909 I ActivityManager: Killing 5171:ai.ciel.companion.preview/u0a192 (adj 0): stop ai.ciel.companion.preview due to from pid 5458
+11-06 12:30:50.163   519   909 I am_kill : [0,5171,ai.ciel.companion.preview,0,stop ai.ciel.companion.preview due to from pid 5458]
+11-06 12:30:50.163   519   909 W ActivityTaskManager: Force removing ActivityRecord{9ba0d72 u0 ai.ciel.companion.preview/net.kuafuai.andee.ui.CielHomeActivity t10 f}}: app died, no saved state
+11-06 12:30:50.163   519   909 I wm_finish_activity: [0,163188082,10,ai.ciel.companion.preview/net.kuafuai.andee.ui.CielHomeActivity,proc died without state saved]
+11-06 12:30:50.167   830   867 V WindowManagerShell: Transition requested: android.os.BinderProxy@22f07d1 TransitionRequestInfo { type = CLOSE, triggerTask = TaskInfo{userId=0 taskId=10 displayId=0 isRunning=false baseIntent=Intent { flg=0x10000000 cmp=ai.ciel.companion.preview/net.kuafuai.andee.ui.CielHomeActivity } baseActivity=null topActivity=null origActivity=null realActivity=ComponentInfo{ai.ciel.companion.preview/net.kuafuai.andee.ui.CielHomeActivity} numActivities=0 lastActiveTime=82304 supportsMultiWindow=true resizeMode=1 isResizeable=true minWidth=-1 minHeight=-1 defaultMinSize=220 token=WCT{android.window.IWindowContainerToken$Stub$Proxy@f0e3236} topActivityType=1 pictureInPictureParams=null shouldDockBigOverlays=false launchIntoPipHostTaskId=-1 lastParentTaskIdBeforePip=-1 displayCutoutSafeInsets=null topActivityInfo=null launchCookies=[] positionInParent=Point(0, 0) parentTaskId=-1 isFocused=true isVisible=true isVisibleRequested=true isSleeping=false topActivityInSizeCompat=false topActivityEligibleForLetterboxEducation= false topActivityLetterboxed= false isFromDoubleTap= false topActivityLetterboxVerticalPosition= -1 topActivityLetterboxHorizontalPosition= -1 topActivityLetterboxWidth=-1 topActivityLetterboxHeight=-1 locusId=null displayAreaFeatureId=1 cameraCompatControlState=hidden}, remoteTransition = null, displayChange = null }
+11-06 12:30:50.174   519   620 I input_focus: [Focus entering 3d69174 ai.ciel.companion.preview/net.kuafuai.andee.ui.CielHomeActivity (server),reason=Window became focusable. Previous reason: NOT_VISIBLE]
+11-06 12:30:50.209   519   620 I input_focus: [Focus leaving 3d69174 ai.ciel.companion.preview/net.kuafuai.andee.ui.CielHomeActivity (server),reason=NO_WINDOW]
+11-06 12:30:50.223   519   908 V ActivityManager: Got obituary of 5171:ai.ciel.companion.preview
+11-06 12:30:50.223   519   908 I WindowManager: WIN DEATH: Window{3d69174 u0 ai.ciel.companion.preview/net.kuafuai.andee.ui.CielHomeActivity}
+11-06 12:30:50.223   519   908 W InputManager-JNI: Input channel object '3d69174 ai.ciel.companion.preview/net.kuafuai.andee.ui.CielHomeActivity (client)' was disposed without first being removed with the input manager!
+11-06 12:30:50.224   519  2682 I ImeTracker: ai.ciel.companion.preview:58af47d0: onRequestHide at ORIGIN_SERVER_HIDE_INPUT reason HIDE_REMOVE_CLIENT
+11-06 12:30:50.228   519  2682 I ImeTracker: ai.ciel.companion.preview:58af47d0: onCancelled at PHASE_SERVER_SHOULD_HIDE
+11-06 12:30:50.275   519   886 W WindowManager: Failed to deliver inset control state change to w=Window{3d69174 u0 ai.ciel.companion.preview/net.kuafuai.andee.ui.CielHomeActivity EXITING}
+11-06 12:30:50.315   519  1084 I wm_create_activity: [0,66310485,11,ai.ciel.companion.preview/net.kuafuai.andee.ui.CielHomeActivity,NULL,NULL,NULL,268435456]
+11-06 12:30:50.315   519  1084 V SplashScreenExceptionList: SplashScreen checking exception for package ai.ciel.companion.preview (target sdk:34) -> false
+11-06 12:30:50.321   519  1084 I ActivityTaskManager: Add Task{c7ca5c3 #10 type=standard A=10192:ai.ciel.companion.preview} to hidden list because adding Task{556376a #11 type=standard A=10192:ai.ciel.companion.preview}
+11-06 12:30:50.322   519  1084 I ActivityTaskManager: START u0 {flg=0x10000000 cmp=ai.ciel.companion.preview/net.kuafuai.andee.ui.CielHomeActivity} with LAUNCH_MULTIPLE from uid 2000 (BAL_ALLOW_PERMISSION) result code=0
+11-06 12:30:50.336   519   549 I am_proc_start: [0,5467,10192,ai.ciel.companion.preview,next-top-activity,{ai.ciel.companion.preview/net.kuafuai.andee.ui.CielHomeActivity}]
+11-06 12:30:50.336   519   549 I ActivityManager: Start proc 5467:ai.ciel.companion.preview/u0a192 for next-top-activity {ai.ciel.companion.preview/net.kuafuai.andee.ui.CielHomeActivity}
+11-06 12:30:50.344   519   901 D CoreBackPreview: Window{a759b37 u0 Splash Screen ai.ciel.companion.preview}: Setting back callback OnBackInvokedCallbackInfo{mCallback=android.window.IOnBackInvokedCallback$Stub$Proxy@40249c2, mPriority=0, mIsAnimationCallback=false}
+11-06 12:30:50.380  5467  5467 I mpanion.preview: Using CollectorTypeCC GC.
+11-06 12:30:50.381  5467  5467 W mpanion.preview: Unexpected CPU variant for x86: x86_64.
+11-06 12:30:50.381  5467  5467 W mpanion.preview: Known variants: atom, sandybridge, silvermont, goldmont, goldmont-plus, tremont, kabylake, default
+11-06 12:30:50.384  5467  5467 E mpanion.preview: Not starting debugger since process cannot load the jdwp agent.
+11-06 12:30:50.395   519   540 W WindowManager: Failed to deliver inset control state change to w=Window{3d69174 u0 ai.ciel.companion.preview/net.kuafuai.andee.ui.CielHomeActivity EXITING}
+11-06 12:30:50.404   519   533 I am_proc_bound: [0,5467,ai.ciel.companion.preview]
+11-06 12:30:50.423  5467  5467 D CompatibilityChangeReporter: Compat change id reported: 171979766; UID 10192; state: ENABLED
+11-06 12:30:50.423  5467  5467 D CompatibilityChangeReporter: Compat change id reported: 242716250; UID 10192; state: ENABLED
+11-06 12:30:50.431  5467  5467 D nativeloader: Configuring clns-6 for other apk /data/app/~~xX1QRQIHuv6PyAVBt8dhbg==/ai.ciel.companion.preview-sPl6Hmtk9kC3yFMI_ePwyw==/base.apk. target_sdk_version=34, uses_libraries=, library_path=/data/app/~~xX1QRQIHuv6PyAVBt8dhbg==/ai.ciel.companion.preview-sPl6Hmtk9kC3yFMI_ePwyw==/lib/x86_64:/data/app/~~xX1QRQIHuv6PyAVBt8dhbg==/ai.ciel.companion.preview-sPl6Hmtk9kC3yFMI_ePwyw==/base.apk!/lib/x86_64, permitted_path=/data:/mnt/expand:/data/user/0/ai.ciel.companion.preview
+11-06 12:30:50.434  5467  5467 V GraphicsEnvironment: Currently set values for:
+11-06 12:30:50.434  5467  5467 V GraphicsEnvironment:   angle_gl_driver_selection_pkgs=[]
+11-06 12:30:50.434  5467  5467 V GraphicsEnvironment:   angle_gl_driver_selection_values=[]
+11-06 12:30:50.434  5467  5467 V GraphicsEnvironment: ANGLE GameManagerService for ai.ciel.companion.preview: false
+11-06 12:30:50.434  5467  5467 V GraphicsEnvironment: ai.ciel.companion.preview is not listed in per-application setting
+11-06 12:30:50.434  5467  5467 V GraphicsEnvironment: Neither updatable production driver nor prerelease driver is supported.
+11-06 12:30:50.512   519   909 I wm_restart_activity: [0,66310485,11,ai.ciel.companion.preview/net.kuafuai.andee.ui.CielHomeActivity]
+11-06 12:30:50.512   519   909 I wm_set_resumed_activity: [0,ai.ciel.companion.preview/net.kuafuai.andee.ui.CielHomeActivity,minimalResumeActivityLocked - onActivityStateChanged]
+11-06 12:30:50.516  5467  5487 D libEGL  : loaded /vendor/lib64/egl/libEGL_emulation.so
+11-06 12:30:50.517  5467  5487 D libEGL  : loaded /vendor/lib64/egl/libGLESv1_CM_emulation.so
+11-06 12:30:50.523   519   536 V WindowManager: Sent Transition #12 createdAt=11-06 12:30:50.163 via request=TransitionRequestInfo { type = CLOSE, triggerTask = TaskInfo{userId=0 taskId=10 displayId=0 isRunning=false baseIntent=Intent { flg=0x10000000 cmp=ai.ciel.companion.preview/net.kuafuai.andee.ui.CielHomeActivity } baseActivity=null topActivity=null origActivity=null realActivity=ComponentInfo{ai.ciel.companion.preview/net.kuafuai.andee.ui.CielHomeActivity} numActivities=0 lastActiveTime=82304 supportsMultiWindow=true resizeMode=1 isResizeable=true minWidth=-1 minHeight=-1 defaultMinSize=220 token=WCT{RemoteToken{bf83246 Task{c7ca5c3 #10 type=standard A=10192:ai.ciel.companion.preview}}} topActivityType=1 pictureInPictureParams=null shouldDockBigOverlays=false launchIntoPipHostTaskId=-1 lastParentTaskIdBeforePip=-1 displayCutoutSafeInsets=null topActivityInfo=null launchCookies=[] positionInParent=Point(0, 0) parentTaskId=-1 isFocused=true isVisible=true isVisibleRequested=true isSleeping=false topActivityInSizeCompat=false topActivityEligibleForLetterboxEducation= false topActivityLetterboxed= false isFromDoubleTap= false topActivityLetterboxVerticalPosition= -1 topActivityLetterboxHorizontalPosition= -1 topActivityLetterboxWidth=-1 topActivityLetterboxHeight=-1 locusId=null displayAreaFeatureId=1 cameraCompatControlState=hidden}, remoteTransition = null, displayChange = null }
+11-06 12:30:50.523   519   536 V WindowManager:     info={id=12 t=CLOSE f=0x0 trk=1 r=[0@Point(0, 0)] c=[{WCT{RemoteToken{fba65a5 Task{556376a #11 type=standard A=10192:ai.ciel.companion.preview}}} m=OPEN f=MOVE_TO_TOP leash=Surface(name=Task=11)/@0xbf6cb0f sb=Rect(0, 0 - 1920, 1080) eb=Rect(0, 0 - 1920, 1080) d=0},{WCT{RemoteToken{bf83246 Task{c7ca5c3 #10 type=standard A=10192:ai.ciel.companion.preview}}} m=CLOSE f=NONE leash=Surface(name=Task=10)/@0x6a3236e sb=Rect(0, 0 - 1920, 1080) eb=Rect(0, 0 - 1920, 1080) d=0}]}
+11-06 12:30:50.530  5467  5487 D libEGL  : loaded /vendor/lib64/egl/libGLESv2_emulation.so
+11-06 12:30:50.535   519   540 W WindowManager: Failed to deliver inset control state change to w=Window{3d69174 u0 ai.ciel.companion.preview/net.kuafuai.andee.ui.CielHomeActivity EXITING}
+11-06 12:30:50.537   519  2651 W WindowManager: Exception thrown during dispatchAppVisibility Window{3d69174 u0 ai.ciel.companion.preview/net.kuafuai.andee.ui.CielHomeActivity EXITING}
+11-06 12:30:50.545  5467  5467 D AppCompatDelegate: Checking for metadata for AppLocalesMetadataHolderService : Service not found
+11-06 12:30:50.548   519  2651 I wm_task_removed: [10,10,0,removeChild, last child = ActivityRecord{9ba0d72 u0 ai.ciel.companion.preview/net.kuafuai.andee.ui.CielHomeActivity t-1 f}} in Task{c7ca5c3 #10 type=standard A=10192:ai.ciel.companion.preview}]
+11-06 12:30:50.582  5467  5467 D CompatibilityChangeReporter: Compat change id reported: 210923482; UID 10192; state: ENABLED
+11-06 12:30:50.591  5467  5467 D CompatibilityChangeReporter: Compat change id reported: 171228096; UID 10192; state: ENABLED
+11-06 12:30:50.598  5467  5467 I wm_on_create_called: [66310485,net.kuafuai.andee.ui.CielHomeActivity,performCreate,48]
+11-06 12:30:50.599  5467  5467 I wm_on_start_called: [66310485,net.kuafuai.andee.ui.CielHomeActivity,handleStartActivity,0]
+11-06 12:30:50.599  5467  5467 I wm_on_resume_called: [66310485,net.kuafuai.andee.ui.CielHomeActivity,RESUME_ACTIVITY,0]
+11-06 12:30:50.607  5467  5467 D CompatibilityChangeReporter: Compat change id reported: 237531167; UID 10192; state: DISABLED
+11-06 12:30:50.607  5467  5467 W OpenGLRenderer: Unknown dataspace 0
+11-06 12:30:50.611  5467  5467 I wm_on_top_resumed_gained_called: [66310485,net.kuafuai.andee.ui.CielHomeActivity,topStateChangedWhenResumed]
+11-06 12:30:50.612  5467  5467 D AutofillManager: view not autofillable - not passing ime action check
+11-06 12:30:50.612  5467  5467 D AutofillManager: view not autofillable - not passing ime action check
+11-06 12:30:50.613   519   909 D CoreBackPreview: Window{400790b u0 ai.ciel.companion.preview/net.kuafuai.andee.ui.CielHomeActivity}: Setting back callback OnBackInvokedCallbackInfo{mCallback=android.window.IOnBackInvokedCallback$Stub$Proxy@fd45a01, mPriority=0, mIsAnimationCallback=false}
+11-06 12:30:50.618   519   540 I input_focus: [Focus request 400790b ai.ciel.companion.preview/net.kuafuai.andee.ui.CielHomeActivity,reason=UpdateInputWindows]
+11-06 12:30:50.644  5467  5486 W OpenGLRenderer: Failed to initialize 101010-2 format, error = EGL_SUCCESS
+11-06 12:30:50.662  5467  5486 I Gralloc4: mapper 4.x is not supported
+11-06 12:30:51.046   519   536 I sysui_multi_action: [319,212,321,51,322,731,325,94,757,761,758,7,759,1,806,ai.ciel.companion.preview,871,net.kuafuai.andee.ui.CielHomeActivity,904,com.android.shell,905,0,945,94,1320,4,1321,4]
+11-06 12:30:51.047   519   536 I wm_activity_launch_time: [0,66310485,ai.ciel.companion.preview/net.kuafuai.andee.ui.CielHomeActivity,731]
+11-06 12:30:51.047   519   536 I ActivityTaskManager: Displayed ai.ciel.companion.preview/net.kuafuai.andee.ui.CielHomeActivity for user 0: +731ms
+11-06 12:30:51.074   519   620 I input_focus: [Focus entering 400790b ai.ciel.companion.preview/net.kuafuai.andee.ui.CielHomeActivity (server),reason=Window became focusable. Previous reason: NOT_VISIBLE]
+11-06 12:30:51.104   519  1084 I ImeTracker: ai.ciel.companion.preview:52727302: onRequestHide at ORIGIN_SERVER_HIDE_INPUT reason HIDE_UNSPECIFIED_WINDOW
+11-06 12:30:51.115   519  2651 W InputManager-JNI: Input channel object 'a759b37 Splash Screen ai.ciel.companion.preview (client)' was disposed without first being removed with the input manager!
+11-06 12:30:51.115   519  1084 I ImeTracker: ai.ciel.companion.preview:52727302: onCancelled at PHASE_SERVER_SHOULD_HIDE
+11-06 12:30:51.122   519  2506 D CoreBackPreview: Window{a759b37 u0 Splash Screen ai.ciel.companion.preview EXITING}: Setting back callback null
+11-06 12:30:51.161  1560  1560 I GoogleInputMethodService: GoogleInputMethodService.onStartInput():1877 onStartInput(EditorInfo{inputType=0x0(NULL) imeOptions=0x0 privateImeOptions=null actionName=UNSPECIFIED actionLabel=null actionId=0 initialSelStart=-1 initialSelEnd=-1 initialCapsMode=0x0 hintText=null label=null packageName=ai.ciel.companion.preview fieldId=0 fieldName=null extras=null}, false)
+11-06 12:30:52.106  5467  5486 D EGL_emulation: app_time_stats: avg=83.62ms min=14.58ms max=530.41ms count=13
+11-06 12:30:52.688  5467  5496 D EGL_emulation: app_time_stats: avg=42.88ms min=28.77ms max=81.42ms count=24
+11-06 12:30:53.111  5467  5486 D EGL_emulation: app_time_stats: avg=37.79ms min=5.18ms max=79.14ms count=26
+11-06 12:30:53.466  1043  1043 D CarrierSvcBindHelper: onHandleForceStop: [ai.ciel.companion.preview]
+11-06 12:30:53.598   519   519 I notification_cancel_all: [1000,519,ai.ciel.companion.preview,0,0,0,5,NULL]
+11-06 12:30:53.732  5467  5496 D EGL_emulation: app_time_stats: avg=38.62ms min=26.47ms max=66.90ms count=27
+11-06 12:30:54.122  5467  5486 D EGL_emulation: app_time_stats: avg=40.42ms min=22.53ms max=62.38ms count=25
+11-06 12:30:54.738  5467  5496 D EGL_emulation: app_time_stats: avg=43.70ms min=27.43ms max=69.45ms count=23
+11-06 12:30:55.135  5467  5486 D EGL_emulation: app_time_stats: avg=42.96ms min=13.12ms max=90.90ms count=23
+11-06 12:30:55.561  5467  5642 D ProfileInstaller: Installing profile for ai.ciel.companion.preview
+11-06 12:30:55.743  5467  5496 D EGL_emulation: app_time_stats: avg=38.48ms min=26.24ms max=53.28ms count=26
+11-06 12:30:56.149  5467  5486 D EGL_emulation: app_time_stats: avg=35.57ms min=9.83ms max=65.63ms count=28
+11-06 12:30:56.767  5467  5496 D EGL_emulation: app_time_stats: avg=34.92ms min=27.75ms max=49.45ms count=29
+11-06 12:30:57.211  5467  5486 D EGL_emulation: app_time_stats: avg=40.21ms min=6.65ms max=99.12ms count=25
+11-06 12:30:57.567   519   620 I input_interaction: Interaction with: 400790b ai.ciel.companion.preview/net.kuafuai.andee.ui.CielHomeActivity (server), [Gesture Monitor] swipe-up (server), [Gesture Monitor] edge-swipe (server), PointerEventDispatcher0 (server), 
+11-06 12:30:57.772  5467  5496 D EGL_emulation: app_time_stats: avg=43.68ms min=27.92ms max=98.81ms count=23
+11-06 12:30:58.215  5467  5486 D EGL_emulation: app_time_stats: avg=37.58ms min=6.41ms max=69.52ms count=26
+11-06 12:30:58.783  5467  5496 D EGL_emulation: app_time_stats: avg=40.43ms min=27.80ms max=62.82ms count=25
+11-06 12:30:59.227  5467  5486 D EGL_emulation: app_time_stats: avg=43.44ms min=16.47ms max=81.63ms count=23
+11-06 12:30:59.813  5467  5496 D EGL_emulation: app_time_stats: avg=39.61ms min=25.07ms max=71.37ms count=26
+11-06 12:31:00.229  5467  5486 D EGL_emulation: app_time_stats: avg=36.21ms min=11.63ms max=60.87ms count=27
+11-06 12:31:00.834  5467  5496 D EGL_emulation: app_time_stats: avg=40.62ms min=26.04ms max=98.95ms count=25
+11-06 12:31:01.248  5467  5486 D EGL_emulation: app_time_stats: avg=42.35ms min=7.25ms max=122.42ms count=23
+11-06 12:31:01.843  5467  5496 D EGL_emulation: app_time_stats: avg=43.19ms min=28.90ms max=109.68ms count=23
+11-06 12:31:02.248  5467  5486 D EGL_emulation: app_time_stats: avg=45.11ms min=15.76ms max=132.60ms count=22
+11-06 12:31:02.851  5467  5496 D EGL_emulation: app_time_stats: avg=40.33ms min=30.81ms max=72.47ms count=25
+11-06 12:31:03.271  5467  5486 D EGL_emulation: app_time_stats: avg=39.30ms min=13.95ms max=74.17ms count=25
+11-06 12:31:03.866  5467  5496 D EGL_emulation: app_time_stats: avg=39.18ms min=27.77ms max=62.79ms count=25
+11-06 12:31:04.305  5467  5486 D EGL_emulation: app_time_stats: avg=36.06ms min=4.11ms max=84.36ms count=27
+11-06 12:31:04.903  5467  5496 D EGL_emulation: app_time_stats: avg=37.59ms min=24.17ms max=52.60ms count=27
+11-06 12:31:05.328  5467  5486 D EGL_emulation: app_time_stats: avg=37.14ms min=8.92ms max=61.36ms count=27
+11-06 12:31:05.908  5467  5496 D EGL_emulation: app_time_stats: avg=38.61ms min=28.87ms max=54.06ms count=26
+11-06 12:31:06.329  5467  5486 D EGL_emulation: app_time_stats: avg=38.96ms min=6.54ms max=79.06ms count=25
+11-06 12:31:06.924  5467  5496 D EGL_emulation: app_time_stats: avg=37.34ms min=26.14ms max=54.00ms count=27
+11-06 12:31:07.338  5467  5486 D EGL_emulation: app_time_stats: avg=36.05ms min=14.45ms max=61.54ms count=28
+11-06 12:31:07.937  5467  5496 D EGL_emulation: app_time_stats: avg=36.00ms min=25.43ms max=69.75ms count=28
+11-06 12:31:08.341  5467  5486 D EGL_emulation: app_time_stats: avg=37.12ms min=11.52ms max=82.14ms count=27
+11-06 12:31:08.847  5467  5467 I ImeTracker: ai.ciel.companion.preview:eac3cf5: onRequestHide at ORIGIN_CLIENT_HIDE_SOFT_INPUT reason HIDE_SOFT_INPUT
+11-06 12:31:08.852   519  2678 I ImeTracker: ai.ciel.companion.preview:eac3cf5: onCancelled at PHASE_SERVER_SHOULD_HIDE
+11-06 12:31:09.013  5467  5467 D AutofillManager: view not autofillable - not passing ime action check
+11-06 12:31:09.013  5467  5467 D AutofillManager: view not autofillable - not passing ime action check
+11-06 12:31:09.016  5467  5496 E BufferQueueProducer: [SurfaceTexture-0-5467-0](id:155b00000001,api:1,p:5467,c:5467) cancelBuffer: BufferQueue has been abandoned
+11-06 12:31:09.527  5467  5486 D EGL_emulation: app_time_stats: avg=74.05ms min=19.41ms max=440.27ms count=16
+11-06 12:31:10.382   519   547 I am_pss  : [5467,10192,ai.ciel.companion.preview,40219648,34689024,335872,138874880,0,2,3]
+11-06 12:31:10.534  5467  5486 D EGL_emulation: app_time_stats: avg=37.81ms min=9.42ms max=66.62ms count=26
+11-06 12:31:10.556  5467  5820 D EGL_emulation: app_time_stats: avg=37.00ms min=26.41ms max=46.75ms count=28
+11-06 12:31:11.558  5467  5486 D EGL_emulation: app_time_stats: avg=36.16ms min=5.99ms max=68.27ms count=27
+11-06 12:31:11.576  5467  5820 D EGL_emulation: app_time_stats: avg=37.77ms min=28.61ms max=61.05ms count=27
+11-06 12:31:12.592  5467  5486 D EGL_emulation: app_time_stats: avg=35.61ms min=18.12ms max=71.10ms count=29
+11-06 12:31:12.615  5467  5820 D EGL_emulation: app_time_stats: avg=35.30ms min=26.54ms max=62.83ms count=29
+11-06 12:31:13.592  5467  5486 D EGL_emulation: app_time_stats: avg=37.52ms min=9.34ms max=90.83ms count=26
+11-06 12:31:13.615  5467  5820 D EGL_emulation: app_time_stats: avg=38.14ms min=25.57ms max=82.85ms count=26
+11-06 12:31:14.608  5467  5486 D EGL_emulation: app_time_stats: avg=38.93ms min=16.97ms max=84.66ms count=26
+11-06 12:31:14.625  5467  5820 D EGL_emulation: app_time_stats: avg=37.62ms min=25.90ms max=56.19ms count=26
+11-06 12:31:15.626  5467  5820 D EGL_emulation: app_time_stats: avg=39.98ms min=26.11ms max=105.08ms count=25
+11-06 12:31:15.644  5467  5486 D EGL_emulation: app_time_stats: avg=39.78ms min=27.40ms max=83.84ms count=26
+11-06 12:31:16.631  5467  5820 D EGL_emulation: app_time_stats: avg=35.88ms min=28.51ms max=51.88ms count=28
+11-06 12:31:16.650  5467  5486 D EGL_emulation: app_time_stats: avg=35.89ms min=18.61ms max=70.11ms count=28
+11-06 12:31:17.658  5467  5820 D EGL_emulation: app_time_stats: avg=43.87ms min=31.86ms max=64.28ms count=23
+11-06 12:31:17.674  5467  5486 D EGL_emulation: app_time_stats: avg=44.47ms min=18.66ms max=84.30ms count=23
+11-06 12:31:18.675  5467  5820 D EGL_emulation: app_time_stats: avg=46.56ms min=27.96ms max=104.29ms count=21
+11-06 12:31:18.691  5467  5486 D EGL_emulation: app_time_stats: avg=47.94ms min=16.54ms max=127.99ms count=21
+11-06 12:31:19.710  5467  5820 D EGL_emulation: app_time_stats: avg=36.96ms min=27.96ms max=52.21ms count=28
+11-06 12:31:19.733  5467  5486 D EGL_emulation: app_time_stats: avg=37.20ms min=26.48ms max=52.70ms count=28
+11-06 12:31:20.739  5467  5820 D EGL_emulation: app_time_stats: avg=44.40ms min=29.57ms max=80.05ms count=23
+11-06 12:31:20.776  5467  5486 D EGL_emulation: app_time_stats: avg=43.86ms min=10.44ms max=96.60ms count=23
+11-06 12:31:21.756  5467  5820 D EGL_emulation: app_time_stats: avg=46.21ms min=28.90ms max=73.86ms count=22
+11-06 12:31:21.817  5467  5486 D EGL_emulation: app_time_stats: avg=45.23ms min=30.04ms max=75.81ms count=23
+11-06 12:31:22.760  5467  5820 D EGL_emulation: app_time_stats: avg=40.18ms min=26.01ms max=68.08ms count=25
+11-06 12:31:22.822  5467  5486 D EGL_emulation: app_time_stats: avg=40.20ms min=26.50ms max=83.76ms count=25
+11-06 12:31:23.667   519   519 I sysui_multi_action: [757,907,758,10,806,ai.ciel.companion.preview,871,,908,com.google.android.gms,909,-1,1452,4,1454,1,1456,2123731924]
+11-06 12:31:23.667   519   519 I sysui_multi_action: [757,919,758,4,806,ai.ciel.companion.preview,871,,908,com.google.android.gms,1455,1,1456,2123731924]
+11-06 12:31:23.778  5467  5820 D EGL_emulation: app_time_stats: avg=42.14ms min=28.37ms max=69.92ms count=24
+11-06 12:31:23.824  5467  5486 D EGL_emulation: app_time_stats: avg=40.70ms min=10.20ms max=76.84ms count=24
+11-06 12:31:24.808  5467  5820 D EGL_emulation: app_time_stats: avg=36.77ms min=26.91ms max=47.93ms count=28
+11-06 12:31:24.825  5467  5486 D EGL_emulation: app_time_stats: avg=38.48ms min=21.96ms max=73.14ms count=26
+11-06 12:31:25.816  5467  5820 D EGL_emulation: app_time_stats: avg=37.32ms min=26.47ms max=72.40ms count=27
+11-06 12:31:25.843  5467  5486 D EGL_emulation: app_time_stats: avg=37.71ms min=26.98ms max=82.93ms count=27
+11-06 12:31:26.838  5467  5467 I ImeTracker: ai.ciel.companion.preview:af04d17f: onRequestHide at ORIGIN_CLIENT_HIDE_SOFT_INPUT reason HIDE_SOFT_INPUT
+11-06 12:31:26.839   519  2681 I ImeTracker: ai.ciel.companion.preview:af04d17f: onCancelled at PHASE_SERVER_SHOULD_HIDE
+11-06 12:31:26.852  5467  5486 D EGL_emulation: app_time_stats: avg=39.93ms min=15.20ms max=66.77ms count=25
+11-06 12:31:26.856  5467  5820 D EGL_emulation: app_time_stats: avg=40.26ms min=28.67ms max=80.90ms count=25
+11-06 12:31:26.891  5467  5820 E BufferQueueProducer: [SurfaceTexture-0-5467-1](id:155b00000002,api:1,p:5467,c:5467) cancelBuffer: BufferQueue has been abandoned
+11-06 12:31:26.941  5467  5467 D AutofillManager: notifyViewEnteredForFillDialog:1073741826
+11-06 12:31:36.028   519   547 I am_pss  : [5467,10192,ai.ciel.companion.preview,40630272,34557952,338944,140808192,0,2,3]
+11-06 12:31:39.403  5467  5467 I ImeTracker: ai.ciel.companion.preview:d40806c4: onRequestHide at ORIGIN_CLIENT_HIDE_SOFT_INPUT reason HIDE_SOFT_INPUT
+11-06 12:31:39.412   519   532 I ImeTracker: ai.ciel.companion.preview:d40806c4: onCancelled at PHASE_SERVER_SHOULD_HIDE
+11-06 12:31:39.417  5467  5486 D EGL_emulation: app_time_stats: avg=4183.40ms min=16.68ms max=12432.47ms count=3
+11-06 12:31:39.425  5467  5467 D AutofillManager: view not autofillable - not passing ime action check
+11-06 12:31:39.425  5467  5467 D AutofillManager: view not autofillable - not passing ime action check
+11-06 12:31:40.469  5467  5486 D EGL_emulation: app_time_stats: avg=49.32ms min=16.98ms max=354.59ms count=21
+11-06 12:31:40.864  5467  6709 D EGL_emulation: app_time_stats: avg=33.63ms min=25.37ms max=42.78ms count=31
+11-06 12:31:41.474  5467  5486 D EGL_emulation: app_time_stats: avg=32.52ms min=8.11ms max=57.82ms count=30
+11-06 12:31:41.869  5467  6709 D EGL_emulation: app_time_stats: avg=35.90ms min=28.72ms max=60.59ms count=28
+11-06 12:31:42.474  5467  5486 D EGL_emulation: app_time_stats: avg=34.48ms min=18.17ms max=63.12ms count=29
+11-06 12:31:42.903  5467  6709 D EGL_emulation: app_time_stats: avg=34.45ms min=27.23ms max=49.31ms count=30
+11-06 12:31:43.477  5467  5486 D EGL_emulation: app_time_stats: avg=35.82ms min=23.88ms max=61.63ms count=28
+11-06 12:31:43.927  5467  6709 D EGL_emulation: app_time_stats: avg=34.13ms min=26.10ms max=47.28ms count=30
+11-06 12:31:44.505  5467  5486 D EGL_emulation: app_time_stats: avg=35.42ms min=25.42ms max=61.72ms count=29
+11-06 12:31:44.929  5467  6709 D EGL_emulation: app_time_stats: avg=35.74ms min=27.81ms max=53.70ms count=28
+11-06 12:31:45.525  5467  5486 D EGL_emulation: app_time_stats: avg=35.91ms min=4.28ms max=69.50ms count=27

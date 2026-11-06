@@ -1,14 +1,16 @@
 # UI and avatar implementation notes
 
-Recorded 2026-11-06. These are source-level implementation and validation notes. The integration owner is running the build, tests and Android runtime checks centrally; this workstream has not launched a separate Gradle JVM.
+Recorded 2026-11-06. These are implementation handoff notes with final integration evidence. The integration owner ran the build, tests and Android runtime checks centrally; this workstream did not launch a separate Gradle JVM.
+
+Integration update: source `549ba53` passed all 423 unit tests, release lint and release assembly in CI `42213575554`. The actual original/Moss/Nova portraits and all 57 expression frames were rendered and visually inspected, with zero invalid-alpha pixels. Exact signed-r2 Android evidence comes from CI `42215450664` (7/9 full-run checks) and `42217850551` (5/5 targeted checks). Together they establish fresh install/launch, blank-key rejection, original avatar, Moss/Nova preview/save/restart, larger-text navigation and a wide viewport without app crash/ANR. The first run's failures remain recorded; no single full-suite pass, physical rotation or live audio test is claimed. [Renderer evidence](evidence/renderer-validation.json), [actual UI](previews/ciel-android-ui.png) and the [central ledger](README.md) hold the final results.
 
 ## Implemented
 
-- Added a native launcher home with Home, Companion and Setup tabs. Talk, Stop and text submission call the actual service APIs; recent messages and connection/task state are visible. An active Stop control remains reachable on every tab.
+- Added a native launcher home with Home, Avatar and Setup tabs. Talk, Stop and text submission call the actual service APIs; recent messages and connection/task state are visible. An active Stop control remains reachable on every tab. The original Companion label was shortened after actual 1.5-font screenshots showed a word wrap.
 - Basic Gemini setup needs one key and does not require overlay or Accessibility access. Microphone permission is requested when Talk is used; phone permissions and advanced overlay settings have explicit entry points.
 - Setup protects credentials from saved view state, autofill and screenshots. Pending service startup is cancelled when the Activity leaves the foreground; saved-key presence is cached rather than repeatedly decrypted by status polling.
 - Added a Companion studio with preview-before-save, labeled emoji/expression controls, automatic cycling through the 19 existing moods, and distinct Moss and Nova procedural designs. The original default avatar remains selectable and unchanged. The five disliked alternatives and their personas were removed from the registry.
-- Moss has mint coloring and leaf-shaped ears; Nova has lavender coloring and golden antennae. Both use the existing expression, gesture, idle and lip-motion engine. These designs exist in source; their rendered output still needs visual acceptance.
+- Moss has mint coloring and leaf-shaped ears; Nova has lavender coloring and golden antennae. Both use the existing expression, gesture, idle and lip-motion engine. Their actual portraits and 19-expression sheets have been inspected; live audio-driven animation still needs a working-key phone test.
 - Fixed stale/removed avatar names retaining the previous selection. Unknown or null saved names now restore the original. Each renderer snapshots its own look for animation and mesh generation, so a preview does not change the live assistant. Hidden/paused TextureViews stop issuing GPU frames.
 - Simplified Android settings and onboarding to direct Gemini Live or a user-configured model/hub. CodeFlying and Huoshan/Volcengine are no longer selectable Android providers or upsells. A single shared Google key field prevents hidden settings from overwriting the visible key.
 - Kept notebook controls available and added English/Chinese explanations that automatic reviews and background planning require Custom model. Gemini Live can read and update the notebook during conversations; its settings no longer silently imply those background features are active.
@@ -19,22 +21,22 @@ Recorded 2026-11-06. These are source-level implementation and validation notes.
 ## Source checks completed
 
 - `git diff --check`: passed at handoff.
-- English fallback and Chinese home resources: all 93 string names match. XML parsing succeeded; no duplicate string names in `values`, `values-en` or `values-zh`.
+- English fallback and Chinese home resources: all 96 final Home string names match. XML parsing succeeded; no duplicate string names in `values`, `values-en` or `values-zh`.
 - Original `ANDEE = BallLook(...)` declaration matches the starting source byte-for-byte. SHA-256: `ef13f7926f4a58e791c3a41f99f2d6c1f2d13c439e0180adfeec795826a47926`.
 - Calculated contrast ratios: white on primary green 6.44:1; selected green on pale green 5.45:1; day muted text on white 5.02:1; night secondary text 8.79:1; night selected mint 6.22:1. These are source color calculations, not screenshot or full accessibility certification.
-- Added four focused `BallLooksTest` cases: removed-name fallback, null fallback, independent animation geometry across global selection changes, and finite geometry through all 19 moods for both new companions. Execution is pending the centralized test run.
+- Added four focused `BallLooksTest` cases: removed-name fallback, null fallback, independent animation geometry across global selection changes, and finite geometry through all 19 moods for both new companions. All passed in the final centralized core test run.
 
-## Required integration/runtime checks
+## Handoff checklist and current status
 
-1. Compile the app and run `:core:test --tests net.kuafuai.andee.ui.ball.BallLooksTest` as part of the central test sequence.
-2. Inspect original, Moss and Nova actual renderer output across representative expressions. Check saved selection, temporary previews, hidden rendering, and Activity recreation.
-3. Exercise startup, key setup, permission denial/retry, Talk/Stop, text submission and tab changes while active. Test narrow screens, large font, landscape, keyboard navigation/IME and day/night appearance.
-4. Verify source/license assets and the application label. The manifest uses `${cielAppLabel}` so the canonical and preview packages can be distinguished by the integration build.
-5. Resolve legacy assistant identity outside this workstream: `LocalPrompt.kt` still contains “You are Andee”; `Selfhood.kt` has an Andee default. The new Home Save completes onboarding without the old Meet/name step. Initialize/migrate the default to Ciel while preserving a name the user deliberately chose.
+1. **Passed:** compile the app and run `BallLooksTest` as part of the complete central core test sequence.
+2. **Passed within recorded scope:** inspect all 57 actual expression frames and exercise saved selection, temporary previews and process restart. Rapid lifecycle/hidden-rendering stress remains unverified.
+3. **Partial:** startup, blank-key setup, large font and wide-viewport tabs passed. Permission denial/retry, active Talk/Stop, text submission, physical rotation/IME, TalkBack and full day/night acceptance need a target phone and valid key where applicable.
+4. **Passed:** source/license assets and application label. The manifest uses `${cielAppLabel}` so canonical and preview packages can be distinguished by the integration build.
+5. Integration resolved the legacy default assistant identity to Ciel while preserving names and personas the owner deliberately chose. The new Home Save completes onboarding without the old Meet/name step.
 
 ## Limits and follow-up candidates
 
 - No physical-phone interaction, APK installation, screenshot acceptance, measured audio latency or full TalkBack session was performed by this workstream. A successful source check does not prove those behaviors.
 - Upstream issue 34's touch mistargeting report lacks a device/reproduction; it cannot be marked fixed from these changes. Issue 36's Android 11 tablet portrait/landscape keyboard behavior needs runtime checks even with the input inset fixes.
 - Backdrop warm/reset concurrency and TextureView EGL failure/rapid surface replacement are remaining review candidates, not demonstrated fixes here.
-- The studio exposes all 19 existing engine moods, not every possible emoji or human expression. New characters are not ready for a visual-completion claim until their actual renderings are inspected.
+- The studio exposes all 19 existing engine moods, not every possible emoji or human expression. Actual shared-engine renderings have been inspected; the user's preference between the new designs is still their choice.

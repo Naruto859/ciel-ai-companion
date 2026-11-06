@@ -1,0 +1,2105 @@
+{
+  "status": "passed",
+  "serial": "emulator-5554",
+  "package": "ai.ciel.companion.preview",
+  "apk": "/home/runner/work/ciel-ai-companion/ciel-ai-companion/smoke-apk.apk",
+  "apk_sha256": "a2695f68f8151d4c44680e8b6d980a4ab9d96241c39ec185267c63c6d2211726",
+  "check_scope": "setup-layout",
+  "checks": [
+    {
+      "name": "fresh emulator and exact APK provenance",
+      "status": "passed",
+      "seconds": 6.72
+    },
+    {
+      "name": "Home launch, resumed PID and missing-key state",
+      "status": "passed",
+      "seconds": 14.95
+    },
+    {
+      "name": "missing-key setup route and blank-key rejection",
+      "status": "passed",
+      "seconds": 36.4
+    },
+    {
+      "name": "landscape viewport tabs",
+      "status": "passed",
+      "seconds": 56.01
+    },
+    {
+      "name": "app remains resumed without app FATAL/ANR",
+      "status": "passed",
+      "seconds": 0.88
+    }
+  ],
+  "captures": [
+    {
+      "name": "01-home",
+      "width": 1080,
+      "height": 1920,
+      "png_sha256": "5acc03854efbb404d3d087df78d6b3167005e59dc81cd5c75467e134250a9f63",
+      "xml_sha256": "fda7242603db12674d932dfe5ee9f7d25514b717814325d2411a1209b1ded619",
+      "secure_window_expected": false
+    },
+    {
+      "name": "02-setup-empty",
+      "capture_kind": "hierarchy_only",
+      "xml_sha256": "eb26a208b9234f970d09c46313e4b925403dbe0711e918de4768bbea77e39855",
+      "secure_window_expected": true,
+      "screenshot_omitted": "secure credential window"
+    },
+    {
+      "name": "03-setup-after-empty-save",
+      "capture_kind": "hierarchy_only",
+      "xml_sha256": "b6e11dc0325c58913b57c49f0d975f927291960337418b79c37705dd788b1858",
+      "secure_window_expected": true,
+      "screenshot_omitted": "secure credential window"
+    },
+    {
+      "name": "03-home-after-empty-save",
+      "width": 1080,
+      "height": 1920,
+      "png_sha256": "a2e21fec456f9b8664893439ab30c3b5ea2bddad78c9d4806a30fa4e161917b2",
+      "xml_sha256": "fda7242603db12674d932dfe5ee9f7d25514b717814325d2411a1209b1ded619",
+      "secure_window_expected": false
+    },
+    {
+      "name": "landscape-home",
+      "width": 1920,
+      "height": 1080,
+      "png_sha256": "2087462ab6bfd3738d719759abcdb29f14b9ac76a8adc6c331a3110561b3d817",
+      "xml_sha256": "6ea177f37fca340de577ec9f7fb8cb32d58cc24b0ad97a2f80b69c705797a5a0",
+      "secure_window_expected": false
+    },
+    {
+      "name": "landscape-companion",
+      "width": 1920,
+      "height": 1080,
+      "png_sha256": "07f8da147d87bced842c17497483c2cc20a6e953b02096893e7b97fcc281caa7",
+      "xml_sha256": "72c2cf454cbb4f67be0b0ae9bbec8ac38adc2fec8d813305e2e45ba5026c9cf3",
+      "secure_window_expected": false
+    },
+    {
+      "name": "landscape-setup",
+      "capture_kind": "hierarchy_only",
+      "xml_sha256": "c630a17c39b0b2b520403ca9e2a6c846d1b5eebdb816e024cda5a9a895668e5c",
+      "secure_window_expected": true,
+      "screenshot_omitted": "secure credential window"
+    }
+  ],
+  "actions": [
+    {
+      "adb": [
+        "get-state"
+      ],
+      "exit": 0,
+      "seconds": 0.0
+    },
+    {
+      "adb": [
+        "shell",
+        "getprop ro.kernel.qemu"
+      ],
+      "exit": 0,
+      "seconds": 0.05
+    },
+    {
+      "adb": [
+        "shell",
+        "getprop ro.boot.qemu"
+      ],
+      "exit": 0,
+      "seconds": 0.05
+    },
+    {
+      "adb": [
+        "shell",
+        "getprop sys.boot_completed"
+      ],
+      "exit": 0,
+      "seconds": 0.07
+    },
+    {
+      "adb": [
+        "shell",
+        "am get-current-user"
+      ],
+      "exit": 0,
+      "seconds": 0.31
+    },
+    {
+      "adb": [
+        "shell",
+        "pm list packages -u ai.ciel.companion.preview"
+      ],
+      "exit": 0,
+      "seconds": 0.31
+    },
+    {
+      "adb": [
+        "shell",
+        "getprop ro.build.version.sdk"
+      ],
+      "exit": 0,
+      "seconds": 0.04
+    },
+    {
+      "adb": [
+        "shell",
+        "getprop ro.product.model"
+      ],
+      "exit": 0,
+      "seconds": 0.03
+    },
+    {
+      "adb": [
+        "shell",
+        "getprop ro.product.cpu.abi"
+      ],
+      "exit": 0,
+      "seconds": 0.03
+    },
+    {
+      "adb": [
+        "shell",
+        "getprop ro.build.fingerprint"
+      ],
+      "exit": 0,
+      "seconds": 0.03
+    },
+    {
+      "adb": [
+        "install",
+        "--no-streaming",
+        "/home/runner/work/ciel-ai-companion/ciel-ai-companion/smoke-apk.apk"
+      ],
+      "exit": 0,
+      "seconds": 3.93
+    },
+    {
+      "adb": [
+        "shell",
+        "pm path ai.ciel.companion.preview"
+      ],
+      "exit": 0,
+      "seconds": 0.14
+    },
+    {
+      "adb": [
+        "pull",
+        "/data/app/~~xX1QRQIHuv6PyAVBt8dhbg==/ai.ciel.companion.preview-sPl6Hmtk9kC3yFMI_ePwyw==/base.apk",
+        "/tmp/ciel-smoke-apk-w64ugr48/installed.apk"
+      ],
+      "exit": 0,
+      "seconds": 0.08
+    },
+    {
+      "adb": [
+        "shell",
+        "wm user-rotation"
+      ],
+      "exit": 0,
+      "seconds": 0.09
+    },
+    {
+      "adb": [
+        "shell",
+        "wm fixed-to-user-rotation"
+      ],
+      "exit": 0,
+      "seconds": 0.09
+    },
+    {
+      "adb": [
+        "shell",
+        "wm size"
+      ],
+      "exit": 0,
+      "seconds": 0.09
+    },
+    {
+      "adb": [
+        "shell",
+        "settings get system accelerometer_rotation"
+      ],
+      "exit": 0,
+      "seconds": 0.08
+    },
+    {
+      "adb": [
+        "shell",
+        "settings get system user_rotation"
+      ],
+      "exit": 0,
+      "seconds": 0.1
+    },
+    {
+      "adb": [
+        "shell",
+        "wm fixed-to-user-rotation enabled"
+      ],
+      "exit": 0,
+      "seconds": 0.1
+    },
+    {
+      "adb": [
+        "shell",
+        "wm user-rotation lock 0"
+      ],
+      "exit": 0,
+      "seconds": 0.08
+    },
+    {
+      "adb": [
+        "shell",
+        "settings get system font_scale"
+      ],
+      "exit": 0,
+      "seconds": 0.07
+    },
+    {
+      "adb": [
+        "shell",
+        "settings put system font_scale 1.0"
+      ],
+      "exit": 0,
+      "seconds": 0.07
+    },
+    {
+      "adb": [
+        "shell",
+        "settings get global window_animation_scale"
+      ],
+      "exit": 0,
+      "seconds": 0.08
+    },
+    {
+      "adb": [
+        "shell",
+        "settings put global window_animation_scale 0"
+      ],
+      "exit": 0,
+      "seconds": 0.17
+    },
+    {
+      "adb": [
+        "shell",
+        "settings get global transition_animation_scale"
+      ],
+      "exit": 0,
+      "seconds": 0.17
+    },
+    {
+      "adb": [
+        "shell",
+        "settings put global transition_animation_scale 0"
+      ],
+      "exit": 0,
+      "seconds": 0.17
+    },
+    {
+      "adb": [
+        "shell",
+        "settings get global animator_duration_scale"
+      ],
+      "exit": 0,
+      "seconds": 0.05
+    },
+    {
+      "adb": [
+        "shell",
+        "settings put global animator_duration_scale 0"
+      ],
+      "exit": 0,
+      "seconds": 0.07
+    },
+    {
+      "adb": [
+        "shell",
+        "date '+%m-%d %H:%M:%S.000'"
+      ],
+      "exit": 0,
+      "seconds": 0.04
+    },
+    {
+      "adb": [
+        "shell",
+        "input keyevent KEYCODE_WAKEUP"
+      ],
+      "exit": 0,
+      "seconds": 0.07
+    },
+    {
+      "adb": [
+        "shell",
+        "wm dismiss-keyguard"
+      ],
+      "exit": 0,
+      "seconds": 0.05
+    },
+    {
+      "adb": [
+        "shell",
+        "am force-stop ai.ciel.companion.preview"
+      ],
+      "exit": 0,
+      "seconds": 0.09
+    },
+    {
+      "adb": [
+        "shell",
+        "am start -W -n ai.ciel.companion.preview/net.kuafuai.andee.ui.CielHomeActivity"
+      ],
+      "exit": 0,
+      "seconds": 3.13
+    },
+    {
+      "adb": [
+        "shell",
+        "dumpsys activity activities"
+      ],
+      "exit": 0,
+      "seconds": 0.16
+    },
+    {
+      "adb": [
+        "shell",
+        "pidof ai.ciel.companion.preview"
+      ],
+      "exit": 0,
+      "seconds": 0.09
+    },
+    {
+      "adb": [
+        "shell",
+        "dumpsys activity activities"
+      ],
+      "exit": 0,
+      "seconds": 0.09
+    },
+    {
+      "adb": [
+        "shell",
+        "pidof ai.ciel.companion.preview"
+      ],
+      "exit": 0,
+      "seconds": 0.09
+    },
+    {
+      "adb": [
+        "shell",
+        "rm -f /data/local/tmp/ciel-smoke-551c5c6d574d463da83c4ee5f8f6ea2e.xml"
+      ],
+      "exit": 0,
+      "seconds": 0.04
+    },
+    {
+      "adb": [
+        "shell",
+        "uiautomator dump --compressed /data/local/tmp/ciel-smoke-551c5c6d574d463da83c4ee5f8f6ea2e.xml"
+      ],
+      "exit": 0,
+      "seconds": 3.24
+    },
+    {
+      "adb": [
+        "exec-out",
+        "cat /data/local/tmp/ciel-smoke-551c5c6d574d463da83c4ee5f8f6ea2e.xml"
+      ],
+      "exit": 0,
+      "seconds": 0.07
+    },
+    {
+      "adb": [
+        "shell",
+        "dumpsys activity activities"
+      ],
+      "exit": 0,
+      "seconds": 0.05
+    },
+    {
+      "adb": [
+        "shell",
+        "pidof ai.ciel.companion.preview"
+      ],
+      "exit": 0,
+      "seconds": 0.08
+    },
+    {
+      "adb": [
+        "shell",
+        "rm -f /data/local/tmp/ciel-smoke-551c5c6d574d463da83c4ee5f8f6ea2e.xml"
+      ],
+      "exit": 0,
+      "seconds": 0.07
+    },
+    {
+      "adb": [
+        "shell",
+        "uiautomator dump --compressed /data/local/tmp/ciel-smoke-551c5c6d574d463da83c4ee5f8f6ea2e.xml"
+      ],
+      "exit": 0,
+      "seconds": 2.69
+    },
+    {
+      "adb": [
+        "exec-out",
+        "cat /data/local/tmp/ciel-smoke-551c5c6d574d463da83c4ee5f8f6ea2e.xml"
+      ],
+      "exit": 0,
+      "seconds": 0.05
+    },
+    {
+      "adb": [
+        "exec-out",
+        "screencap -p"
+      ],
+      "exit": 0,
+      "seconds": 1.05
+    },
+    {
+      "adb": [
+        "shell",
+        "dumpsys activity activities"
+      ],
+      "exit": 0,
+      "seconds": 0.08
+    },
+    {
+      "adb": [
+        "shell",
+        "pidof ai.ciel.companion.preview"
+      ],
+      "exit": 0,
+      "seconds": 0.11
+    },
+    {
+      "adb": [
+        "shell",
+        "rm -f /data/local/tmp/ciel-smoke-551c5c6d574d463da83c4ee5f8f6ea2e.xml"
+      ],
+      "exit": 0,
+      "seconds": 0.12
+    },
+    {
+      "adb": [
+        "shell",
+        "uiautomator dump --compressed /data/local/tmp/ciel-smoke-551c5c6d574d463da83c4ee5f8f6ea2e.xml"
+      ],
+      "exit": 0,
+      "seconds": 2.57
+    },
+    {
+      "adb": [
+        "exec-out",
+        "cat /data/local/tmp/ciel-smoke-551c5c6d574d463da83c4ee5f8f6ea2e.xml"
+      ],
+      "exit": 0,
+      "seconds": 0.07
+    },
+    {
+      "adb": [
+        "shell",
+        "am force-stop ai.ciel.companion.preview"
+      ],
+      "exit": 0,
+      "seconds": 0.21
+    },
+    {
+      "adb": [
+        "shell",
+        "am start -W -n ai.ciel.companion.preview/net.kuafuai.andee.ui.CielHomeActivity"
+      ],
+      "exit": 0,
+      "seconds": 1.35
+    },
+    {
+      "adb": [
+        "shell",
+        "dumpsys activity activities"
+      ],
+      "exit": 0,
+      "seconds": 0.19
+    },
+    {
+      "adb": [
+        "shell",
+        "pidof ai.ciel.companion.preview"
+      ],
+      "exit": 0,
+      "seconds": 0.15
+    },
+    {
+      "adb": [
+        "shell",
+        "dumpsys activity activities"
+      ],
+      "exit": 0,
+      "seconds": 0.04
+    },
+    {
+      "adb": [
+        "shell",
+        "pidof ai.ciel.companion.preview"
+      ],
+      "exit": 0,
+      "seconds": 0.04
+    },
+    {
+      "adb": [
+        "shell",
+        "rm -f /data/local/tmp/ciel-smoke-551c5c6d574d463da83c4ee5f8f6ea2e.xml"
+      ],
+      "exit": 0,
+      "seconds": 0.04
+    },
+    {
+      "adb": [
+        "shell",
+        "uiautomator dump --compressed /data/local/tmp/ciel-smoke-551c5c6d574d463da83c4ee5f8f6ea2e.xml"
+      ],
+      "exit": 0,
+      "seconds": 3.24
+    },
+    {
+      "adb": [
+        "exec-out",
+        "cat /data/local/tmp/ciel-smoke-551c5c6d574d463da83c4ee5f8f6ea2e.xml"
+      ],
+      "exit": 0,
+      "seconds": 0.05
+    },
+    {
+      "adb": [
+        "shell",
+        "dumpsys activity activities"
+      ],
+      "exit": 0,
+      "seconds": 0.07
+    },
+    {
+      "adb": [
+        "shell",
+        "pidof ai.ciel.companion.preview"
+      ],
+      "exit": 0,
+      "seconds": 0.05
+    },
+    {
+      "adb": [
+        "shell",
+        "rm -f /data/local/tmp/ciel-smoke-551c5c6d574d463da83c4ee5f8f6ea2e.xml"
+      ],
+      "exit": 0,
+      "seconds": 0.13
+    },
+    {
+      "adb": [
+        "shell",
+        "uiautomator dump --compressed /data/local/tmp/ciel-smoke-551c5c6d574d463da83c4ee5f8f6ea2e.xml"
+      ],
+      "exit": 0,
+      "seconds": 2.97
+    },
+    {
+      "adb": [
+        "exec-out",
+        "cat /data/local/tmp/ciel-smoke-551c5c6d574d463da83c4ee5f8f6ea2e.xml"
+      ],
+      "exit": 0,
+      "seconds": 0.1
+    },
+    {
+      "adb": [
+        "shell",
+        "dumpsys activity activities"
+      ],
+      "exit": 0,
+      "seconds": 0.11
+    },
+    {
+      "adb": [
+        "shell",
+        "pidof ai.ciel.companion.preview"
+      ],
+      "exit": 0,
+      "seconds": 0.08
+    },
+    {
+      "adb": [
+        "shell",
+        "input tap 540 1335"
+      ],
+      "exit": 0,
+      "seconds": 0.21
+    },
+    {
+      "adb": [
+        "shell",
+        "dumpsys activity activities"
+      ],
+      "exit": 0,
+      "seconds": 0.09
+    },
+    {
+      "adb": [
+        "shell",
+        "pidof ai.ciel.companion.preview"
+      ],
+      "exit": 0,
+      "seconds": 0.06
+    },
+    {
+      "adb": [
+        "shell",
+        "rm -f /data/local/tmp/ciel-smoke-551c5c6d574d463da83c4ee5f8f6ea2e.xml"
+      ],
+      "exit": 0,
+      "seconds": 0.04
+    },
+    {
+      "adb": [
+        "shell",
+        "uiautomator dump --compressed /data/local/tmp/ciel-smoke-551c5c6d574d463da83c4ee5f8f6ea2e.xml"
+      ],
+      "exit": 0,
+      "seconds": 2.47
+    },
+    {
+      "adb": [
+        "exec-out",
+        "cat /data/local/tmp/ciel-smoke-551c5c6d574d463da83c4ee5f8f6ea2e.xml"
+      ],
+      "exit": 0,
+      "seconds": 0.04
+    },
+    {
+      "adb": [
+        "shell",
+        "dumpsys activity activities"
+      ],
+      "exit": 0,
+      "seconds": 0.05
+    },
+    {
+      "adb": [
+        "shell",
+        "pidof ai.ciel.companion.preview"
+      ],
+      "exit": 0,
+      "seconds": 0.06
+    },
+    {
+      "adb": [
+        "shell",
+        "rm -f /data/local/tmp/ciel-smoke-551c5c6d574d463da83c4ee5f8f6ea2e.xml"
+      ],
+      "exit": 0,
+      "seconds": 0.05
+    },
+    {
+      "adb": [
+        "shell",
+        "uiautomator dump --compressed /data/local/tmp/ciel-smoke-551c5c6d574d463da83c4ee5f8f6ea2e.xml"
+      ],
+      "exit": 0,
+      "seconds": 2.49
+    },
+    {
+      "adb": [
+        "exec-out",
+        "cat /data/local/tmp/ciel-smoke-551c5c6d574d463da83c4ee5f8f6ea2e.xml"
+      ],
+      "exit": 0,
+      "seconds": 0.03
+    },
+    {
+      "adb": [
+        "shell",
+        "dumpsys activity activities"
+      ],
+      "exit": 0,
+      "seconds": 0.03
+    },
+    {
+      "adb": [
+        "shell",
+        "pidof ai.ciel.companion.preview"
+      ],
+      "exit": 0,
+      "seconds": 0.03
+    },
+    {
+      "adb": [
+        "shell",
+        "rm -f /data/local/tmp/ciel-smoke-551c5c6d574d463da83c4ee5f8f6ea2e.xml"
+      ],
+      "exit": 0,
+      "seconds": 0.02
+    },
+    {
+      "adb": [
+        "shell",
+        "uiautomator dump --compressed /data/local/tmp/ciel-smoke-551c5c6d574d463da83c4ee5f8f6ea2e.xml"
+      ],
+      "exit": 0,
+      "seconds": 2.23
+    },
+    {
+      "adb": [
+        "exec-out",
+        "cat /data/local/tmp/ciel-smoke-551c5c6d574d463da83c4ee5f8f6ea2e.xml"
+      ],
+      "exit": 0,
+      "seconds": 0.04
+    },
+    {
+      "adb": [
+        "shell",
+        "dumpsys activity activities"
+      ],
+      "exit": 0,
+      "seconds": 0.05
+    },
+    {
+      "adb": [
+        "shell",
+        "pidof ai.ciel.companion.preview"
+      ],
+      "exit": 0,
+      "seconds": 0.02
+    },
+    {
+      "adb": [
+        "shell",
+        "input tap 540 1373"
+      ],
+      "exit": 0,
+      "seconds": 0.05
+    },
+    {
+      "adb": [
+        "shell",
+        "dumpsys activity activities"
+      ],
+      "exit": 0,
+      "seconds": 0.04
+    },
+    {
+      "adb": [
+        "shell",
+        "pidof ai.ciel.companion.preview"
+      ],
+      "exit": 0,
+      "seconds": 0.03
+    },
+    {
+      "adb": [
+        "shell",
+        "rm -f /data/local/tmp/ciel-smoke-551c5c6d574d463da83c4ee5f8f6ea2e.xml"
+      ],
+      "exit": 0,
+      "seconds": 0.03
+    },
+    {
+      "adb": [
+        "shell",
+        "uiautomator dump --compressed /data/local/tmp/ciel-smoke-551c5c6d574d463da83c4ee5f8f6ea2e.xml"
+      ],
+      "exit": 0,
+      "seconds": 2.32
+    },
+    {
+      "adb": [
+        "exec-out",
+        "cat /data/local/tmp/ciel-smoke-551c5c6d574d463da83c4ee5f8f6ea2e.xml"
+      ],
+      "exit": 0,
+      "seconds": 0.02
+    },
+    {
+      "adb": [
+        "shell",
+        "dumpsys activity activities"
+      ],
+      "exit": 0,
+      "seconds": 0.03
+    },
+    {
+      "adb": [
+        "shell",
+        "pidof ai.ciel.companion.preview"
+      ],
+      "exit": 0,
+      "seconds": 0.02
+    },
+    {
+      "adb": [
+        "shell",
+        "rm -f /data/local/tmp/ciel-smoke-551c5c6d574d463da83c4ee5f8f6ea2e.xml"
+      ],
+      "exit": 0,
+      "seconds": 0.02
+    },
+    {
+      "adb": [
+        "shell",
+        "uiautomator dump --compressed /data/local/tmp/ciel-smoke-551c5c6d574d463da83c4ee5f8f6ea2e.xml"
+      ],
+      "exit": 0,
+      "seconds": 2.11
+    },
+    {
+      "adb": [
+        "exec-out",
+        "cat /data/local/tmp/ciel-smoke-551c5c6d574d463da83c4ee5f8f6ea2e.xml"
+      ],
+      "exit": 0,
+      "seconds": 0.05
+    },
+    {
+      "adb": [
+        "shell",
+        "dumpsys activity activities"
+      ],
+      "exit": 0,
+      "seconds": 0.03
+    },
+    {
+      "adb": [
+        "shell",
+        "pidof ai.ciel.companion.preview"
+      ],
+      "exit": 0,
+      "seconds": 0.02
+    },
+    {
+      "adb": [
+        "shell",
+        "rm -f /data/local/tmp/ciel-smoke-551c5c6d574d463da83c4ee5f8f6ea2e.xml"
+      ],
+      "exit": 0,
+      "seconds": 0.01
+    },
+    {
+      "adb": [
+        "shell",
+        "uiautomator dump --compressed /data/local/tmp/ciel-smoke-551c5c6d574d463da83c4ee5f8f6ea2e.xml"
+      ],
+      "exit": 0,
+      "seconds": 2.04
+    },
+    {
+      "adb": [
+        "exec-out",
+        "cat /data/local/tmp/ciel-smoke-551c5c6d574d463da83c4ee5f8f6ea2e.xml"
+      ],
+      "exit": 0,
+      "seconds": 0.02
+    },
+    {
+      "adb": [
+        "shell",
+        "am force-stop ai.ciel.companion.preview"
+      ],
+      "exit": 0,
+      "seconds": 0.09
+    },
+    {
+      "adb": [
+        "shell",
+        "am start -W -n ai.ciel.companion.preview/net.kuafuai.andee.ui.CielHomeActivity"
+      ],
+      "exit": 0,
+      "seconds": 1.42
+    },
+    {
+      "adb": [
+        "shell",
+        "dumpsys activity activities"
+      ],
+      "exit": 0,
+      "seconds": 0.24
+    },
+    {
+      "adb": [
+        "shell",
+        "pidof ai.ciel.companion.preview"
+      ],
+      "exit": 0,
+      "seconds": 0.02
+    },
+    {
+      "adb": [
+        "shell",
+        "dumpsys activity activities"
+      ],
+      "exit": 0,
+      "seconds": 0.04
+    },
+    {
+      "adb": [
+        "shell",
+        "pidof ai.ciel.companion.preview"
+      ],
+      "exit": 0,
+      "seconds": 0.04
+    },
+    {
+      "adb": [
+        "shell",
+        "rm -f /data/local/tmp/ciel-smoke-551c5c6d574d463da83c4ee5f8f6ea2e.xml"
+      ],
+      "exit": 0,
+      "seconds": 0.02
+    },
+    {
+      "adb": [
+        "shell",
+        "uiautomator dump --compressed /data/local/tmp/ciel-smoke-551c5c6d574d463da83c4ee5f8f6ea2e.xml"
+      ],
+      "exit": 0,
+      "seconds": 2.25
+    },
+    {
+      "adb": [
+        "exec-out",
+        "cat /data/local/tmp/ciel-smoke-551c5c6d574d463da83c4ee5f8f6ea2e.xml"
+      ],
+      "exit": 0,
+      "seconds": 0.05
+    },
+    {
+      "adb": [
+        "shell",
+        "dumpsys activity activities"
+      ],
+      "exit": 0,
+      "seconds": 0.14
+    },
+    {
+      "adb": [
+        "shell",
+        "pidof ai.ciel.companion.preview"
+      ],
+      "exit": 0,
+      "seconds": 0.06
+    },
+    {
+      "adb": [
+        "shell",
+        "rm -f /data/local/tmp/ciel-smoke-551c5c6d574d463da83c4ee5f8f6ea2e.xml"
+      ],
+      "exit": 0,
+      "seconds": 0.04
+    },
+    {
+      "adb": [
+        "shell",
+        "uiautomator dump --compressed /data/local/tmp/ciel-smoke-551c5c6d574d463da83c4ee5f8f6ea2e.xml"
+      ],
+      "exit": 0,
+      "seconds": 2.59
+    },
+    {
+      "adb": [
+        "exec-out",
+        "cat /data/local/tmp/ciel-smoke-551c5c6d574d463da83c4ee5f8f6ea2e.xml"
+      ],
+      "exit": 0,
+      "seconds": 0.12
+    },
+    {
+      "adb": [
+        "shell",
+        "dumpsys activity activities"
+      ],
+      "exit": 0,
+      "seconds": 0.13
+    },
+    {
+      "adb": [
+        "shell",
+        "pidof ai.ciel.companion.preview"
+      ],
+      "exit": 0,
+      "seconds": 0.08
+    },
+    {
+      "adb": [
+        "shell",
+        "rm -f /data/local/tmp/ciel-smoke-551c5c6d574d463da83c4ee5f8f6ea2e.xml"
+      ],
+      "exit": 0,
+      "seconds": 0.09
+    },
+    {
+      "adb": [
+        "shell",
+        "uiautomator dump --compressed /data/local/tmp/ciel-smoke-551c5c6d574d463da83c4ee5f8f6ea2e.xml"
+      ],
+      "exit": 0,
+      "seconds": 2.65
+    },
+    {
+      "adb": [
+        "exec-out",
+        "cat /data/local/tmp/ciel-smoke-551c5c6d574d463da83c4ee5f8f6ea2e.xml"
+      ],
+      "exit": 0,
+      "seconds": 0.03
+    },
+    {
+      "adb": [
+        "exec-out",
+        "screencap -p"
+      ],
+      "exit": 0,
+      "seconds": 0.81
+    },
+    {
+      "adb": [
+        "shell",
+        "settings put system font_scale 1.0"
+      ],
+      "exit": 0,
+      "seconds": 0.1
+    },
+    {
+      "adb": [
+        "shell",
+        "wm user-rotation lock 0"
+      ],
+      "exit": 0,
+      "seconds": 0.13
+    },
+    {
+      "adb": [
+        "shell",
+        "wm size 1920x1080"
+      ],
+      "exit": 0,
+      "seconds": 0.2
+    },
+    {
+      "adb": [
+        "shell",
+        "wm size"
+      ],
+      "exit": 0,
+      "seconds": 0.04
+    },
+    {
+      "adb": [
+        "shell",
+        "wm user-rotation"
+      ],
+      "exit": 0,
+      "seconds": 0.21
+    },
+    {
+      "adb": [
+        "shell",
+        "wm fixed-to-user-rotation"
+      ],
+      "exit": 0,
+      "seconds": 0.05
+    },
+    {
+      "adb": [
+        "shell",
+        "am force-stop ai.ciel.companion.preview"
+      ],
+      "exit": 0,
+      "seconds": 0.17
+    },
+    {
+      "adb": [
+        "shell",
+        "am start -W -n ai.ciel.companion.preview/net.kuafuai.andee.ui.CielHomeActivity"
+      ],
+      "exit": 0,
+      "seconds": 0.81
+    },
+    {
+      "adb": [
+        "shell",
+        "dumpsys activity activities"
+      ],
+      "exit": 0,
+      "seconds": 0.1
+    },
+    {
+      "adb": [
+        "shell",
+        "pidof ai.ciel.companion.preview"
+      ],
+      "exit": 0,
+      "seconds": 0.05
+    },
+    {
+      "adb": [
+        "shell",
+        "dumpsys activity activities"
+      ],
+      "exit": 0,
+      "seconds": 0.05
+    },
+    {
+      "adb": [
+        "shell",
+        "pidof ai.ciel.companion.preview"
+      ],
+      "exit": 0,
+      "seconds": 0.03
+    },
+    {
+      "adb": [
+        "shell",
+        "rm -f /data/local/tmp/ciel-smoke-551c5c6d574d463da83c4ee5f8f6ea2e.xml"
+      ],
+      "exit": 0,
+      "seconds": 0.02
+    },
+    {
+      "adb": [
+        "shell",
+        "uiautomator dump --compressed /data/local/tmp/ciel-smoke-551c5c6d574d463da83c4ee5f8f6ea2e.xml"
+      ],
+      "exit": 0,
+      "seconds": 2.24
+    },
+    {
+      "adb": [
+        "exec-out",
+        "cat /data/local/tmp/ciel-smoke-551c5c6d574d463da83c4ee5f8f6ea2e.xml"
+      ],
+      "exit": 0,
+      "seconds": 0.09
+    },
+    {
+      "adb": [
+        "exec-out",
+        "screencap -p"
+      ],
+      "exit": 0,
+      "seconds": 0.82
+    },
+    {
+      "adb": [
+        "shell",
+        "dumpsys activity activities"
+      ],
+      "exit": 0,
+      "seconds": 0.09
+    },
+    {
+      "adb": [
+        "shell",
+        "pidof ai.ciel.companion.preview"
+      ],
+      "exit": 0,
+      "seconds": 0.05
+    },
+    {
+      "adb": [
+        "shell",
+        "rm -f /data/local/tmp/ciel-smoke-551c5c6d574d463da83c4ee5f8f6ea2e.xml"
+      ],
+      "exit": 0,
+      "seconds": 0.07
+    },
+    {
+      "adb": [
+        "shell",
+        "uiautomator dump --compressed /data/local/tmp/ciel-smoke-551c5c6d574d463da83c4ee5f8f6ea2e.xml"
+      ],
+      "exit": 0,
+      "seconds": 2.75
+    },
+    {
+      "adb": [
+        "exec-out",
+        "cat /data/local/tmp/ciel-smoke-551c5c6d574d463da83c4ee5f8f6ea2e.xml"
+      ],
+      "exit": 0,
+      "seconds": 0.04
+    },
+    {
+      "adb": [
+        "shell",
+        "input swipe 960 379 960 687 350"
+      ],
+      "exit": 0,
+      "seconds": 0.46
+    },
+    {
+      "adb": [
+        "shell",
+        "dumpsys activity activities"
+      ],
+      "exit": 0,
+      "seconds": 0.18
+    },
+    {
+      "adb": [
+        "shell",
+        "pidof ai.ciel.companion.preview"
+      ],
+      "exit": 0,
+      "seconds": 0.04
+    },
+    {
+      "adb": [
+        "shell",
+        "rm -f /data/local/tmp/ciel-smoke-551c5c6d574d463da83c4ee5f8f6ea2e.xml"
+      ],
+      "exit": 0,
+      "seconds": 0.07
+    },
+    {
+      "adb": [
+        "shell",
+        "uiautomator dump --compressed /data/local/tmp/ciel-smoke-551c5c6d574d463da83c4ee5f8f6ea2e.xml"
+      ],
+      "exit": 0,
+      "seconds": 2.73
+    },
+    {
+      "adb": [
+        "exec-out",
+        "cat /data/local/tmp/ciel-smoke-551c5c6d574d463da83c4ee5f8f6ea2e.xml"
+      ],
+      "exit": 0,
+      "seconds": 0.04
+    },
+    {
+      "adb": [
+        "shell",
+        "dumpsys activity activities"
+      ],
+      "exit": 0,
+      "seconds": 0.07
+    },
+    {
+      "adb": [
+        "shell",
+        "pidof ai.ciel.companion.preview"
+      ],
+      "exit": 0,
+      "seconds": 0.05
+    },
+    {
+      "adb": [
+        "shell",
+        "rm -f /data/local/tmp/ciel-smoke-551c5c6d574d463da83c4ee5f8f6ea2e.xml"
+      ],
+      "exit": 0,
+      "seconds": 0.02
+    },
+    {
+      "adb": [
+        "shell",
+        "uiautomator dump --compressed /data/local/tmp/ciel-smoke-551c5c6d574d463da83c4ee5f8f6ea2e.xml"
+      ],
+      "exit": 0,
+      "seconds": 2.45
+    },
+    {
+      "adb": [
+        "exec-out",
+        "cat /data/local/tmp/ciel-smoke-551c5c6d574d463da83c4ee5f8f6ea2e.xml"
+      ],
+      "exit": 0,
+      "seconds": 0.1
+    },
+    {
+      "adb": [
+        "exec-out",
+        "screencap -p"
+      ],
+      "exit": 0,
+      "seconds": 0.72
+    },
+    {
+      "adb": [
+        "shell",
+        "dumpsys activity activities"
+      ],
+      "exit": 0,
+      "seconds": 0.08
+    },
+    {
+      "adb": [
+        "shell",
+        "pidof ai.ciel.companion.preview"
+      ],
+      "exit": 0,
+      "seconds": 0.08
+    },
+    {
+      "adb": [
+        "shell",
+        "rm -f /data/local/tmp/ciel-smoke-551c5c6d574d463da83c4ee5f8f6ea2e.xml"
+      ],
+      "exit": 0,
+      "seconds": 0.07
+    },
+    {
+      "adb": [
+        "shell",
+        "uiautomator dump --compressed /data/local/tmp/ciel-smoke-551c5c6d574d463da83c4ee5f8f6ea2e.xml"
+      ],
+      "exit": 0,
+      "seconds": 2.48
+    },
+    {
+      "adb": [
+        "exec-out",
+        "cat /data/local/tmp/ciel-smoke-551c5c6d574d463da83c4ee5f8f6ea2e.xml"
+      ],
+      "exit": 0,
+      "seconds": 0.08
+    },
+    {
+      "adb": [
+        "shell",
+        "dumpsys activity activities"
+      ],
+      "exit": 0,
+      "seconds": 0.09
+    },
+    {
+      "adb": [
+        "shell",
+        "pidof ai.ciel.companion.preview"
+      ],
+      "exit": 0,
+      "seconds": 0.09
+    },
+    {
+      "adb": [
+        "shell",
+        "input tap 959 928"
+      ],
+      "exit": 0,
+      "seconds": 0.06
+    },
+    {
+      "adb": [
+        "shell",
+        "dumpsys activity activities"
+      ],
+      "exit": 0,
+      "seconds": 0.04
+    },
+    {
+      "adb": [
+        "shell",
+        "pidof ai.ciel.companion.preview"
+      ],
+      "exit": 0,
+      "seconds": 0.02
+    },
+    {
+      "adb": [
+        "shell",
+        "rm -f /data/local/tmp/ciel-smoke-551c5c6d574d463da83c4ee5f8f6ea2e.xml"
+      ],
+      "exit": 0,
+      "seconds": 0.02
+    },
+    {
+      "adb": [
+        "shell",
+        "uiautomator dump --compressed /data/local/tmp/ciel-smoke-551c5c6d574d463da83c4ee5f8f6ea2e.xml"
+      ],
+      "exit": 0,
+      "seconds": 2.55
+    },
+    {
+      "adb": [
+        "exec-out",
+        "cat /data/local/tmp/ciel-smoke-551c5c6d574d463da83c4ee5f8f6ea2e.xml"
+      ],
+      "exit": 0,
+      "seconds": 0.1
+    },
+    {
+      "adb": [
+        "shell",
+        "dumpsys activity activities"
+      ],
+      "exit": 0,
+      "seconds": 0.19
+    },
+    {
+      "adb": [
+        "shell",
+        "pidof ai.ciel.companion.preview"
+      ],
+      "exit": 0,
+      "seconds": 0.08
+    },
+    {
+      "adb": [
+        "shell",
+        "rm -f /data/local/tmp/ciel-smoke-551c5c6d574d463da83c4ee5f8f6ea2e.xml"
+      ],
+      "exit": 0,
+      "seconds": 0.1
+    },
+    {
+      "adb": [
+        "shell",
+        "uiautomator dump --compressed /data/local/tmp/ciel-smoke-551c5c6d574d463da83c4ee5f8f6ea2e.xml"
+      ],
+      "exit": 0,
+      "seconds": 2.69
+    },
+    {
+      "adb": [
+        "exec-out",
+        "cat /data/local/tmp/ciel-smoke-551c5c6d574d463da83c4ee5f8f6ea2e.xml"
+      ],
+      "exit": 0,
+      "seconds": 0.06
+    },
+    {
+      "adb": [
+        "shell",
+        "input swipe 960 379 960 687 350"
+      ],
+      "exit": 0,
+      "seconds": 0.47
+    },
+    {
+      "adb": [
+        "shell",
+        "dumpsys activity activities"
+      ],
+      "exit": 0,
+      "seconds": 0.1
+    },
+    {
+      "adb": [
+        "shell",
+        "pidof ai.ciel.companion.preview"
+      ],
+      "exit": 0,
+      "seconds": 0.06
+    },
+    {
+      "adb": [
+        "shell",
+        "rm -f /data/local/tmp/ciel-smoke-551c5c6d574d463da83c4ee5f8f6ea2e.xml"
+      ],
+      "exit": 0,
+      "seconds": 0.06
+    },
+    {
+      "adb": [
+        "shell",
+        "uiautomator dump --compressed /data/local/tmp/ciel-smoke-551c5c6d574d463da83c4ee5f8f6ea2e.xml"
+      ],
+      "exit": 0,
+      "seconds": 2.48
+    },
+    {
+      "adb": [
+        "exec-out",
+        "cat /data/local/tmp/ciel-smoke-551c5c6d574d463da83c4ee5f8f6ea2e.xml"
+      ],
+      "exit": 0,
+      "seconds": 0.07
+    },
+    {
+      "adb": [
+        "shell",
+        "dumpsys activity activities"
+      ],
+      "exit": 0,
+      "seconds": 0.12
+    },
+    {
+      "adb": [
+        "shell",
+        "pidof ai.ciel.companion.preview"
+      ],
+      "exit": 0,
+      "seconds": 0.06
+    },
+    {
+      "adb": [
+        "shell",
+        "rm -f /data/local/tmp/ciel-smoke-551c5c6d574d463da83c4ee5f8f6ea2e.xml"
+      ],
+      "exit": 0,
+      "seconds": 0.09
+    },
+    {
+      "adb": [
+        "shell",
+        "uiautomator dump --compressed /data/local/tmp/ciel-smoke-551c5c6d574d463da83c4ee5f8f6ea2e.xml"
+      ],
+      "exit": 0,
+      "seconds": 2.78
+    },
+    {
+      "adb": [
+        "exec-out",
+        "cat /data/local/tmp/ciel-smoke-551c5c6d574d463da83c4ee5f8f6ea2e.xml"
+      ],
+      "exit": 0,
+      "seconds": 0.07
+    },
+    {
+      "adb": [
+        "exec-out",
+        "screencap -p"
+      ],
+      "exit": 0,
+      "seconds": 0.62
+    },
+    {
+      "adb": [
+        "shell",
+        "dumpsys activity activities"
+      ],
+      "exit": 0,
+      "seconds": 0.05
+    },
+    {
+      "adb": [
+        "shell",
+        "pidof ai.ciel.companion.preview"
+      ],
+      "exit": 0,
+      "seconds": 0.1
+    },
+    {
+      "adb": [
+        "shell",
+        "rm -f /data/local/tmp/ciel-smoke-551c5c6d574d463da83c4ee5f8f6ea2e.xml"
+      ],
+      "exit": 0,
+      "seconds": 0.05
+    },
+    {
+      "adb": [
+        "shell",
+        "uiautomator dump --compressed /data/local/tmp/ciel-smoke-551c5c6d574d463da83c4ee5f8f6ea2e.xml"
+      ],
+      "exit": 0,
+      "seconds": 2.74
+    },
+    {
+      "adb": [
+        "exec-out",
+        "cat /data/local/tmp/ciel-smoke-551c5c6d574d463da83c4ee5f8f6ea2e.xml"
+      ],
+      "exit": 0,
+      "seconds": 0.09
+    },
+    {
+      "adb": [
+        "shell",
+        "dumpsys activity activities"
+      ],
+      "exit": 0,
+      "seconds": 0.17
+    },
+    {
+      "adb": [
+        "shell",
+        "pidof ai.ciel.companion.preview"
+      ],
+      "exit": 0,
+      "seconds": 0.05
+    },
+    {
+      "adb": [
+        "shell",
+        "input tap 1575 928"
+      ],
+      "exit": 0,
+      "seconds": 0.12
+    },
+    {
+      "adb": [
+        "shell",
+        "dumpsys activity activities"
+      ],
+      "exit": 0,
+      "seconds": 0.05
+    },
+    {
+      "adb": [
+        "shell",
+        "pidof ai.ciel.companion.preview"
+      ],
+      "exit": 0,
+      "seconds": 0.05
+    },
+    {
+      "adb": [
+        "shell",
+        "rm -f /data/local/tmp/ciel-smoke-551c5c6d574d463da83c4ee5f8f6ea2e.xml"
+      ],
+      "exit": 0,
+      "seconds": 0.03
+    },
+    {
+      "adb": [
+        "shell",
+        "uiautomator dump --compressed /data/local/tmp/ciel-smoke-551c5c6d574d463da83c4ee5f8f6ea2e.xml"
+      ],
+      "exit": 0,
+      "seconds": 2.21
+    },
+    {
+      "adb": [
+        "exec-out",
+        "cat /data/local/tmp/ciel-smoke-551c5c6d574d463da83c4ee5f8f6ea2e.xml"
+      ],
+      "exit": 0,
+      "seconds": 0.02
+    },
+    {
+      "adb": [
+        "shell",
+        "dumpsys activity activities"
+      ],
+      "exit": 0,
+      "seconds": 0.02
+    },
+    {
+      "adb": [
+        "shell",
+        "pidof ai.ciel.companion.preview"
+      ],
+      "exit": 0,
+      "seconds": 0.02
+    },
+    {
+      "adb": [
+        "shell",
+        "rm -f /data/local/tmp/ciel-smoke-551c5c6d574d463da83c4ee5f8f6ea2e.xml"
+      ],
+      "exit": 0,
+      "seconds": 0.02
+    },
+    {
+      "adb": [
+        "shell",
+        "uiautomator dump --compressed /data/local/tmp/ciel-smoke-551c5c6d574d463da83c4ee5f8f6ea2e.xml"
+      ],
+      "exit": 0,
+      "seconds": 2.04
+    },
+    {
+      "adb": [
+        "exec-out",
+        "cat /data/local/tmp/ciel-smoke-551c5c6d574d463da83c4ee5f8f6ea2e.xml"
+      ],
+      "exit": 0,
+      "seconds": 0.02
+    },
+    {
+      "adb": [
+        "shell",
+        "input swipe 960 379 960 687 350"
+      ],
+      "exit": 0,
+      "seconds": 0.4
+    },
+    {
+      "adb": [
+        "shell",
+        "dumpsys activity activities"
+      ],
+      "exit": 0,
+      "seconds": 0.03
+    },
+    {
+      "adb": [
+        "shell",
+        "pidof ai.ciel.companion.preview"
+      ],
+      "exit": 0,
+      "seconds": 0.04
+    },
+    {
+      "adb": [
+        "shell",
+        "rm -f /data/local/tmp/ciel-smoke-551c5c6d574d463da83c4ee5f8f6ea2e.xml"
+      ],
+      "exit": 0,
+      "seconds": 0.02
+    },
+    {
+      "adb": [
+        "shell",
+        "uiautomator dump --compressed /data/local/tmp/ciel-smoke-551c5c6d574d463da83c4ee5f8f6ea2e.xml"
+      ],
+      "exit": 0,
+      "seconds": 2.26
+    },
+    {
+      "adb": [
+        "exec-out",
+        "cat /data/local/tmp/ciel-smoke-551c5c6d574d463da83c4ee5f8f6ea2e.xml"
+      ],
+      "exit": 0,
+      "seconds": 0.03
+    },
+    {
+      "adb": [
+        "shell",
+        "dumpsys activity activities"
+      ],
+      "exit": 0,
+      "seconds": 0.03
+    },
+    {
+      "adb": [
+        "shell",
+        "pidof ai.ciel.companion.preview"
+      ],
+      "exit": 0,
+      "seconds": 0.03
+    },
+    {
+      "adb": [
+        "shell",
+        "rm -f /data/local/tmp/ciel-smoke-551c5c6d574d463da83c4ee5f8f6ea2e.xml"
+      ],
+      "exit": 0,
+      "seconds": 0.02
+    },
+    {
+      "adb": [
+        "shell",
+        "uiautomator dump --compressed /data/local/tmp/ciel-smoke-551c5c6d574d463da83c4ee5f8f6ea2e.xml"
+      ],
+      "exit": 0,
+      "seconds": 2.13
+    },
+    {
+      "adb": [
+        "exec-out",
+        "cat /data/local/tmp/ciel-smoke-551c5c6d574d463da83c4ee5f8f6ea2e.xml"
+      ],
+      "exit": 0,
+      "seconds": 0.03
+    },
+    {
+      "adb": [
+        "shell",
+        "dumpsys activity activities"
+      ],
+      "exit": 0,
+      "seconds": 0.03
+    },
+    {
+      "adb": [
+        "shell",
+        "pidof ai.ciel.companion.preview"
+      ],
+      "exit": 0,
+      "seconds": 0.03
+    },
+    {
+      "adb": [
+        "shell",
+        "rm -f /data/local/tmp/ciel-smoke-551c5c6d574d463da83c4ee5f8f6ea2e.xml"
+      ],
+      "exit": 0,
+      "seconds": 0.02
+    },
+    {
+      "adb": [
+        "shell",
+        "uiautomator dump --compressed /data/local/tmp/ciel-smoke-551c5c6d574d463da83c4ee5f8f6ea2e.xml"
+      ],
+      "exit": 0,
+      "seconds": 2.08
+    },
+    {
+      "adb": [
+        "exec-out",
+        "cat /data/local/tmp/ciel-smoke-551c5c6d574d463da83c4ee5f8f6ea2e.xml"
+      ],
+      "exit": 0,
+      "seconds": 0.02
+    },
+    {
+      "adb": [
+        "shell",
+        "dumpsys activity activities"
+      ],
+      "exit": 0,
+      "seconds": 0.02
+    },
+    {
+      "adb": [
+        "shell",
+        "pidof ai.ciel.companion.preview"
+      ],
+      "exit": 0,
+      "seconds": 0.02
+    },
+    {
+      "adb": [
+        "shell",
+        "input tap 344 928"
+      ],
+      "exit": 0,
+      "seconds": 0.02
+    },
+    {
+      "adb": [
+        "shell",
+        "dumpsys activity activities"
+      ],
+      "exit": 0,
+      "seconds": 0.03
+    },
+    {
+      "adb": [
+        "shell",
+        "pidof ai.ciel.companion.preview"
+      ],
+      "exit": 0,
+      "seconds": 0.03
+    },
+    {
+      "adb": [
+        "shell",
+        "rm -f /data/local/tmp/ciel-smoke-551c5c6d574d463da83c4ee5f8f6ea2e.xml"
+      ],
+      "exit": 0,
+      "seconds": 0.05
+    },
+    {
+      "adb": [
+        "shell",
+        "uiautomator dump --compressed /data/local/tmp/ciel-smoke-551c5c6d574d463da83c4ee5f8f6ea2e.xml"
+      ],
+      "exit": 0,
+      "seconds": 2.44
+    },
+    {
+      "adb": [
+        "exec-out",
+        "cat /data/local/tmp/ciel-smoke-551c5c6d574d463da83c4ee5f8f6ea2e.xml"
+      ],
+      "exit": 0,
+      "seconds": 0.03
+    },
+    {
+      "adb": [
+        "shell",
+        "dumpsys activity activities"
+      ],
+      "exit": 0,
+      "seconds": 0.06
+    },
+    {
+      "adb": [
+        "shell",
+        "pidof ai.ciel.companion.preview"
+      ],
+      "exit": 0,
+      "seconds": 0.06
+    },
+    {
+      "adb": [
+        "shell",
+        "rm -f /data/local/tmp/ciel-smoke-551c5c6d574d463da83c4ee5f8f6ea2e.xml"
+      ],
+      "exit": 0,
+      "seconds": 0.02
+    },
+    {
+      "adb": [
+        "shell",
+        "uiautomator dump --compressed /data/local/tmp/ciel-smoke-551c5c6d574d463da83c4ee5f8f6ea2e.xml"
+      ],
+      "exit": 0,
+      "seconds": 2.32
+    },
+    {
+      "adb": [
+        "exec-out",
+        "cat /data/local/tmp/ciel-smoke-551c5c6d574d463da83c4ee5f8f6ea2e.xml"
+      ],
+      "exit": 0,
+      "seconds": 0.03
+    },
+    {
+      "adb": [
+        "exec-out",
+        "screencap -p"
+      ],
+      "exit": 0,
+      "seconds": 0.46
+    },
+    {
+      "adb": [
+        "logcat",
+        "-d",
+        "-b",
+        "all",
+        "-v",
+        "threadtime",
+        "-T",
+        "11-06 12:29:57.000"
+      ],
+      "exit": 0,
+      "seconds": 0.47
+    },
+    {
+      "adb": [
+        "shell",
+        "dumpsys activity activities"
+      ],
+      "exit": 0,
+      "seconds": 0.06
+    },
+    {
+      "adb": [
+        "shell",
+        "pidof ai.ciel.companion.preview"
+      ],
+      "exit": 0,
+      "seconds": 0.06
+    },
+    {
+      "adb": [
+        "shell",
+        "am force-stop ai.ciel.companion.preview"
+      ],
+      "exit": 0,
+      "seconds": 0.07
+    },
+    {
+      "adb": [
+        "shell",
+        "wm size reset"
+      ],
+      "exit": 0,
+      "seconds": 0.12
+    },
+    {
+      "adb": [
+        "shell",
+        "settings put global animator_duration_scale 0.0"
+      ],
+      "exit": 0,
+      "seconds": 0.08
+    },
+    {
+      "adb": [
+        "shell",
+        "settings put global transition_animation_scale 0.0"
+      ],
+      "exit": 0,
+      "seconds": 0.07
+    },
+    {
+      "adb": [
+        "shell",
+        "settings put global window_animation_scale 0.0"
+      ],
+      "exit": 0,
+      "seconds": 0.05
+    },
+    {
+      "adb": [
+        "shell",
+        "settings delete system font_scale"
+      ],
+      "exit": 0,
+      "seconds": 0.07
+    },
+    {
+      "adb": [
+        "shell",
+        "settings put system user_rotation 0"
+      ],
+      "exit": 0,
+      "seconds": 0.05
+    },
+    {
+      "adb": [
+        "shell",
+        "settings put system accelerometer_rotation 1"
+      ],
+      "exit": 0,
+      "seconds": 0.07
+    },
+    {
+      "adb": [
+        "shell",
+        "wm fixed-to-user-rotation default"
+      ],
+      "exit": 0,
+      "seconds": 0.13
+    },
+    {
+      "adb": [
+        "shell",
+        "wm user-rotation free"
+      ],
+      "exit": 0,
+      "seconds": 0.07
+    },
+    {
+      "adb": [
+        "shell",
+        "rm -f /data/local/tmp/ciel-smoke-551c5c6d574d463da83c4ee5f8f6ea2e.xml"
+      ],
+      "exit": 0,
+      "seconds": 0.04
+    }
+  ],
+  "cleanup_errors": [],
+  "visual_review_required": true,
+  "audio_or_phone_control_verified": false,
+  "limitations": [
+    "Screenshots require visual review for rendering and clipped text.",
+    "Setup records UI hierarchy only; no screenshot is requested from the secure credential window.",
+    "Landscape layout uses an explicit wide emulator viewport, not a physical rotation/sensor test.",
+    "Blank-key rejection is checked through retained Setup and missing-key state, not the inline error caption.",
+    "No Gemini calls, microphone tests, phone tools or physical devices are exercised."
+  ],
+  "device": {
+    "ro.build.version.sdk": "34",
+    "ro.product.model": "sdk_gphone64_x86_64",
+    "ro.product.cpu.abi": "x86_64",
+    "ro.build.fingerprint": "google/sdk_gphone64_x86_64/emu64xa:14/UE1A.230829.050/12077443:userdebug/dev-keys"
+  },
+  "installed_apk_sha256": "a2695f68f8151d4c44680e8b6d980a4ab9d96241c39ec185267c63c6d2211726",
+  "initial_display": {
+    "wm_size": "Physical size: 1080x1920",
+    "restore_size": "reset",
+    "width": 1080,
+    "height": 1920
+  },
+  "last_resumed_activity": [
+    "topResumedActivity=ActivityRecord{3f3d155 u0 ai.ciel.companion.preview/net.kuafuai.andee.ui.CielHomeActivity t11}"
+  ],
+  "observed_app_pids": [
+    "3497",
+    "4233",
+    "5171",
+    "5467"
+  ],
+  "missing_key_precondition": true,
+  "blank_key_rejected_after_restart": true,
+  "navigation_bounds_checked": true,
+  "app_fatal_or_anr": [],
+  "logcat_lines_examined": 43743,
+  "seconds": 115.8
+}

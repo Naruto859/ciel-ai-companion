@@ -1,0 +1,285 @@
+{
+  "production_source_commit": "549ba53619e3d78ce0f3887dd291f10e5400033a",
+  "apk": "/root/ciel-artifacts-20261106/final-r2/ciel-preview-0.12.0-24-r2-universal.apk",
+  "apk_sha256": "a2695f68f8151d4c44680e8b6d980a4ab9d96241c39ec185267c63c6d2211726",
+  "bytes": 16037798,
+  "frozen_files": 368,
+  "frozen_changes": [],
+  "unsigned_apk": "/root/ciel-artifacts-20261106/ci-42213575554/ciel-unsigned-preview/app-universal-release-unsigned.apk",
+  "unsigned_sha256": "04d8702155f70e076f430dec4dab68a88330269325a47f5512387a976f454f47",
+  "payload_changes": [],
+  "added_members": [
+    "META-INF/CIEL.RSA",
+    "META-INF/CIEL.SF",
+    "META-INF/MANIFEST.MF"
+  ],
+  "missing_members": [],
+  "notices_match_source": {
+    "LICENSE": true,
+    "THIRD_PARTY_NOTICES.md": true,
+    "CIEL_NOTICE.md": true
+  },
+  "bundled_key_empty": true,
+  "native_libraries": [
+    {
+      "path": "lib/arm64-v8a/libbarhopper_v3.so",
+      "elf_class": 2,
+      "machine": 183
+    },
+    {
+      "path": "lib/arm64-v8a/libimage_processing_util_jni.so",
+      "elf_class": 2,
+      "machine": 183
+    },
+    {
+      "path": "lib/armeabi-v7a/libbarhopper_v3.so",
+      "elf_class": 1,
+      "machine": 40
+    },
+    {
+      "path": "lib/armeabi-v7a/libimage_processing_util_jni.so",
+      "elf_class": 1,
+      "machine": 40
+    },
+    {
+      "path": "lib/x86/libbarhopper_v3.so",
+      "elf_class": 1,
+      "machine": 3
+    },
+    {
+      "path": "lib/x86/libimage_processing_util_jni.so",
+      "elf_class": 1,
+      "machine": 3
+    },
+    {
+      "path": "lib/x86_64/libbarhopper_v3.so",
+      "elf_class": 2,
+      "machine": 62
+    },
+    {
+      "path": "lib/x86_64/libimage_processing_util_jni.so",
+      "elf_class": 2,
+      "machine": 62
+    }
+  ],
+  "credential_pattern_findings": [],
+  "badging_summary": [
+    "package: name='ai.ciel.companion.preview' versionCode='24' versionName='0.12.0' platformBuildVersionName='14' platformBuildVersionCode='34' compileSdkVersion='34' compileSdkVersionCodename='14'",
+    "sdkVersion:'30'",
+    "targetSdkVersion:'34'",
+    "application-label:'Ciel Preview'",
+    "launchable-activity: name='net.kuafuai.andee.ui.CielHomeActivity'  label='' icon=''",
+    "native-code: 'arm64-v8a' 'armeabi-v7a' 'x86' 'x86_64'"
+  ],
+  "provider_authorities": [
+    "ai.ciel.companion.preview.files",
+    "ai.ciel.companion.preview.mlkitinitprovider",
+    "ai.ciel.companion.preview.androidx-startup"
+  ],
+  "shared_uid": false,
+  "required_split_flags": false,
+  "unit_tests": {
+    "core": {
+      "tests": 328,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0
+    },
+    "app": {
+      "tests": 95,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0
+    }
+  },
+  "lint": {
+    "Warning": 513
+  },
+  "apk_members_changed_since_r1": [
+    "META-INF/CIEL.RSA",
+    "META-INF/CIEL.SF",
+    "META-INF/MANIFEST.MF",
+    "META-INF/version-control-info.textproto",
+    "resources.arsc"
+  ],
+  "apk_members_added_since_r1": [],
+  "apk_members_removed_since_r1": [],
+  "core_class_count": 338,
+  "core_classes_changed_since_render": [],
+  "core_classes_added_since_render": [],
+  "core_classes_removed_since_render": [],
+  "packaged_vcs_metadata": "repositories {\n  system: GIT\n  local_root_path: \"$PROJECT_DIR\"\n  revision: \"549ba53619e3d78ce0f3887dd291f10e5400033a\"\n}\n",
+  "reviewer": "final_artifact_review",
+  "artifact_status": "r2 Preview: source/package and listed Android UI paths verified; Live and phone feature gates remain unverified.",
+  "build_ci_run": "42213575554",
+  "harness_commit_reviewed": "1debaf38ee004c83a6e41f233c8a99394245fc38",
+  "package": "ai.ciel.companion.preview",
+  "version": "0.12.0 (24)",
+  "min_sdk": 30,
+  "target_sdk": 34,
+  "certificate_sha256": "1e11584f8c081fc18f0ddaf6467a8268f59bf5a37c2b0bd55105bb7af0a17bac",
+  "signature_v3_verified": true,
+  "zip_alignment_4_verified": true,
+  "previous_package_provider_collision": false,
+  "packaged_navigation_labels": {
+    "default": "形象",
+    "en": "Avatar"
+  },
+  "p0_p1_findings": [],
+  "historical_candidate_evidence": "final-artifact-review-r1.json",
+  "runtime_review": {
+    "runs": [
+      {
+        "run_id": "42215450664",
+        "scope": "full",
+        "report": "evidence/runtime-r2/full/smoke-report.json",
+        "report_sha256": "07f0043339fc0e96a3b0337780fb4e7408516984042f92e331e591aaf0c79de8",
+        "recorded_overall_status": "failed",
+        "passed_checks": 7,
+        "total_checks": 9,
+        "checks": [
+          {
+            "name": "fresh emulator and exact APK provenance",
+            "status": "passed",
+            "seconds": 7.75
+          },
+          {
+            "name": "Home launch, resumed PID and missing-key state",
+            "status": "passed",
+            "seconds": 15.39
+          },
+          {
+            "name": "missing-key setup route and visible validation error",
+            "status": "failed",
+            "error": "Visible UI control/text not found: avatar state",
+            "seconds": 28.47
+          },
+          {
+            "name": "original companion",
+            "status": "passed",
+            "seconds": 25.2
+          },
+          {
+            "name": "Moss preview isolation and saved persistence",
+            "status": "passed",
+            "seconds": 114.29
+          },
+          {
+            "name": "Nova preview isolation and saved persistence",
+            "status": "passed",
+            "seconds": 95.68
+          },
+          {
+            "name": "large-font portrait tabs",
+            "status": "passed",
+            "seconds": 49.17
+          },
+          {
+            "name": "landscape tabs",
+            "status": "failed",
+            "error": "Timed out: emulator display orientation 1",
+            "seconds": 24.99
+          },
+          {
+            "name": "app remains resumed without app FATAL/ANR",
+            "status": "passed",
+            "seconds": 1.29
+          }
+        ],
+        "installed_apk_sha256": "a2695f68f8151d4c44680e8b6d980a4ab9d96241c39ec185267c63c6d2211726",
+        "device": {
+          "ro.build.version.sdk": "34",
+          "ro.product.model": "sdk_gphone64_x86_64",
+          "ro.product.cpu.abi": "x86_64",
+          "ro.build.fingerprint": "google/sdk_gphone64_x86_64/emu64xa:14/UE1A.230829.050/12077443:userdebug/dev-keys"
+        },
+        "capture_count": 14,
+        "capture_hash_mismatches": [],
+        "last_resumed_activity": [
+          "topResumedActivity=ActivityRecord{fa11279 u0 ai.ciel.companion.preview/net.kuafuai.andee.ui.CielHomeActivity t18}"
+        ],
+        "app_fatal_or_anr": [],
+        "cleanup_errors": []
+      },
+      {
+        "run_id": "42217850551",
+        "scope": "setup-layout",
+        "report": "evidence/runtime-r2/setup-layout/smoke-report.json",
+        "report_sha256": "71a4b53fa67f70ae771bd1eb40e9f06a24ae0d6eeedd41412f74098964b3e675",
+        "recorded_overall_status": "passed",
+        "passed_checks": 5,
+        "total_checks": 5,
+        "checks": [
+          {
+            "name": "fresh emulator and exact APK provenance",
+            "status": "passed",
+            "seconds": 6.72
+          },
+          {
+            "name": "Home launch, resumed PID and missing-key state",
+            "status": "passed",
+            "seconds": 14.95
+          },
+          {
+            "name": "missing-key setup route and blank-key rejection",
+            "status": "passed",
+            "seconds": 36.4
+          },
+          {
+            "name": "landscape viewport tabs",
+            "status": "passed",
+            "seconds": 56.01
+          },
+          {
+            "name": "app remains resumed without app FATAL/ANR",
+            "status": "passed",
+            "seconds": 0.88
+          }
+        ],
+        "installed_apk_sha256": "a2695f68f8151d4c44680e8b6d980a4ab9d96241c39ec185267c63c6d2211726",
+        "device": {
+          "ro.build.version.sdk": "34",
+          "ro.product.model": "sdk_gphone64_x86_64",
+          "ro.product.cpu.abi": "x86_64",
+          "ro.build.fingerprint": "google/sdk_gphone64_x86_64/emu64xa:14/UE1A.230829.050/12077443:userdebug/dev-keys"
+        },
+        "capture_count": 7,
+        "capture_hash_mismatches": [],
+        "last_resumed_activity": [
+          "topResumedActivity=ActivityRecord{3f3d155 u0 ai.ciel.companion.preview/net.kuafuai.andee.ui.CielHomeActivity t11}"
+        ],
+        "app_fatal_or_anr": [],
+        "cleanup_errors": []
+      }
+    ],
+    "scope_note": "Combined full-run 7/9 and targeted setup-layout 5/5 evidence for the identical APK; no single full-suite rerun passed. The targeted run does not repeat avatar persistence or large-font checks.",
+    "verified": {
+      "exact_installation": true,
+      "home_resumed": true,
+      "avatar_preview_and_persistence": true,
+      "large_font_navigation": true,
+      "blank_key_stays_unconfigured_after_restart": true,
+      "wide_viewport_pixels": [
+        1920,
+        1080
+      ],
+      "wide_navigation_in_bounds": true
+    },
+    "visual_observations": [
+      "Avatar fits on one line at font scale 1.5.",
+      "Saved Moss rendering agrees with its Current label.",
+      "Wide Home and Avatar have fixed tabs within the screen and scrollable content; the tall hero extends below the initial viewport."
+    ],
+    "unverified": [
+      "Inline blank-key error caption",
+      "Valid-key save and Gemini audio",
+      "Microphone and phone controls",
+      "Device or sensor rotation",
+      "Every wide-layout control",
+      "Physical-device behavior"
+    ],
+    "full_suite_passed_in_single_run": false,
+    "microphone_or_phone_control_verified": false,
+    "sensor_rotation_verified": false
+  }
+}

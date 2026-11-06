@@ -39,7 +39,7 @@ The phone scope adds 30 regression test methods:
 - `PermissionOutcomeTest` (7): mixed grants, failed handoff, fine/coarse pairing, approximate-only access, request-ID isolation, early result, brightness route.
 - `SelfCheckMergeTest` (2 added): offline/missing-key facts replace stale probe success; local Ciel version replaces a stale upstream warning.
 
-The primary agent confirmed CI run `42201498655` passed **423 unit tests: 328 core and 95 app**, including the phone regressions above. Its full release lint report then identified the follow-up items below. Their final central lint/build rerun is still pending; `git diff --check` and manifest XML validation pass. The primary agent owns final compilation, signing and emulator verification; no device, SMS, call, calendar or remote-server action was performed by this audit agent.
+Final application source `549ba53` passed **423 unit tests: 328 core and 95 app**, including the phone regressions above, in CI run `42213575554`. Release lint passed with zero errors and 513 warnings; canonical and Preview release assembly also passed. [Recorded counts](ciel-upgrade-20261106/evidence/ci-42213575554-source.json) distinguish this final build from earlier failed lint attempts. The primary agent owns signing and exact-APK emulator checks. No physical-device, SMS, call or calendar action was performed by this audit agent.
 
 ## Release lint follow-up
 
@@ -51,8 +51,8 @@ The primary agent confirmed CI run `42201498655` passed **423 unit tests: 328 co
 
 ## Capability review and remaining runtime work
 
-- Audited 96 literal built-in schema methods against dispatcher/host handlers. `screen.drag` is intentionally desktop-only and excluded by `AndroidBrainHost`. Several `note.*` methods are handled by `LifeTools` or `NotifyRuleTool`. `note.fold` is intercepted by `LocalBrain`; the Live integration must omit it unless it supplies that handler.
-- The optional `tap_target` locator uses a separate vision/chat request; a native-audio model is not a valid substitute. The Live integration must use screen elements plus screenshot/zoom coordinates unless a suitable locator is configured.
+- Audited 96 literal built-in schema methods against dispatcher/host handlers. `screen.drag` is intentionally desktop-only and excluded by `AndroidBrainHost`. Several `note.*` methods are handled by `LifeTools` or `NotifyRuleTool`. `note.fold` is intercepted by `LocalBrain` and is excluded from Live.
+- The optional `tap_target` locator uses a separate vision/chat request; a native-audio model is not a valid substitute. Live excludes it and uses screen elements plus screenshot/zoom coordinates. The final compiled Live setup exposes 90 built-in declarations.
 - A native user-picked document-reading tool is still absent in this baseline. Upstream issue [37](https://github.com/kuafuai/andee/issues/37) tracks it; open [PR 38](https://github.com/kuafuai/andee/pull/38) contains a proposal. That PR also independently confirms the developer-port issue; it was not imported wholesale.
 - `VoiceConfig.current()` is used by local UI only in the audited Android/peer/transport sources. No dispatcher config-read endpoint was found. Provider credentials are not included in hub tool registration or peer metadata in those sources.
 - Physical-phone checks remain essential for OEM accessibility/keyboard behavior, actual gestures and Stop timing, SMS/call/clock/calendar providers, approximate location, and protected screens. The source changes do not bypass lock screens or Android permissions.
