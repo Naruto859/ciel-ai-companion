@@ -75,6 +75,7 @@ class PermissionsController(private val context: Context) {
         ),
         Perm("notifications", null, "notification", R.string.dev_perm_feature_notifications),
         Perm("overlay", null, "overlay", R.string.dev_perm_feature_overlay),
+        Perm("brightness", null, "write_settings", R.string.dev_perm_feature_brightness),
     )
 
     fun status(): JSONObject {
@@ -85,8 +86,7 @@ class PermissionsController(private val context: Context) {
             // missing, so it is not reported either way — see [Perm.api].
             if (p.api > 0 && Build.VERSION.SDK_INT < p.api) continue
             val ok = when {
-                p.permission != null ->
-                    context.checkSelfPermission(p.permission) == android.content.pm.PackageManager.PERMISSION_GRANTED
+                p.permission != null -> isGranted(p.permission)
                 // Notification: the permission flag alone lies after every
                 // reinstall (zombie grant — enabled in Settings, never bound).
                 // Count it as granted only when the listener is actually
@@ -96,6 +96,7 @@ class PermissionsController(private val context: Context) {
                 p.special == "notification" -> NotificationRelayService.status(context)
                     .optBoolean("listener_connected")
                 p.special == "overlay" -> Settings.canDrawOverlays(context)
+                p.special == "write_settings" -> Settings.System.canWrite(context)
                 else -> false
             }
             val o = JSONObject()
@@ -135,7 +136,8 @@ class PermissionsController(private val context: Context) {
         val lctx = AppLocale.wrap(context)
         val wanted = buildList {
             for (i in 0 until ids.length()) {
-                catalog.firstOrNull { it.id == ids.optString(i) }?.let { add(it) }
+                catalog.firstOrNull { it.id == ids.optString(i) && (it.api == 0 || Build.VERSION.SDK_INT >= it.api) }
+                    ?.let { if (it !in this) add(it) }
             }
         }
         if (wanted.isEmpty()) return JSONObject().put("error", "no known permission ids in request")
@@ -143,6 +145,7 @@ class PermissionsController(private val context: Context) {
         val runtime = wanted.filter { it.permission != null }
         val special = wanted.filter { it.special == "notification" }
         val overlay = wanted.filter { it.special == "overlay" }
+        val writeSettings = wanted.filter { it.special == "write_settings" }
 
         val featureList = wanted.joinToString(lctx.getString(R.string.dev_perm_say_sep)) {
             lctx.getString(it.featureRes)
@@ -151,6 +154,7 @@ class PermissionsController(private val context: Context) {
             append(lctx.getString(R.string.dev_perm_say_prefix, featureList))
             if (runtime.isNotEmpty()) append(lctx.getString(R.string.dev_perm_say_runtime))
             if (special.isNotEmpty()) append(lctx.getString(R.string.dev_perm_say_notification))
+            if (overlay.isNotEmpty() || writeSettings.isNotEmpty()) append(lctx.getString(R.string.dev_perm_say_settings))
         }
 
         if (!confirm) {
@@ -169,29 +173,34 @@ class PermissionsController(private val context: Context) {
         // the dedicated PermissionRequestActivity (manifest-registered,
         // translucent, finishes itself).
         var fired = false
+        var launchFailed = false
+        var requestId: String? = null
         if (missing.isNotEmpty()) {
-            PermissionRequestActivity.arm()
+            requestId = PermissionRequestActivity.arm()
             val i = Intent(context, PermissionRequestActivity::class.java).apply {
-                putExtra("permissions", missing.mapNotNull { it.permission }.toTypedArray())
+                putExtra("permissions", runtimePermissions(missing.mapNotNull { it.permission }, Build.VERSION.SDK_INT).toTypedArray())
+                putExtra("request_id", requestId)
                 addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
             }
             fired = runCatching { context.startActivity(i) }.isSuccess
+            launchFailed = !fired
+            if (!fired) PermissionRequestActivity.discard(checkNotNull(requestId))
         }
-        special.forEach {
-            runCatching {
-                context.startActivity(
+        // Settings and runtime dialogs cannot be answered as one stack. Request
+        // runtime first; the next call opens only the missing special-access page.
+        if (missing.isEmpty()) {
+            val intent = when {
+                special.isNotEmpty() && !NotificationRelayService.status(context).optBoolean("listener_connected") ->
                     Intent(Settings.ACTION_NOTIFICATION_LISTENER_SETTINGS)
-                        .addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
-                )
-            }
-        }
-        if (overlay.isNotEmpty()) {
-            runCatching {
-                context.startActivity(
+                overlay.isNotEmpty() && !Settings.canDrawOverlays(context) ->
                     Intent(Settings.ACTION_MANAGE_OVERLAY_PERMISSION, Uri.parse("package:${context.packageName}"))
-                        .addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
-                )
+                writeSettings.isNotEmpty() && !Settings.System.canWrite(context) ->
+                    Intent(Settings.ACTION_MANAGE_WRITE_SETTINGS, Uri.parse("package:${context.packageName}"))
+                else -> null
             }
+            if (intent != null) launchFailed = runCatching {
+                context.startActivity(intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK))
+            }.isFailure
         }
 
         // Three ways this ends, in the order they can be known:
@@ -199,22 +208,35 @@ class PermissionsController(private val context: Context) {
         //  - a dialog was fired    → wait out the grace, because that is the
         //                            window in which a silent block answers
         //  - only a Settings page  → nothing to wait on but the user
-        val result = when {
-            runtime.isNotEmpty() && missing.isEmpty() -> GRANTED
-            missing.isNotEmpty() && !fired -> NO_DIALOG
-            missing.isNotEmpty() -> PermissionRequestActivity.await(DIALOG_GRACE_MS) ?: WAITING
-            else -> WAITING
-        }
+        val runtimeResult = if (fired) PermissionRequestActivity.await(checkNotNull(requestId), DIALOG_GRACE_MS) else null
+        val allGranted = wanted.all { p -> when {
+            p.permission != null -> isGranted(p.permission)
+            p.special == "overlay" -> Settings.canDrawOverlays(context)
+            p.special == "notification" -> NotificationRelayService.status(context).optBoolean("listener_connected")
+            p.special == "write_settings" -> Settings.System.canWrite(context)
+            else -> false
+        } }
+        val result = combinedResult(allGranted, launchFailed, runtimeResult)
 
         return JSONObject()
             .put("mode", mode)
             .put("result", result)
-            .put("next", nextFor(mode, result))
+            .put("next", if (runtimeResult == GRANTED && !allGranted) {
+                "Runtime permissions are granted. Request only missing_ids to open the next special-access settings page."
+            } else nextFor(mode, result))
             .put("say", say)
+            .put("missing_ids", JSONArray(wanted.filterNot { p -> when {
+                p.permission != null -> isGranted(p.permission)
+                p.special == "overlay" -> Settings.canDrawOverlays(context)
+                p.special == "notification" -> NotificationRelayService.status(context).optBoolean("listener_connected")
+                p.special == "write_settings" -> Settings.System.canWrite(context)
+                else -> false
+            } }.map { it.id }))
     }
 
-    private fun isGranted(permission: String): Boolean =
-        context.checkSelfPermission(permission) == PackageManager.PERMISSION_GRANTED
+    private fun isGranted(permission: String): Boolean = permissionSatisfied(permission) {
+        context.checkSelfPermission(it) == PackageManager.PERMISSION_GRANTED
+    }
 
     /**
      * One line telling the brain what this result means for its next call.
@@ -285,7 +307,27 @@ class PermissionsController(private val context: Context) {
         )
 
         /** Ids with no dialog at all — only a switch inside Settings. */
-        private val SETTINGS_IDS = setOf("notifications", "overlay")
+        private val SETTINGS_IDS = setOf("notifications", "overlay", "brightness")
+
+        /** The location tool accepts approximate access; do not ask again solely to upgrade its precision. */
+        internal fun permissionSatisfied(permission: String, granted: (String) -> Boolean): Boolean =
+            granted(permission) || (permission == "android.permission.ACCESS_FINE_LOCATION" &&
+                granted("android.permission.ACCESS_COARSE_LOCATION"))
+
+        /** Android 12+ ignores a fine-location-only request; approximate and precise travel together. */
+        internal fun runtimePermissions(permissions: List<String>, sdk: Int): List<String> = buildList {
+            addAll(permissions)
+            if (sdk >= 31 && "android.permission.ACCESS_FINE_LOCATION" in permissions) {
+                add("android.permission.ACCESS_COARSE_LOCATION")
+            }
+        }.distinct()
+
+        internal fun combinedResult(allGranted: Boolean, launchFailed: Boolean, runtimeResult: String?): String = when {
+            allGranted -> GRANTED
+            launchFailed -> NO_DIALOG
+            runtimeResult == DENIED || runtimeResult == NO_DIALOG -> runtimeResult
+            else -> WAITING
+        }
 
         /**
          * Which route a request takes, from the ids alone, so it is testable

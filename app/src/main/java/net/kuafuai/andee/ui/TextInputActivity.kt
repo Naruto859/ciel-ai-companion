@@ -167,7 +167,7 @@ class TextInputActivity : Activity() {
             // way to send is the button — a coin flip the user has to learn.
             maxLines = 1
             inputType = InputType.TYPE_CLASS_TEXT
-            imeOptions = EditorInfo.IME_ACTION_SEND
+            imeOptions = EditorInfo.IME_ACTION_SEND or EditorInfo.IME_FLAG_NO_EXTRACT_UI
             setPadding(dp(4), 0, dp(4), 0)
             setOnEditorActionListener { _, actionId, _ ->
                 if (actionId == EditorInfo.IME_ACTION_SEND) {
@@ -222,7 +222,6 @@ class TextInputActivity : Activity() {
             // is the same slate this line used to paint, so a field opened in the first
             // few hundred milliseconds gets a continuous surface rather than the
             // desktop. Same arrangement as before, one layer down.
-            setPadding(dp(8), dp(8), dp(8), dp(8))
             setPadding(dp(8), dp(8), dp(8), dp(8))
             addView(thumbScroll, LinearLayout.LayoutParams(MATCH_PARENT, WRAP))
             addView(row, LinearLayout.LayoutParams(MATCH_PARENT, WRAP))
@@ -297,13 +296,14 @@ class TextInputActivity : Activity() {
         WindowCompat.setDecorFitsSystemWindows(window, false)
         ViewCompat.setOnApplyWindowInsetsListener(root) { _, insets ->
             val ime = insets.getInsets(WindowInsetsCompat.Type.ime()).bottom
-            val bars = insets.getInsets(WindowInsetsCompat.Type.systemBars())
+            val bars = insets.getInsets(WindowInsetsCompat.Type.systemBars() or WindowInsetsCompat.Type.displayCutout())
+            val bottom = maxOf(ime, bars.bottom)
             // On the column, not the root: the backdrop is full bleed and must
             // slide under the status bar and the keys, while the strip itself
             // steps around them.
             // Lay out at the final inset once. During animation translationY
             // offsets the strip back to the keyboard's current position.
-            column.setPadding(dp(12), dp(4) + bars.top, dp(12), dp(12) + ime)
+            column.setPadding(dp(12) + bars.left, dp(4) + bars.top, dp(12) + bars.right, dp(12) + bottom)
             if (ime > 0) {
                 imeShown = true
                 cancelCloseWhenGone()
@@ -342,7 +342,7 @@ class TextInputActivity : Activity() {
                 if (ime > 0 && strip.height > 0) {
                     val at = IntArray(2)
                     root.getLocationOnScreen(at)
-                    onTop?.invoke(at[1] + root.height - (dp(12) + ime) - strip.height)
+                    onTop?.invoke(at[1] + root.height - (dp(12) + bottom) - strip.height)
                 }
                 return@setOnApplyWindowInsetsListener insets
             }
@@ -379,7 +379,8 @@ class TextInputActivity : Activity() {
             override fun onProgress(insets: WindowInsetsCompat, running: MutableList<WindowInsetsAnimationCompat>): WindowInsetsCompat {
                 if (!sliding || picking) return insets
                 val ime = insets.getInsets(WindowInsetsCompat.Type.ime()).bottom
-                strip.translationY = (column.paddingBottom - dp(12) - ime).toFloat()
+                val bars = insets.getInsets(WindowInsetsCompat.Type.systemBars()).bottom
+                strip.translationY = (column.paddingBottom - dp(12) - maxOf(ime, bars)).toFloat()
                 return insets
             }
 

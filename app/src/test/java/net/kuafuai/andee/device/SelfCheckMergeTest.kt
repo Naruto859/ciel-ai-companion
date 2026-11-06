@@ -83,4 +83,20 @@ class SelfCheckMergeTest {
         assertEquals(listOf("backend", "overlay"), merged.map { it.id })
         assertEquals(Level.OK, merged.first { it.id == "backend" }.level)
     }
+
+    @Test
+    fun `offline state and a removed key override old successful probes`() {
+        val previous = listOf(row("backend", Level.OK), row("voice_host", Level.OK))
+        val fresh = listOf(
+            Finding("backend", 0, Level.NOTE, net.kuafuai.andee.R.string.check_detail_model_no_key),
+            Finding("voice_host", 0, Level.NOTE, net.kuafuai.andee.R.string.check_detail_skipped_offline),
+        )
+        assertEquals(fresh, SelfCheck.mergeLocal(fresh, previous))
+    }
+
+    @Test
+    fun `local Ciel version replaces an old upstream upgrade warning`() {
+        val fresh = listOf(row("version", Level.NOTE))
+        assertEquals(fresh, SelfCheck.mergeLocal(fresh, listOf(row("version", Level.FAIL))))
+    }
 }

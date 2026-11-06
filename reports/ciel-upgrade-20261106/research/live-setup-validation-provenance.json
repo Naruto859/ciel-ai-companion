@@ -1,0 +1,14 @@
+{
+  "artifact": "live-setup-validation.json",
+  "purpose": "Credential-free direct Gemini Live setup for the default built-in Android tool surface, without paired peers or runtime call extensions.",
+  "model": "models/gemini-3.8-live",
+  "function_declarations": 92,
+  "final_filter_removed": [
+    "ask_user",
+    "alert_user",
+    "notify_rule"
+  ],
+  "generation": "Updated existing protocol-generated fixture by applying final LiveToolAvailability exclusions; requires compiled-fixture comparison after the central build.",
+  "sha256": "5cf80fb76cc351d83bf969ab9c0544303cb5707673d6ee10a68a2081dbdf5681",
+  "provider_acceptance": "Unverified: the available API key was rejected before setupComplete."
+}

@@ -163,10 +163,10 @@ object Glass {
         title = "#0E1116",
         label = "#2B313B",
         secondary = "#5A6270",
-        muted = "#7D8592",
+        muted = "#657080",
         photoInk = "#252A33",
-        accent = "#3B62E0",
-        tint = "#3B62E0",
+        accent = "#176B52",
+        tint = "#176B52",
         danger = "#DC2626",
         ok = "#16A34A",
         warn = "#D97706",
@@ -187,11 +187,11 @@ object Glass {
         sheen = stops("#1FFFFFFF", "#00FFFFFF"),
         title = "#FFFFFF",
         label = "#DCE1EA",
-        secondary = "#8F97A6",
-        muted = "#5F6775",
+        secondary = "#B3BCC9",
+        muted = "#A2AABA",
         photoInk = "#98A0AE",
-        accent = "#22D3EE",
-        tint = "#FFC928",
+        accent = "#86DDC0",
+        tint = "#176B52",
         danger = "#FF6B6B",
         ok = "#4ADE80",
         warn = "#FFC928",
@@ -422,19 +422,19 @@ object Glass {
         }
 
         /** A card's own title. */
-        val DISPLAY: Float get() = if (phone) 20f else 26f
+        val DISPLAY: Float get() = 26f
 
         /** The title of a card stacked on another card, or of a step. */
-        val HEADLINE: Float get() = if (phone) 15.5f else 20f
+        val HEADLINE: Float get() = if (phone) 18f else 20f
 
         /** A dialog's title, a row that is the point of its panel. */
-        val TITLE: Float get() = if (phone) 13.5f else 17f
+        val TITLE: Float get() = if (phone) 16f else 17f
 
         /** What the user reads: rows, fields, buttons, answers. */
-        val BODY: Float get() = if (phone) 12f else 15f
+        val BODY: Float get() = 15f
 
         /** What explains the body: subtitles, notes, section heads, hints. */
-        val CAPTION: Float get() = if (phone) 10.5f else 13f
+        val CAPTION: Float get() = 13f
 
         /**
          * Timestamps, badges, the pinned gesture tips.
@@ -443,7 +443,7 @@ object Glass {
          * already the floor of what can be read, and a floor that moves with the
          * screen is not a floor. It stays at the tablet's value on both.
          */
-        val MICRO: Float get() = if (phone) 9.5f else 11f
+        val MICRO: Float get() = 11f
     }
 
     // ---- Motion ----
@@ -801,7 +801,10 @@ object Glass {
      */
     @SuppressLint("ClickableViewAccessibility")
     fun pressable(v: View) {
+        v.isFocusable = true
+        v.minimumHeight = maxOf(v.minimumHeight, dp(v.context, 44))
         v.setOnTouchListener { view, ev ->
+            if (!ValueAnimator.areAnimatorsEnabled()) return@setOnTouchListener false
             when (ev.actionMasked) {
                 android.view.MotionEvent.ACTION_DOWN ->
                     view.animate().scaleX(0.96f).scaleY(0.96f).alpha(0.8f)

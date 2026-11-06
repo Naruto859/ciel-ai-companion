@@ -110,8 +110,10 @@ class AndroidBrainHost(
     override fun toolLists(): List<JSONArray> = listOfNotNull(
         // tap_target only where a pointing model can answer it: on a backend without one it would fail every tap.
         ToolSchemas.subset { m ->
+            val live = VoiceConfig.brainConfig(ctx).isLive
             // drag is the Mac's: on the phone a swipe already is a finger moving, and there is nothing to implement.
-            m != "screen.drag" && (m != "screen.tap_target" || net.kuafuai.andee.brain.Locator.modelFor(
+            m != "screen.drag" && (!live || net.kuafuai.andee.voice.LiveToolAvailability.supports(m)) &&
+                (m != "screen.tap_target" || net.kuafuai.andee.brain.Locator.modelFor(
                 net.kuafuai.andee.config.VoiceConfig.brainConfig(ctx), net.kuafuai.andee.config.VoiceConfig.locatorModel(ctx),
             ) != null)
         },
@@ -127,6 +129,13 @@ class AndroidBrainHost(
             ?: net.kuafuai.andee.peer.PeerTasks.methodOf(toolName)
 
     override fun dispatch(method: String, params: JSONObject, callId: String, silent: Boolean, untrusted: Boolean): Any? {
+        return dispatchAtGeneration(method, params, callId, silent, untrusted, dispatcher.cancellationGeneration())
+    }
+
+    /** Live calls capture this generation before entering their serial queue. */
+    fun dispatchAtGeneration(method: String, params: JSONObject, callId: String, silent: Boolean,
+        untrusted: Boolean, expectedGeneration: Long): Any? {
+        check(expectedGeneration == dispatcher.cancellationGeneration()) { "The user stopped this task." }
         Notebook.callBeingRun = callId
         // Not the dispatcher's: the link to the other devices is not part of this body, and the hub must never
         // see it. The turn guard still runs first — it is what keeps a stranger's notification from handing work on.
@@ -134,7 +143,8 @@ class AndroidBrainHost(
             net.kuafuai.andee.net.TurnGuards.check(method, silent, untrusted)
             return peers.tasks.dispatch(method, params)
         }
-        return dispatcher.dispatch(method, params, driving = true, silent = silent, untrusted = untrusted)
+        return dispatcher.dispatch(method, params, driving = true, silent = silent, untrusted = untrusted,
+            expectedGeneration = expectedGeneration)
     }
 
     override fun traceDir(): File = ctx.filesDir

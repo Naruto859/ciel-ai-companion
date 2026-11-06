@@ -1,0 +1,11 @@
+{
+  "model": "models/gemini-3.8-live",
+  "status": "failed",
+  "measurement_scope": "VPS text prompt to first returned audio; no phone microphone or tool execution",
+  "tool_declarations": 95,
+  "phone_tools_executed": 0,
+  "events": [],
+  "error_type": "InvalidProxyMessage",
+  "error": "did not receive a valid HTTP response from proxy",
+  "total_ms": 2978
+}

@@ -57,20 +57,21 @@ class DeviceCommsController(private val context: Context) {
     // ---- dial ----------------------------------------------------
 
     fun dial(number: String, direct: Boolean): JSONObject {
+        require(number.isNotBlank()) { "dial requires a phone number" }
         if (direct) {
             if (!ensurePermission(Manifest.permission.CALL_PHONE)) return denied("call_phone",
                 "Direct dialing needs the Phone permission; without it only the dialer can be opened (direct=false).")
             return runCatching {
                 context.startActivity(
-                    android.content.Intent(android.content.Intent.ACTION_CALL, Uri.parse("tel:$number"))
+                    android.content.Intent(android.content.Intent.ACTION_CALL, Uri.fromParts("tel", number, null))
                         .addFlags(android.content.Intent.FLAG_ACTIVITY_NEW_TASK)
                 )
-                JSONObject().put("dialed", number).put("direct", true)
+                JSONObject().put("call_requested", number).put("direct", true)
             }.getOrElse { JSONObject().put("error", "call failed: ${it.message}") }
         }
         return runCatching {
             context.startActivity(
-                android.content.Intent(android.content.Intent.ACTION_DIAL, Uri.parse("tel:$number"))
+                android.content.Intent(android.content.Intent.ACTION_DIAL, Uri.fromParts("tel", number, null))
                     .addFlags(android.content.Intent.FLAG_ACTIVITY_NEW_TASK)
             )
             JSONObject().put("dialer_opened", number).put("direct", false)
@@ -110,6 +111,7 @@ class DeviceCommsController(private val context: Context) {
     // ---- sms ----------------------------------------------------
 
     fun readSms(box: String, limit: Int = 15): JSONObject {
+        require(box == "inbox" || box == "sent") { "SMS box must be inbox or sent" }
         if (!ensurePermission(Manifest.permission.READ_SMS)) return denied("sms")
         val uri = if (box == "sent") Telephony.Sms.Sent.CONTENT_URI else Telephony.Sms.Inbox.CONTENT_URI
         val out = JSONArray()
@@ -134,16 +136,23 @@ class DeviceCommsController(private val context: Context) {
     }
 
     fun sendSms(number: String, body: String): JSONObject {
-        if (!ensurePermission(Manifest.permission.SEND_SMS)) return denied("send_sms")
+        DeviceCommandInputs.sms(number, body)
+        if (!ensurePermission(Manifest.permission.SEND_SMS)) return denied("sms_send")
         return runCatching {
-            SmsManager.getDefault().sendTextMessage(number, null, body, null, null)
-            JSONObject().put("sent", true).put("to", number).put("len", body.length)
+            val manager = SmsManager.getDefault()
+            val parts = manager.divideMessage(body)
+            if (parts.size > 1) manager.sendMultipartTextMessage(number, null, parts, null, null)
+            else manager.sendTextMessage(number, null, body, null, null)
+            JSONObject().put("submitted", true).put("delivery_confirmed", false)
+                .put("to", number).put("len", body.length).put("parts", parts.size)
+                .put("note", "Submitted to Android for sending; carrier delivery is not confirmed. Do not retry automatically.")
         }.getOrElse { JSONObject().put("error", "send failed: ${it.message}") }
     }
 
     // ---- calendar ----------------------------------------------------
 
     fun calendarEvents(daysAhead: Int = 3): JSONObject {
+        require(daysAhead in 1..365) { "days_ahead must be between 1 and 365" }
         if (!ensurePermission(Manifest.permission.READ_CALENDAR)) return denied("calendar")
         val now = System.currentTimeMillis()
         val until = now + daysAhead * 86_400_000L
@@ -177,12 +186,16 @@ class DeviceCommsController(private val context: Context) {
     }
 
     fun addCalendarEvent(title: String, beginMs: Long, endMs: Long?, location: String?, description: String?): JSONObject {
-        if (!ensurePermission(Manifest.permission.WRITE_CALENDAR)) return denied("write_calendar")
+        require(title.isNotBlank()) { "calendar title must not be empty" }
+        val end = DeviceCommandInputs.calendarEnd(beginMs, endMs)
+        if (!ensurePermission(Manifest.permission.READ_CALENDAR)) return denied("calendar",
+            "Choosing a writable calendar needs Calendar read access as well as Calendar write access.")
+        if (!ensurePermission(Manifest.permission.WRITE_CALENDAR)) return denied("calendar_write")
         val cv = android.content.ContentValues().apply {
             put(CalendarContract.Events.CALENDAR_ID, primaryCalendarId())
             put(CalendarContract.Events.TITLE, title)
             put(CalendarContract.Events.DTSTART, beginMs)
-            put(CalendarContract.Events.DTEND, endMs ?: (beginMs + 3_600_000L))
+            put(CalendarContract.Events.DTEND, end)
             put(CalendarContract.Events.EVENT_TIMEZONE, java.util.TimeZone.getDefault().id)
             location?.let { put(CalendarContract.Events.EVENT_LOCATION, it) }
             description?.let { put(CalendarContract.Events.DESCRIPTION, it) }
@@ -198,7 +211,8 @@ class DeviceCommsController(private val context: Context) {
         context.contentResolver.query(
             CalendarContract.Calendars.CONTENT_URI,
             arrayOf(CalendarContract.Calendars._ID, CalendarContract.Calendars.IS_PRIMARY),
-            null, null, null,
+            "${CalendarContract.Calendars.VISIBLE} = 1 AND ${CalendarContract.Calendars.CALENDAR_ACCESS_LEVEL} >= ?",
+            arrayOf(CalendarContract.Calendars.CAL_ACCESS_CONTRIBUTOR.toString()), null,
         )?.use { c ->
             var first = -1L
             while (c.moveToNext()) {
@@ -207,7 +221,7 @@ class DeviceCommsController(private val context: Context) {
             }
             if (first >= 0) return first
         }
-        return 1L
+        throw IllegalStateException("No visible writable calendar is available. Add a calendar account or enable a writable calendar first.")
     }
 
     // ---- permissions ----------------------------------------------------
@@ -216,5 +230,5 @@ class DeviceCommsController(private val context: Context) {
         context.checkSelfPermission(perm) == PackageManager.PERMISSION_GRANTED
 
     private fun denied(what: String, hint: String = "Ask the user to grant it once (Settings → Apps → Permissions), then retry.") =
-        JSONObject().put("error", "permission denied: $what").put("hint", hint)
+        JSONObject().put("error", "permission denied: $what").put("permission_id", what).put("hint", hint)
 }

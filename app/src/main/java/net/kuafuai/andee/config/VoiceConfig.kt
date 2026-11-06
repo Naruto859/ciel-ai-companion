@@ -52,6 +52,8 @@ object VoiceConfig {
             // which is the only way back to a baked-in key.
             "google_api_key", "google_project", "google_base_url", "google_location",
             "google_asr_model", "google_tts_model", "google_language",
+            "google_live_model", "google_live_voice",
+            "hub_url", "llm_api_key", "llm_base_url", "llm_model",
         )
 
         const val DEFAULT_ASR_ENDPOINT = "wss://openspeech.bytedance.com/api/v3/sauc/bigmodel_async"
@@ -157,6 +159,45 @@ object VoiceConfig {
         const val BRAIN_HUB = net.kuafuai.andee.config.BrainConfig.BRAIN_HUB
         const val BRAIN_LOCAL = net.kuafuai.andee.config.BrainConfig.BRAIN_LOCAL
         const val BRAIN_CODEFLYING = net.kuafuai.andee.config.BrainConfig.BRAIN_CODEFLYING
+        const val BRAIN_GEMINI_LIVE = net.kuafuai.andee.config.BrainConfig.BRAIN_GEMINI_LIVE
+
+        /** AI Studio credentials are entered on the device, never packaged in the APK. */
+        fun googleApiKey(context: Context): String =
+            context.getSharedPreferences(PREFS, Context.MODE_PRIVATE)
+                .getString("google_api_key", "").orEmpty().trim()
+
+        fun googleLiveModel(context: Context): String =
+            context.getSharedPreferences(PREFS, Context.MODE_PRIVATE)
+                .getString("google_live_model", "").orEmpty().trim()
+                .ifBlank { net.kuafuai.andee.voice.GeminiLiveConfig.DEFAULT_MODEL }
+
+        fun googleLiveVoice(context: Context): String =
+            context.getSharedPreferences(PREFS, Context.MODE_PRIVATE)
+                .getString("google_live_voice", "").orEmpty().trim()
+                .ifBlank { net.kuafuai.andee.tts.GoogleTts.voiceFor(load(context).ttsSpeaker) }
+
+        fun googleLiveConfig(context: Context) = net.kuafuai.andee.voice.GeminiLiveConfig(
+            apiKey = googleApiKey(context),
+            model = googleLiveModel(context),
+            voice = googleLiveVoice(context),
+        )
+
+        /** The local developer control port is an explicit, authenticated opt-in. */
+        fun wsServerEnabled(context: Context): Boolean =
+            context.getSharedPreferences(PREFS, Context.MODE_PRIVATE)
+                .getString("ws_server_enabled", "off") == "on"
+
+        /** Never included in current(), logs, an APK asset, or a config export. */
+        @Synchronized
+        fun wsServerToken(context: Context): String {
+            val prefs = context.getSharedPreferences(PREFS, Context.MODE_PRIVATE)
+            val saved = prefs.getString("ws_server_token", "").orEmpty()
+            if (saved.isNotBlank()) return saved
+            val bytes = ByteArray(32).also { java.security.SecureRandom().nextBytes(it) }
+            val token = java.util.Base64.getUrlEncoder().withoutPadding().encodeToString(bytes)
+            check(prefs.edit().putString("ws_server_token", token).commit()) { "Could not save local connection token" }
+            return token
+        }
 
         const val DEFAULT_LLM_BASE_URL = "https://api.deepseek.com"
         const val DEFAULT_LLM_MODEL = "deepseek-flash"
@@ -212,13 +253,9 @@ object VoiceConfig {
         fun codeFlyingKey(context: Context): String =
             context.getSharedPreferences(PREFS, Context.MODE_PRIVATE)
                 .getString("codeflying_key", "").orEmpty().trim()
-                .ifEmpty { codeFlyingBuiltInKey(context) }
 
-        /** The key that came with the APK, ignoring anything typed. */
-        fun codeFlyingBuiltInKey(context: Context): String =
-            runCatching {
-                context.assets.open("andee_key.txt").bufferedReader().use { it.readText().trim() }
-            }.getOrDefault("").ifEmpty { BuildConfig.CODEFLYING_KEY }
+        /** Compatibility for old settings UI; this application never ships a vendor credential. */
+        fun codeFlyingBuiltInKey(@Suppress("UNUSED_PARAMETER") context: Context): String = ""
 
         /** Origin for the market tools; see [net.kuafuai.andee.config.CodeFlyingEndpoint.marketBaseUrl]. */
         fun codeFlyingMarketBaseUrl(context: Context): String =
@@ -341,15 +378,27 @@ object VoiceConfig {
             return when (saved) {
                 BRAIN_HUB -> BRAIN_HUB
                 BRAIN_LOCAL -> BRAIN_LOCAL
-                BRAIN_CODEFLYING -> BRAIN_CODEFLYING
-                "" -> BRAIN_CODEFLYING
-                else -> BRAIN_LOCAL
+                // Android no longer depends on the former hosted vendor. Keep the saved
+                // preference for rollback, but resolve old installs to direct Gemini.
+                BRAIN_CODEFLYING -> BRAIN_GEMINI_LIVE
+                BRAIN_GEMINI_LIVE -> BRAIN_GEMINI_LIVE
+                else -> BRAIN_GEMINI_LIVE
             }
         }
 
         fun brainConfig(context: Context): BrainConfig {
             val p = context.getSharedPreferences(PREFS, Context.MODE_PRIVATE)
             val mode = brainMode(context)
+            if (mode == BRAIN_GEMINI_LIVE) {
+                return BrainConfig(
+                    mode = mode,
+                    apiKey = googleApiKey(context),
+                    baseUrl = DEFAULT_GOOGLE_BASE_URL,
+                    model = googleLiveModel(context),
+                    thinking = false,
+                    reasoningEffort = "minimal",
+                )
+            }
             // CodeFlying derives everything from the build — the user does not
             // see or edit the endpoints. llm_model / thinking / effort are
             // deliberately *still* read from prefs so the same picker in
@@ -490,19 +539,19 @@ object VoiceConfig {
          * choice, and a saved value outranks the build's default.
          */
         fun voiceProvider(context: Context): String {
+            if (brainMode(context) == BRAIN_GEMINI_LIVE) return VOICE_GOOGLE
             if (brainMode(context) == BRAIN_CODEFLYING) return VOICE_HUOSHAN
             val saved = context.getSharedPreferences(PREFS, Context.MODE_PRIVATE)
                 .getString("voice_provider", "").orEmpty().trim().lowercase()
             return when (saved) {
                 VOICE_GOOGLE -> VOICE_GOOGLE
-                VOICE_HUOSHAN -> VOICE_HUOSHAN
+                VOICE_HUOSHAN -> VOICE_GOOGLE
                 // Never chosen. A build packaged with a Google key is a build
                 // packaged *for* Google, so that is what it reads as; a build
                 // without one reads as 火山, which is what every build did
                 // before this setting existed. Either way the picker is one tap
                 // away, and a user's own choice always outranks this.
-                "" -> if (googleApiKeyDefault().isNotEmpty()) VOICE_GOOGLE else VOICE_HUOSHAN
-                else -> VOICE_HUOSHAN
+                else -> VOICE_GOOGLE
             }
         }
 
@@ -519,15 +568,16 @@ object VoiceConfig {
          * [voiceProvider] — the hosted gateway owns the upstream choice.
          */
         fun speakProvider(context: Context): String {
+            if (brainMode(context) == BRAIN_GEMINI_LIVE) return VOICE_GOOGLE
             if (brainMode(context) == BRAIN_CODEFLYING) return VOICE_HUOSHAN
             val saved = context.getSharedPreferences(PREFS, Context.MODE_PRIVATE)
                 .getString("speak_provider", "").orEmpty().trim().lowercase()
             return when (saved) {
                 VOICE_GOOGLE -> VOICE_GOOGLE
                 VOICE_SYSTEM -> VOICE_SYSTEM
-                VOICE_HUOSHAN -> VOICE_HUOSHAN
+                VOICE_HUOSHAN -> VOICE_GOOGLE
                 "" -> voiceProvider(context)
-                else -> VOICE_HUOSHAN
+                else -> VOICE_GOOGLE
             }
         }
 
@@ -579,8 +629,7 @@ object VoiceConfig {
                 // card's hint under each row is the same call — see
                 // [googleApiKeyDefault]. On a build with nothing baked in that
                 // reduces to exactly what it was before: the constants.
-                googleApiKey = p.getString("google_api_key", "").orEmpty().trim()
-                    .ifEmpty { googleApiKeyDefault() },
+                googleApiKey = googleApiKey(context),
                 googleBaseUrl = p.getString("google_base_url", "").orEmpty().trim()
                     .trimEnd('/').ifEmpty { googleBaseUrlDefault() },
                 // The project number has no constant to fall back to — there is
@@ -665,13 +714,16 @@ object VoiceConfig {
                 "google_asr_model" to p.getString("google_asr_model", "").orEmpty(),
                 "google_tts_model" to p.getString("google_tts_model", "").orEmpty(),
                 "google_language" to p.getString("google_language", "").orEmpty(),
+                "google_live_model" to googleLiveModel(context),
+                "google_live_voice" to googleLiveVoice(context),
+                "ws_server_enabled" to if (wsServerEnabled(context)) "on" else "off",
                 "hub_url" to hc.url,
                 "device_id" to hc.deviceId,
                 "device_name" to hc.deviceName,
                 // What the card selects: nothing saved is CodeFlying (the default tab for a
                 // new install), whether or not this build can run it — the tab then says so.
                 // Not bc.mode, which has CodeFlying already resolved away to local.
-                "brain" to p.getString("brain", "").orEmpty().trim().lowercase().ifEmpty { BRAIN_CODEFLYING },
+                "brain" to brainMode(context),
                 "show_hub" to if (showHub(context)) "on" else "off",
                 // llm_api_key / llm_base_url / llm_model are the 本机 tab's rows —
                 // the user's own credentials and the endpoint they point at.
@@ -985,6 +1037,7 @@ object VoiceConfig {
             "google_api_key", "google_base_url",
             "google_project", "google_location",
             "google_asr_model", "google_tts_model", "google_language",
+            "google_live_model", "google_live_voice", "ws_server_enabled",
             "hub_url", "device_name",
             "brain",
             "show_hub",

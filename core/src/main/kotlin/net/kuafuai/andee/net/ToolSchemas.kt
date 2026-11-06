@@ -2364,6 +2364,25 @@ object ToolSchemas {
     fun methodOf(toolName: String): String? =
         TOOLS.firstOrNull { it.getString("name") == toolName }?.optString("method")?.ifEmpty { null }
 
+    /** Apply the same private-tool boundary to requests that [forHub] applies to advertisements. */
+    fun hubMethodOf(toolName: String): String? =
+        TOOLS.firstOrNull { it.getString("name") == toolName && !it.optBoolean("localOnly", false) }
+            ?.optString("method")?.ifEmpty { null }
+
+    /** An extension must not impersonate a built-in tool or an internal dispatch method. */
+    fun requireExtensionTools(tools: JSONArray) {
+        val names = mutableSetOf<String>()
+        for (i in 0 until tools.length()) {
+            val tool = requireNotNull(tools.optJSONObject(i)) { "extension tool must be an object" }
+            val name = tool.optString("name")
+            require(name.matches(Regex("[A-Za-z_][A-Za-z0-9_.-]{0,127}"))) { "invalid extension tool name" }
+            require(names.add(name)) { "duplicate extension tool name: $name" }
+            require(!name.startsWith("debug.") && TOOLS.none {
+                it.optString("name") == name || it.optString("method") == name
+            }) { "extension cannot replace built-in tool: $name" }
+        }
+    }
+
     /**
      * The entries whose internal method [keep] accepts, for a body that only
      * has some of these hands — the desktop has no SMS and no step counter, and

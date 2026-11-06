@@ -60,6 +60,10 @@ class ScreenController(
     @Volatile
     var shotGuard: ((() -> JSONObject) -> JSONObject)? = null
 
+    /** The dispatcher checks the generation accepted before this command was queued. */
+    @Volatile
+    var commandCheck: (() -> Unit)? = null
+
     private fun guardedShot(shot: () -> JSONObject): JSONObject =
         shotGuard?.invoke(shot) ?: shot()
 
@@ -901,6 +905,7 @@ class ScreenController(
         var moved = 0
         var stoppedAtEnd = false
         for (i in 0 until n) {
+            commandCheck?.invoke()
             val before = screenFingerprint()
             val beforePx = if (before.optBoolean("blind")) pixelSignature() else null
             swipe(x1, y1, x2, y2, durationMs, fling = false)
@@ -1589,6 +1594,7 @@ class ScreenController(
             val matches = root.findAccessibilityNodeInfosByViewId(id).orEmpty()
             val target = matches.firstOrNull() ?: throw IllegalArgumentException("no node with id: $id")
             try {
+                commandCheck?.invoke()
                 val performed = target.performAction(AccessibilityNodeInfo.ACTION_CLICK)
                 return JSONObject().put("performed", performed).put("id", id).put("matches", matches.size)
             } finally {
@@ -1746,6 +1752,7 @@ class ScreenController(
             val matches = root.findAccessibilityNodeInfosByViewId(id).orEmpty()
             val target = matches.firstOrNull() ?: throw IllegalArgumentException("no node with id: $id")
             try {
+                commandCheck?.invoke()
                 val performed = target.performAction(AccessibilityNodeInfo.ACTION_LONG_CLICK)
                 return JSONObject().put("performed", performed).put("id", id)
             } finally {
@@ -1764,6 +1771,7 @@ class ScreenController(
      * [typeViaAdbKeyboard].
      */
     fun typeText(text: String, id: String?, secret: Boolean): JSONObject {
+        commandCheck?.invoke()
         // ── 输入通道:无障碍输入法优先,ADBKeyboard 兜底(2026-09-30) ──
         //
         // 首选 [A11yIme]:API 33 起,声明了 flagInputMethodEditor 的无障碍
@@ -1833,7 +1841,8 @@ class ScreenController(
      * 法。没有电脑的用户在那条路上一个字也打不了。
      */
     private fun typeViaA11yIme(text: String, secret: Boolean): JSONObject? {
-        val got = A11yIme.replace(service, text) ?: return null
+        commandCheck?.invoke()
+        val got = A11yIme.replace(service, text) { commandCheck?.invoke() } ?: return null
         val ok = got == text
         return JSONObject()
             .put("performed", ok)
@@ -1935,12 +1944,17 @@ class ScreenController(
 
     /** The broadcast-and-verify half. Only ever called with the brain's IME up. */
     private fun typeWithKeyboardUp(text: String, secret: Boolean): JSONObject {
-        runCatching {
-            service.sendBroadcast(
-                android.content.Intent(ADB_CLEAR_TEXT).setPackage(ADB_KEYBOARD_PKG)
-            )
+        commandCheck?.invoke()
+        service.sendBroadcast(
+            android.content.Intent(ADB_CLEAR_TEXT).setPackage(ADB_KEYBOARD_PKG)
+        )
+        try {
             Thread.sleep(150)
+        } catch (e: InterruptedException) {
+            Thread.currentThread().interrupt()
+            throw e
         }
+        commandCheck?.invoke()
         service.sendBroadcast(
             android.content.Intent(ADB_INPUT_TEXT)
                 .putExtra("msg", text)
@@ -2030,6 +2044,7 @@ class ScreenController(
      * When `id` is null we use the currently focused input.
      */
     fun submitInput(id: String?): JSONObject {
+        commandCheck?.invoke()
         if (id == null && A11yIme.sendsOnlyFromButton(service)) {
             throw IllegalStateException(
                 "this field has no keyboard send action — it sends only from its own Send/发送 " +
@@ -2047,7 +2062,7 @@ class ScreenController(
             focus?.recycle()
             r?.recycle()
             if (focus == null) {
-                if (A11yIme.editorAction(service)) {
+                if (A11yIme.editorAction(service) { commandCheck?.invoke() }) {
                     return JSONObject().put("performed", true).put("via", A11yIme.VIA)
                 }
                 throw IllegalStateException(
@@ -2066,6 +2081,8 @@ class ScreenController(
                     ?: throw IllegalStateException("no input focus (tap into an input field first)")
             }
             try {
+                // Node resolution can block on another app; Stop may arrive while it does.
+                commandCheck?.invoke()
                 val performed = target.performAction(
                     AccessibilityNodeInfo.AccessibilityAction.ACTION_IME_ENTER.id
                 )
@@ -2076,7 +2093,7 @@ class ScreenController(
                 // ACTION_IME_ENTER needs no focused *input connection* and covers
                 // the `id`-addressed case this method also serves.
                 val viaIme = if (!performed && id == null) {
-                    A11yIme.editorAction(service)
+                    A11yIme.editorAction(service) { commandCheck?.invoke() }
                 } else {
                     false
                 }
@@ -2101,6 +2118,7 @@ class ScreenController(
      *   caller that can't be the user, is also the one that never passes it.
      */
     fun globalAction(action: String, actor: String = "brain"): JSONObject {
+        commandCheck?.invoke()
         // Leaving the screen ends whatever was being typed into.
         typedBlindAt = 0L
         screenMovedAtMs = SystemClock.uptimeMillis()
@@ -2113,6 +2131,7 @@ class ScreenController(
             else -> throw IllegalArgumentException("unknown global action: $action")
         }
         GroundingLog.noteNav(action.lowercase(), actor)
+        commandCheck?.invoke()
         val ok = service.performGlobalAction(code)
         return JSONObject().put("performed", ok).put("action", action)
     }
@@ -3185,7 +3204,7 @@ class ScreenController(
             total == 0 && net.kuafuai.andee.ui.OwnCard.showing ->
                 out.put(
                     "hint",
-                    "The user has one of Andee's own cards open (settings or the vault), so " +
+                    "The user has one of Ciel's own cards open (settings or the vault), so " +
                         "there is no app tree to read — the card is deliberately invisible to " +
                         "accessibility, including to us. Nothing is broken. Wait for them to " +
                         "close it, or say in plain words that you need the settings card closed " +
@@ -3201,7 +3220,7 @@ class ScreenController(
             total == 0 && net.kuafuai.andee.ui.FullscreenCard.covering ->
                 out.put(
                     "hint",
-                    "Andee's own card is unfolded over the whole screen, so the app behind it " +
+                    "Ciel's own card is unfolded over the whole screen, so the app behind it " +
                         "is covered and reports every node as not visible — that is why this is " +
                         "empty, and nothing is broken. Folding the card is automatic before any " +
                         "screen tool, so retry this call once and it should read normally. Do " +
@@ -3214,12 +3233,12 @@ class ScreenController(
             useful == 0 && out.optBoolean("withheld") -> {
                 val app = out.optString("pkg").ifEmpty { "This app" }
                 val helper = if (out.optBoolean("tree_helper_enabled")) {
-                    "Andee has just switched that helper on itself and the app has not picked " +
+                    "Ciel has just switched that helper on itself and the app has not picked " +
                         "it up yet — the next dump may read normally, so retry once before " +
                         "giving up on the list; if it is still blank, the user may need to " +
                         "reopen the app. "
                 } else {
-                    "Andee could not switch it on here, and the user cannot either: it is a " +
+                    "Ciel could not switch it on here, and the user cannot either: it is a " +
                         "hidden companion MIUI only runs alongside TalkBack, and TalkBack " +
                         "would read the whole screen aloud and change how every tap works. So " +
                         "do not send the user to look for any setting — if it matters, say " +
@@ -3230,7 +3249,7 @@ class ScreenController(
                     "`$app` is withholding its UI from accessibility: its window hands every " +
                         "accessibility client — the system's own uiautomator included — a blank " +
                         "placeholder with no size and no children. That is the app's choice, not a " +
-                        "fault on this device; switching Andee off and on does not change it, so " +
+                        "fault on this device; switching Ciel off and on does not change it, so " +
                         "do not ask the user to. What it does depend on is which *other* " +
                         "accessibility services are on: WeChat was measured exposing its full " +
                         "tree only while MIUI's TalkBack helper (MiuiEnhanceTalkback) was also " +
@@ -3355,7 +3374,7 @@ class ScreenController(
             "containers. Zero nodes from an app that was readable is the signature of " +
             "our accessibility connection having gone stale, and no tool call can " +
             "repair it: only the person holding the tablet can, by opening 设置 → " +
-            "无障碍 (Settings → Accessibility), switching Andee off and back on. That " +
+            "无障碍 (Settings → Accessibility), switching Ciel off and back on. That " +
             "takes about three seconds. Retry this tool once first in case the screen " +
             "was merely mid-transition; if it is still empty, say so to the user in " +
             "plain words and wait for them. Taps and swipes still work and you still " +
@@ -3364,6 +3383,7 @@ class ScreenController(
     }
 
     private fun runGesture(gesture: GestureDescription, timeoutMs: Long): JSONObject {
+        commandCheck?.invoke()
         screenMovedAtMs = SystemClock.uptimeMillis()
         val latch = CountDownLatch(1)
         var completed = false

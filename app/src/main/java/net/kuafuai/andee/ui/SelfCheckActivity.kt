@@ -148,6 +148,8 @@ class SelfCheckActivity : StageActivity() {
          * [requestScreenCapture].
          */
         const val EXTRA_SCREEN_CAPTURE = "screen_capture"
+        /** Explicit diagnostics entry from Ciel Home, including on an already running device. */
+        const val EXTRA_SHOW_CHECKS = "show_checks"
 
         /**
          * Start-intent extra: the screen the check card was asked to open, and
@@ -367,7 +369,7 @@ class SelfCheckActivity : StageActivity() {
         // — a tap that does nothing, on the path the user just took because the
         // list told them to. See [showForErrand].
         val errand = intent?.getParcelableExtra<Intent>(EXTRA_ERRAND)
-        val carrying = errand != null
+        val carrying = errand != null || intent?.getBooleanExtra(EXTRA_SHOW_CHECKS, false) == true
 
         // First run outranks the launcher's normal trampoline behaviour. A
         // configured device still skips every setup item it already has, but

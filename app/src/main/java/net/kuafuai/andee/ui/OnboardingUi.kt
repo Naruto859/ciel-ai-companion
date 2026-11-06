@@ -91,30 +91,21 @@ class OnboardingUi(
 
     private var selectedBrain = when (VoiceConfig.brainMode(context)) {
         VoiceConfig.BRAIN_LOCAL -> VoiceConfig.BRAIN_LOCAL
-        else -> VoiceConfig.BRAIN_CODEFLYING
+        else -> VoiceConfig.BRAIN_GEMINI_LIVE
     }
     private val initialConfig = VoiceConfig.current(context)
-    private var draftCodeFlyingKey = initialConfig["codeflying_key"].orEmpty()
     private var draftLocalKey = initialConfig["llm_api_key"].orEmpty()
     private var draftLocalBase = initialConfig["llm_base_url"].orEmpty()
     private var draftLocalModel = initialConfig["llm_model"].orEmpty()
-    private var codeFlyingKeyEdit: EditText? = null
     private var localKeyEdit: EditText? = null
     private var localBaseEdit: EditText? = null
     private var localModelEdit: EditText? = null
 
-    // Voice, for the local brain only: CodeFlying brings its own from the build.
-    // Who hears and who speaks are two pickers, as in SettingsUi.
-    private var draftHear = initialConfig["voice_provider"].orEmpty()
-        .ifBlank { VoiceConfig.VOICE_HUOSHAN }
+    // A custom model can use Google or the installed Android voice for speech.
     private var draftSpeak = initialConfig["speak_provider"].orEmpty()
-        .ifBlank { draftHear }
-    private var draftVolcKey = initialConfig["api_key"].orEmpty()
+        .ifBlank { VoiceConfig.VOICE_GOOGLE }
     private var draftGoogleKey = initialConfig["google_api_key"].orEmpty()
-    private var draftGoogleProject = initialConfig["google_project"].orEmpty()
-    private var volcKeyEdit: EditText? = null
     private var googleKeyEdit: EditText? = null
-    private var googleProjectEdit: EditText? = null
 
     /** Read aloud or not; written when the prelude is left, unmuted unless the user says otherwise. */
     private var soundOn = !VoiceConfig.muted(context)
@@ -213,6 +204,9 @@ class OnboardingUi(
     private fun nextMissing(): SelfCheck.Finding? = requiredMissing().firstOrNull()
 
     private fun modelReady(): Boolean {
+        if (VoiceConfig.brainMode(context) == VoiceConfig.BRAIN_GEMINI_LIVE) {
+            return VoiceConfig.current(context)["google_api_key"].orEmpty().isNotBlank()
+        }
         val brain = VoiceConfig.brainConfig(context)
         return if (brain.isLocal) brain.apiKey.isNotBlank() && voiceReady()
         else VoiceConfig.hubConfig(context).url.isNotBlank()
@@ -221,10 +215,10 @@ class OnboardingUi(
     /**
      * Whether the voice side can hear and speak, by the checklist's own row —
      * so this page and the self-check can never disagree about the same key.
-     * Only asked for the local brain; CodeFlying's voice comes with the build.
+     * The Gemini Live path checks its own direct API key in modelReady().
      */
     private fun voiceReady(): Boolean =
-        SelfCheck.local(context).firstOrNull { it.id == "voice_key" }?.level != SelfCheck.Level.WARN
+        SelfCheck.local(context).firstOrNull { it.id == "voice_key" }?.level == SelfCheck.Level.OK
 
     private fun render(animated: Boolean) {
         lctx = AppLocale.wrap(context)
@@ -741,212 +735,78 @@ class OnboardingUi(
 
     private fun model(body: LinearLayout, footer: LinearLayout) {
         if (!justGranted) mood(Mood.THINKING)
-        pageHeader(
-            body,
-            R.string.onboarding_model_badge,
-            R.string.onboarding_model_title,
-            R.string.onboarding_model_body,
-        )
-
-        val choices = LinearLayout(context).apply {
-            orientation = LinearLayout.HORIZONTAL
+        pageHeader(body, R.string.onboarding_model_badge, R.string.onboarding_model_title, R.string.ciel_setup_intro)
+        localKeyEdit = null
+        localBaseEdit = null
+        localModelEdit = null
+        googleKeyEdit = null
+        val choices = LinearLayout(context).apply { orientation = LinearLayout.HORIZONTAL }
+        listOf(VoiceConfig.BRAIN_GEMINI_LIVE to R.string.ciel_gemini_live, VoiceConfig.BRAIN_LOCAL to R.string.ciel_custom_model).forEach { (mode, title) ->
+            choices.addView(modelChoice(lctx.getString(title), "API", selectedBrain == mode) {
+                captureModelDrafts()
+                selectedBrain = mode
+                render(animated = true)
+            }, LinearLayout.LayoutParams(0, WRAP, 1f).apply { marginEnd = dp(6) })
         }
-        choices.addView(
-            modelChoice(
-                title = "CodeFlying",
-                subtitle = lctx.getString(R.string.onboarding_model_recommended),
-                selected = selectedBrain == VoiceConfig.BRAIN_CODEFLYING,
-            ) {
-                captureModelDrafts()
-                selectedBrain = VoiceConfig.BRAIN_CODEFLYING
-                render(animated = true)
-            },
-            LinearLayout.LayoutParams(0, WRAP, 1f).apply { marginEnd = dp(5) },
-        )
-        choices.addView(
-            modelChoice(
-                title = lctx.getString(R.string.onboarding_model_local_title),
-                subtitle = "API",
-                selected = selectedBrain == VoiceConfig.BRAIN_LOCAL,
-            ) {
-                captureModelDrafts()
-                selectedBrain = VoiceConfig.BRAIN_LOCAL
-                render(animated = true)
-            },
-            LinearLayout.LayoutParams(0, WRAP, 1f).apply { marginStart = dp(5) },
-        )
         body.addView(choices, spacedParams(18))
-
-        val form = panel()
-        if (selectedBrain == VoiceConfig.BRAIN_CODEFLYING) {
-            form.addView(bodyCopy(lctx.getString(R.string.onboarding_model_codeflying_note)))
-            form.addView(textLink(lctx.getString(R.string.onboarding_model_open_site)) {
-                onOpenUrl(lctx.getString(R.string.codeflying_url))
-            }, spacedParams(4))
-            codeFlyingKeyEdit = input(
-                label = lctx.getString(R.string.settings_codeflying_key),
-                value = draftCodeFlyingKey,
-                hint = lctx.getString(R.string.onboarding_model_key_hint),
-                secret = true,
-            )
-            form.addView(fieldBlock(lctx.getString(R.string.settings_codeflying_key), codeFlyingKeyEdit!!), spacedParams(8))
-        } else {
-            form.addView(bodyCopy(lctx.getString(R.string.onboarding_model_local_note)))
+        if (selectedBrain == VoiceConfig.BRAIN_LOCAL) {
+            val form = panel()
             localKeyEdit = input("", draftLocalKey, lctx.getString(R.string.onboarding_model_key_hint), secret = true)
-            localBaseEdit = input(
-                "",
-                draftLocalBase,
-                lctx.getString(R.string.onboarding_model_base_hint, VoiceConfig.llmBaseUrlDefault(context)),
-            )
-            localModelEdit = input(
-                "",
-                draftLocalModel,
-                lctx.getString(R.string.onboarding_model_name_hint, VoiceConfig.llmModelDefault(context)),
-            )
+            localBaseEdit = input("", draftLocalBase, VoiceConfig.llmBaseUrlDefault(context))
+            localModelEdit = input("", draftLocalModel, VoiceConfig.llmModelDefault(context))
             form.addView(fieldBlock(lctx.getString(R.string.settings_llm_api_key), localKeyEdit!!), spacedParams(8))
             form.addView(fieldBlock(lctx.getString(R.string.settings_llm_base_url), localBaseEdit!!), spacedParams(8))
             form.addView(fieldBlock(lctx.getString(R.string.settings_llm_model), localModelEdit!!), spacedParams(8))
+            body.addView(form, spacedParams(12))
         }
-        body.addView(form, spacedParams(12))
-        if (selectedBrain == VoiceConfig.BRAIN_LOCAL) body.addView(voiceForm(), spacedParams(12))
-
+        body.addView(voiceForm(), spacedParams(12))
         val error = errorLabel()
         body.addView(error, spacedParams(8))
         footer.addView(primaryButton(lctx.getString(R.string.onboarding_model_save)) {
             captureModelDrafts()
-            val key = if (selectedBrain == VoiceConfig.BRAIN_CODEFLYING) {
-                draftCodeFlyingKey.ifBlank { VoiceConfig.codeFlyingBuiltInKey(context) }
-            } else {
-                draftLocalKey
-            }
-            if (key.isBlank()) {
-                error.text = lctx.getString(R.string.onboarding_model_key_required)
+            if (draftGoogleKey.isBlank() || (selectedBrain == VoiceConfig.BRAIN_LOCAL && draftLocalKey.isBlank())) {
+                error.text = lctx.getString(R.string.ciel_key_required)
                 error.visibility = View.VISIBLE
                 mood(Mood.ANXIOUS)
-                ball?.trigger(Action.SHAKE)
                 return@primaryButton
             }
-            if (selectedBrain == VoiceConfig.BRAIN_LOCAL && !voiceDraftComplete()) {
-                error.text = lctx.getString(R.string.onboarding_voice_key_required)
-                error.visibility = View.VISIBLE
-                mood(Mood.ANXIOUS)
-                ball?.trigger(Action.SHAKE)
-                return@primaryButton
-            }
-            val updates = if (selectedBrain == VoiceConfig.BRAIN_CODEFLYING) {
-                mapOf(
-                    "brain" to VoiceConfig.BRAIN_CODEFLYING,
-                    "codeflying_key" to draftCodeFlyingKey,
-                )
-            } else {
-                mapOf(
-                    "brain" to VoiceConfig.BRAIN_LOCAL,
-                    "llm_api_key" to draftLocalKey,
-                    "llm_base_url" to draftLocalBase,
-                    "llm_model" to draftLocalModel,
-                    "voice_provider" to draftHear,
-                    "speak_provider" to draftSpeak,
-                    // Blank values are dropped by save(), so an untouched key
-                    // field keeps whatever was there.
-                    "api_key" to draftVolcKey,
-                    "google_api_key" to draftGoogleKey,
-                    "google_project" to draftGoogleProject,
-                )
-            }
+            val updates = mutableMapOf(
+                "brain" to selectedBrain,
+                "voice_provider" to VoiceConfig.VOICE_GOOGLE,
+                "speak_provider" to if (selectedBrain == VoiceConfig.BRAIN_GEMINI_LIVE) VoiceConfig.VOICE_GOOGLE else draftSpeak,
+                "google_api_key" to draftGoogleKey,
+            )
+            if (selectedBrain == VoiceConfig.BRAIN_LOCAL) updates.putAll(mapOf(
+                "llm_api_key" to draftLocalKey, "llm_base_url" to draftLocalBase, "llm_model" to draftLocalModel,
+            ))
             onSaveModel(updates)
             advance(OnboardingState.Page.MEET)
         })
     }
 
     private fun captureModelDrafts() {
-        codeFlyingKeyEdit?.let { draftCodeFlyingKey = it.text?.toString().orEmpty().trim() }
         localKeyEdit?.let { draftLocalKey = it.text?.toString().orEmpty().trim() }
         localBaseEdit?.let { draftLocalBase = it.text?.toString().orEmpty().trim() }
         localModelEdit?.let { draftLocalModel = it.text?.toString().orEmpty().trim() }
-        volcKeyEdit?.let { draftVolcKey = it.text?.toString().orEmpty().trim() }
         googleKeyEdit?.let { draftGoogleKey = it.text?.toString().orEmpty().trim() }
-        googleProjectEdit?.let { draftGoogleProject = it.text?.toString().orEmpty().trim() }
     }
 
-    // ---- Voice (local brain) -----------------------------------------------
-
-    private fun usesHuoshan() = draftHear == VoiceConfig.VOICE_HUOSHAN || draftSpeak == VoiceConfig.VOICE_HUOSHAN
-    private fun usesGoogle() = draftHear == VoiceConfig.VOICE_GOOGLE || draftSpeak == VoiceConfig.VOICE_GOOGLE
-
-    /**
-     * Mirrors [SelfCheck]'s voice row against the drafts, before they are
-     * saved: every provider in use needs its key. A build packaged with a
-     * Google key/project needs neither typed.
-     */
-    private fun voiceDraftComplete(): Boolean {
-        if (usesHuoshan() && draftVolcKey.isBlank()) return false
-        if (usesGoogle()) {
-            if (draftGoogleKey.isBlank() && VoiceConfig.googleApiKeyDefault().isBlank()) return false
-            if (draftGoogleProject.isBlank() && VoiceConfig.googleProjectDefault().isBlank()) return false
-        }
-        return true
-    }
-
-    /**
-     * Who hears, who speaks, and only the keys those two need. Endpoints and
-     * resource ids ship working defaults and stay in Settings.
-     */
     private fun voiceForm(): View = panel().apply {
-        addView(label(lctx.getString(R.string.onboarding_voice_title), Glass.TITLE, bold = true))
-        addView(bodyCopy(lctx.getString(R.string.onboarding_voice_body)), spacedParams(6))
-
-        addView(sectionLabel(lctx.getString(R.string.settings_voice_hear_provider)), spacedParams(12))
-        addView(pickerRow(
-            listOf(
-                VoiceConfig.VOICE_HUOSHAN to lctx.getString(R.string.settings_voice_provider_huoshan),
-                VoiceConfig.VOICE_GOOGLE to lctx.getString(R.string.settings_voice_provider_google),
-            ),
-            draftHear,
-        ) { draftHear = it }, spacedParams(6))
-
-        addView(sectionLabel(lctx.getString(R.string.settings_voice_speak_provider)), spacedParams(12))
-        addView(pickerRow(
-            listOf(
-                VoiceConfig.VOICE_HUOSHAN to lctx.getString(R.string.settings_voice_provider_huoshan),
+        addView(label(lctx.getString(R.string.ciel_gemini_live), Glass.TITLE, bold = true))
+        addView(bodyCopy(lctx.getString(R.string.ciel_gemini_note)), spacedParams(6))
+        googleKeyEdit = input("", draftGoogleKey, lctx.getString(R.string.ciel_key_hint), secret = true)
+        addView(fieldBlock(lctx.getString(R.string.ciel_api_key), googleKeyEdit!!), spacedParams(12))
+        addView(textLink(lctx.getString(R.string.ciel_get_key)) { onOpenUrl("https://aistudio.google.com/apikey") }, spacedParams(6))
+        if (selectedBrain == VoiceConfig.BRAIN_LOCAL) {
+            addView(sectionLabel(lctx.getString(R.string.settings_voice_speak_provider)), spacedParams(12))
+            addView(pickerRow(listOf(
                 VoiceConfig.VOICE_GOOGLE to lctx.getString(R.string.settings_voice_provider_google),
                 VoiceConfig.VOICE_SYSTEM to lctx.getString(R.string.settings_voice_provider_system),
-            ),
-            draftSpeak,
-        ) { draftSpeak = it }, spacedParams(6))
-
-        volcKeyEdit = null
-        googleKeyEdit = null
-        googleProjectEdit = null
-        if (usesHuoshan()) {
-            volcKeyEdit = input("", draftVolcKey, lctx.getString(R.string.settings_voice_api_key_hint), secret = true)
-            addView(fieldBlock(lctx.getString(R.string.settings_voice_api_key), volcKeyEdit!!), spacedParams(12))
+            ), draftSpeak) { draftSpeak = it }, spacedParams(6))
         }
-        if (usesGoogle()) {
-            val builtInKey = VoiceConfig.googleApiKeyDefault()
-            val builtInProject = VoiceConfig.googleProjectDefault()
-            googleKeyEdit = input(
-                "",
-                draftGoogleKey,
-                lctx.getString(
-                    if (builtInKey.isNotEmpty()) R.string.settings_google_key_builtin
-                    else R.string.settings_google_api_key_hint,
-                ),
-                secret = true,
-            )
-            googleProjectEdit = input(
-                "",
-                draftGoogleProject,
-                builtInProject.ifEmpty { lctx.getString(R.string.settings_google_project_hint) },
-            )
-            addView(fieldBlock(lctx.getString(R.string.settings_google_api_key), googleKeyEdit!!), spacedParams(12))
-            addView(fieldBlock(lctx.getString(R.string.settings_google_project), googleProjectEdit!!), spacedParams(8))
-        }
-        addView(bodyCopy(lctx.getString(R.string.onboarding_voice_more)).apply {
-            setTextSize(TypedValue.COMPLEX_UNIT_SP, Glass.Type.CAPTION)
-        }, spacedParams(10))
+        addView(bodyCopy(lctx.getString(R.string.ciel_quota_note)), spacedParams(10))
     }
 
-    /** A row of pills; a pick re-renders, since it changes which keys are asked. */
     private fun pickerRow(
         options: List<Pair<String, String>>,
         picked: String,

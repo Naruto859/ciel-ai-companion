@@ -49,10 +49,8 @@ import net.kuafuai.andee.wake.WakeWord
  *    other one's fields away instead of leaving the user to guess which four
  *    rows matter. It *folds* rather than flicking to `GONE`: rows that vanish
  *    instantly read as rows that were deleted.
- *  * **The 火山 endpoints start collapsed.** They ship working defaults
- *    ([VoiceConfig.DEFAULT_ASR_ENDPOINT] and friends) and the key is compiled
- *    in, so on almost every device they are read-only trivia sitting above the
- *    settings that actually get edited.
+ *  * **Direct Gemini Live starts with one key.** Custom model endpoints and
+ *    separate speech settings are shown only for the corresponding provider.
  *
  * **Language.** Every visible string comes from a resource, through [lctx], and
  * the picker sits in the header because it is the one setting whose effect is
@@ -72,10 +70,8 @@ import net.kuafuai.andee.wake.WakeWord
  * A language picker names each language in its own script, so 中 and EN are the
  * same in every locale.
  *
- * The 火山 key row is where a key comes from at all: [VoiceConfig.API_KEY]
- * ships empty in the public source, so an empty row means the device cannot
- * hear or speak. `SelfCheck`'s `voice_key` row says so before the user finds
- * out from a connect timeout.
+ * The Google key row is shared across the Gemini paths. `SelfCheck` explains
+ * a missing credential before the user discovers it through a failed call.
  */
 class SettingsUi(
     private val context: Context,
@@ -585,346 +581,73 @@ class SettingsUi(
      * (`BodyCoreService.startBrain` builds one brain or the other), so the
      * picker folds away the half that is not in play.
      */
-    /**
-     * The backend section. Three tabs — 本机 / CodeFlying / 云端 — only one is
-     * ever in play, and the picker folds away the two that are not.
-     *
-     * Visibility rules:
-     *  * **CodeFlying** is only in the picker when the build enables it with a
-     *    non-empty domain (the build's CODEFLYING_DOMAIN). The tab
-     *    itself has no editable rows — endpoints and credential are compiled
-     *    in — just a note describing what the hosted backend offers.
-     *  * **云端** is only in the picker when the user has turned the "显示
-     *    云端选项" toggle on (`show_hub`, saved eagerly so the picker rebuilds
-     *    at once). It is off by default: a device nobody has configured for a
-     *    hub is better off not seeing an option it has nothing to fill in.
-     *
-     * Voice (`asr_endpoint` / `tts_endpoint` / `api_key` and the resource IDs)
-     * used to live inside 高级 → 火山. It now lives inside the **本机** tab,
-     * because voice runs on this device whichever backend answers, but a
-     * CodeFlying device never touches these fields and a 云端 device cares
-     * about hub plumbing instead.
-     */
+    /** Direct Gemini Live or a user-configured model/hub; no hosted vendor fallback. */
     private fun brainSection(form: LinearLayout) {
-        val panel = group(
-            form,
-            lctx.getString(R.string.settings_section_brain),
-            lctx.getString(R.string.settings_brain_panel_note),
-        )
-
-        // Tab picker. 本机 and CodeFlying are always visible — CodeFlying stays
-        // in the row even when the build didn't configure it, so the user is
-        // told what it is and how to turn it on. 云端 is still gated on the
-        // user's own show_hub toggle: it is the only tab that is pure extra
-        // configuration surface, so nobody who hasn't asked for it needs to
-        // see it. If the user picks CodeFlying without a configured build,
-        // [VoiceConfig.brainMode] silently falls back to local at runtime —
-        // the saved value sticks, so the picker rebuilds correctly, and
-        // installing a configured build later flips the behaviour on without
-        // the user having to re-pick.
-        // CodeFlying leads: it is the default tab on a fresh install, and the
-        // leftmost cell is the fallback (see [segmented]).
+        val panel = group(form, lctx.getString(R.string.settings_section_brain), lctx.getString(R.string.ciel_backend_note))
         val options = buildList {
-            add(VoiceConfig.BRAIN_CODEFLYING to lctx.getString(R.string.settings_brain_codeflying))
-            add(VoiceConfig.BRAIN_LOCAL to lctx.getString(R.string.settings_brain_local))
-            if (VoiceConfig.showHub(context)) {
-                add(VoiceConfig.BRAIN_HUB to lctx.getString(R.string.settings_brain_cloud))
-            }
+            add(VoiceConfig.BRAIN_GEMINI_LIVE to lctx.getString(R.string.ciel_gemini_live))
+            add(VoiceConfig.BRAIN_LOCAL to lctx.getString(R.string.ciel_custom_model))
+            if (VoiceConfig.showHub(context)) add(VoiceConfig.BRAIN_HUB to lctx.getString(R.string.settings_brain_cloud))
         }
         var applyMode: ((String, Boolean) -> Unit)? = null
-        // Filled in by the picker itself: the "no key?" line below has to move the
-        // tab the same way a tap on the cell would, or the card would keep showing
-        // 本机 while saving CodeFlying.
-        var pickBrain: (String) -> Unit = {}
-        val mode = segmented(panel, "brain", options, setterRef = { pickBrain = it }) { applyMode?.invoke(it, true) }
+        val mode = segmented(panel, "brain", options) { applyMode?.invoke(it, true) }
 
-        // ---- 云端 tab ----
-        val hubBlock = block(panel)
-        field(
-            hubBlock,
-            "hub_url",
-            lctx.getString(R.string.settings_hub_url),
-            hint = lctx.getString(R.string.settings_hub_url_hint),
-        )
-        field(
-            hubBlock,
-            "device_name",
-            lctx.getString(R.string.settings_device_name),
-            hint = lctx.getString(R.string.settings_device_name_hint),
-        )
-        note(hubBlock, lctx.getString(R.string.settings_brain_cloud_note))
+        // One shared key field prevents a hidden provider form overwriting the
+        // key the person just entered in the visible form.
+        field(panel, "google_api_key", lctx.getString(R.string.ciel_api_key), hint = lctx.getString(R.string.ciel_key_hint), secret = true)
+        linkNote(panel, lctx.getString(R.string.ciel_get_key)) { onOpenLink("https://aistudio.google.com/apikey") }
 
-        // ---- CodeFlying tab ----
-        // No "connected or not": the tab is the default, and the one thing it has
-        // to say is how to get a key while there is none. With a key it says what
-        // the backend is.
-        val cfBlock = block(panel)
-        val cfKeyed = VoiceConfig.codeFlyingKey(context).isNotEmpty()
-        // Same words and same link whether or not a key is set: the tab does not
-        // describe the state, the key box below does.
-        note(cfBlock, lctx.getString(R.string.settings_brain_codeflying_note))
-        note(cfBlock, lctx.getString(R.string.settings_codeflying_get_key))
-        linkNote(cfBlock, lctx.getString(R.string.settings_codeflying_open_site)) {
-            onOpenLink(lctx.getString(R.string.codeflying_url))
-        }
-        // Shows the key in effect (typed, else the build's); editing it overrides.
-        // The server address is the build's and has no row. The key row is always
-        // here: it is where a person who just got a key from the link above puts it.
-        field(
-            cfBlock,
-            "codeflying_key",
-            lctx.getString(R.string.settings_codeflying_key),
-            hint = "kft_…",
-            secret = true,
-            copyValue = { VoiceConfig.codeFlyingKey(context) },
-        )
+        val liveBlock = block(panel)
+        note(liveBlock, lctx.getString(R.string.ciel_gemini_note))
+        field(liveBlock, "google_live_model", lctx.getString(R.string.ciel_live_model), hint = VoiceConfig.googleLiveModel(context))
+        field(liveBlock, "google_live_voice", lctx.getString(R.string.ciel_live_voice), hint = VoiceConfig.googleLiveVoice(context))
+        note(liveBlock, lctx.getString(R.string.ciel_quota_note))
 
-        // ---- 本机 tab: LLM + 火山 voice rows ----
         val localBlock = block(panel)
-        // The hint *is* the value a blank row resolves to, so the hint and the
-        // resolved config come from the same language-aware pair — see
-        // [VoiceConfig.llmModelDefault]. An English card advertises an OpenAI
-        // model / base URL and, if the user never saves one, actually calls it;
-        // a Chinese card stays on DeepSeek.
-        field(
-            localBlock,
-            "llm_api_key",
-            lctx.getString(R.string.settings_llm_api_key),
-            hint = "sk-…",
-            secret = true,
-        )
-        // Directly under the row that asks for it: whoever has no key is
-        // reading this row, not the picker at the top of the card. Tapping
-        // moves the tab under their finger rather than sending them up to
-        // find which cell that was — and it only moves the pick; 保存 still
-        // commits it, like every other row.
-        linkNote(localBlock, lctx.getString(R.string.settings_no_key_use_codeflying)) {
-            pickBrain(VoiceConfig.BRAIN_CODEFLYING)
-        }
-        field(
-            localBlock,
-            "llm_model",
-            lctx.getString(R.string.settings_llm_model),
-            hint = VoiceConfig.llmModelDefault(context),
-        )
-        field(
-            localBlock,
-            "llm_base_url",
-            lctx.getString(R.string.settings_llm_base_url),
-            hint = VoiceConfig.llmBaseUrlDefault(context),
-        )
-
+        field(localBlock, "llm_api_key", lctx.getString(R.string.settings_llm_api_key), secret = true)
+        field(localBlock, "llm_model", lctx.getString(R.string.settings_llm_model), hint = VoiceConfig.llmModelDefault(context))
+        field(localBlock, "llm_base_url", lctx.getString(R.string.settings_llm_base_url), hint = VoiceConfig.llmBaseUrlDefault(context))
         rowLabel(localBlock, lctx.getString(R.string.settings_llm_thinking))
         var applyThinking: ((String, Boolean) -> Unit)? = null
-        val thinking = segmented(
-            localBlock,
-            "llm_thinking",
-            listOf("enabled" to lctx.getString(R.string.common_on), "disabled" to lctx.getString(R.string.common_off)),
-        ) { applyThinking?.invoke(it, true) }
-
+        val thinking = segmented(localBlock, "llm_thinking", listOf(
+            "disabled" to lctx.getString(R.string.common_off),
+            "enabled" to lctx.getString(R.string.common_on),
+        )) { applyThinking?.invoke(it, true) }
         val effortBlock = block(localBlock)
         rowLabel(effortBlock, lctx.getString(R.string.settings_llm_effort))
-        segmented(
-            effortBlock,
-            "llm_reasoning_effort",
-            listOf(
-                "high" to lctx.getString(R.string.common_high),
-                "medium" to lctx.getString(R.string.common_medium),
-                "low" to lctx.getString(R.string.common_low),
-            ),
-        )
-        note(localBlock, lctx.getString(R.string.settings_brain_local_note))
+        segmented(effortBlock, "llm_reasoning_effort", listOf(
+            "low" to lctx.getString(R.string.common_low),
+            "medium" to lctx.getString(R.string.common_medium),
+            "high" to lctx.getString(R.string.common_high),
+        ))
 
-        // ---- Which service hears and speaks ----
-        //
-        // One container, so that the whole block can be taken out in one move
-        // rather than view by view — see the visibility flip at the end of it.
-        //
-        // **Not inside `localBlock`**, even though it reads like a 本机
-        // concern: who hears and who thinks are two different questions, and
-        // hanging this off the 本机 tab would hide it from a 云端 device that
-        // legitimately wants to point its own voice service somewhere.
-        //
-        // The two sets of rows are mutually exclusive and are not two flavours
-        // of the same thing: 火山's are endpoints and resource ids, Google's are
-        // a project, a location and two model names.
+        val hubBlock = block(panel)
+        field(hubBlock, "hub_url", lctx.getString(R.string.settings_hub_url), hint = lctx.getString(R.string.settings_hub_url_hint))
+        field(hubBlock, "device_name", lctx.getString(R.string.settings_device_name), hint = lctx.getString(R.string.settings_device_name_hint))
+        note(hubBlock, lctx.getString(R.string.settings_brain_cloud_note))
+
         val voiceBlock = block(panel)
-        // 听（识别）：谁把用户的话转成文字。系统引擎没有识别器，所以这一
-        // 侧只有 火山/谷歌。
-        rowLabel(voiceBlock, lctx.getString(R.string.settings_voice_hear_provider))
-        var applyProvider: ((String, Boolean) -> Unit)? = null
-        val provider = segmented(
-            voiceBlock,
-            "voice_provider",
-            listOf(
-                // 火山 first, because the first option is the fallback when
-                // nothing is saved — and for every device that predates this
-                // row, 火山 is what it has been running. See
-                // [VoiceConfig.voiceProvider].
-                VoiceConfig.VOICE_HUOSHAN to lctx.getString(R.string.settings_voice_provider_huoshan),
-                VoiceConfig.VOICE_GOOGLE to lctx.getString(R.string.settings_voice_provider_google),
-            ),
-        ) { applyProvider?.invoke(it, true) }
-
-        // 说（朗读）：谁把答案读出来。可以选系统自带的引擎——免费、离线。
+        picks["voice_provider"] = { VoiceConfig.VOICE_GOOGLE }
+        readOnly(voiceBlock, lctx.getString(R.string.settings_voice_hear_provider), lctx.getString(R.string.settings_voice_provider_google))
         rowLabel(voiceBlock, lctx.getString(R.string.settings_voice_speak_provider))
-        var speakPicked = ""
-        val speak = segmented(
-            voiceBlock,
-            "speak_provider",
-            listOf(
-                VoiceConfig.VOICE_HUOSHAN to lctx.getString(R.string.settings_voice_provider_huoshan),
-                VoiceConfig.VOICE_GOOGLE to lctx.getString(R.string.settings_voice_provider_google),
-                VoiceConfig.VOICE_SYSTEM to lctx.getString(R.string.settings_voice_provider_system),
-            ),
-        ) {
-            speakPicked = it
-            applyProvider?.invoke(provider, true)
-        }
-        speakPicked = speak
+        segmented(voiceBlock, "speak_provider", listOf(
+            VoiceConfig.VOICE_GOOGLE to lctx.getString(R.string.settings_voice_provider_google),
+            VoiceConfig.VOICE_SYSTEM to lctx.getString(R.string.settings_voice_provider_system),
+        ))
+        field(voiceBlock, "google_asr_model", lctx.getString(R.string.settings_google_asr_model), hint = VoiceConfig.googleAsrModelDefault())
+        field(voiceBlock, "google_tts_model", lctx.getString(R.string.settings_google_tts_model), hint = VoiceConfig.googleTtsModelDefault())
+        field(voiceBlock, "google_base_url", lctx.getString(R.string.settings_google_base_url), hint = VoiceConfig.googleBaseUrlDefault())
+        field(voiceBlock, "google_language", lctx.getString(R.string.settings_google_language), hint = lctx.getString(R.string.settings_google_language_hint))
+        note(voiceBlock, lctx.getString(R.string.ciel_custom_voice_note))
 
-        // 火山: previously in 高级 → 火山. Rows copy that section's labels,
-        // which still describe exactly these keys.
-        val huoshanBlock = block(voiceBlock)
-        field(
-            huoshanBlock,
-            "api_key",
-            lctx.getString(R.string.settings_voice_api_key),
-            hint = lctx.getString(R.string.settings_voice_api_key_hint),
-            secret = true,
-        )
-        // Same line, same reason, under the voice key: this is the other half
-        // of what CodeFlying would hand over for free.
-        linkNote(huoshanBlock, lctx.getString(R.string.settings_no_key_use_codeflying)) {
-            pickBrain(VoiceConfig.BRAIN_CODEFLYING)
-        }
-        field(huoshanBlock, "asr_endpoint", lctx.getString(R.string.settings_voice_asr_endpoint), hint = VoiceConfig.DEFAULT_ASR_ENDPOINT)
-        field(huoshanBlock, "asr_resource_id", lctx.getString(R.string.settings_voice_asr_resource_id), hint = VoiceConfig.DEFAULT_ASR_RESOURCE)
-        field(huoshanBlock, "tts_endpoint", lctx.getString(R.string.settings_voice_tts_endpoint), hint = VoiceConfig.DEFAULT_TTS_ENDPOINT)
-        field(huoshanBlock, "tts_resource_id", lctx.getString(R.string.settings_voice_tts_resource_id), hint = VoiceConfig.DEFAULT_TTS_RESOURCE)
-        field(
-            huoshanBlock,
-            "tts_sample_rate",
-            lctx.getString(R.string.settings_voice_tts_sample_rate),
-            numeric = true,
-        )
-
-        // ---- Google: one Vertex Express key, two protocols ----
-        //
-        // Every hint here is the value a blank row resolves to, from the same
-        // constants [VoiceConfig.load] reads — the same rule the LLM rows
-        // follow, for the same reason: a card that advertises a model but
-        // silently calls another is lying where the user goes to decide.
-        // A blank row means "use whatever the build carries", which for a
-        // packaged-for-Google APK is a real key and a real project number. So
-        // the hint has to say that, or the user reads an empty box as "not set
-        // up" while the device is happily talking to Google with a credential
-        // they never typed. The key's *value* is never shown — a settings card
-        // is not a place to print a secret — but the project number is not one,
-        // and printing it is how the row can be checked at a glance.
-        val builtInKey = VoiceConfig.googleApiKeyDefault()
-        val builtInProject = VoiceConfig.googleProjectDefault()
-
-        val googleBlock = block(voiceBlock)
-        field(
-            googleBlock,
-            "google_api_key",
-            lctx.getString(R.string.settings_google_api_key),
-            hint = if (builtInKey.isNotEmpty()) {
-                lctx.getString(R.string.settings_google_key_builtin)
-            } else {
-                lctx.getString(R.string.settings_google_api_key_hint)
-            },
-            secret = true,
-        )
-        linkNote(googleBlock, lctx.getString(R.string.settings_no_key_use_codeflying)) {
-            pickBrain(VoiceConfig.BRAIN_CODEFLYING)
-        }
-        field(
-            googleBlock,
-            "google_project",
-            lctx.getString(R.string.settings_google_project),
-            hint = builtInProject.ifEmpty {
-                lctx.getString(R.string.settings_google_project_hint)
-            },
-        )
-        field(
-            googleBlock,
-            "google_location",
-            lctx.getString(R.string.settings_google_location),
-            hint = VoiceConfig.googleLocationDefault(),
-        )
-        field(
-            googleBlock,
-            "google_asr_model",
-            lctx.getString(R.string.settings_google_asr_model),
-            hint = VoiceConfig.googleAsrModelDefault(),
-        )
-        field(
-            googleBlock,
-            "google_tts_model",
-            lctx.getString(R.string.settings_google_tts_model),
-            hint = VoiceConfig.googleTtsModelDefault(),
-        )
-        field(
-            googleBlock,
-            "google_base_url",
-            lctx.getString(R.string.settings_google_base_url),
-            hint = VoiceConfig.googleBaseUrlDefault(),
-        )
-        field(
-            googleBlock,
-            "google_language",
-            lctx.getString(R.string.settings_google_language),
-            hint = lctx.getString(R.string.settings_google_language_hint),
-        )
-        note(googleBlock, lctx.getString(R.string.settings_voice_google_note))
-
-        applyProvider = { p, animate ->
-            // A provider's block is shown if it is picked on *either* side. The
-            // blocks hold both the hearing and speaking rows, so hiding one
-            // because the *hearing* picker does not name it would bury the key
-            // field for the provider the *speaking* picker just chose.
-            val useHuoshan = p == VoiceConfig.VOICE_HUOSHAN || speakPicked == VoiceConfig.VOICE_HUOSHAN
-            val useGoogle = p == VoiceConfig.VOICE_GOOGLE || speakPicked == VoiceConfig.VOICE_GOOGLE
-            Glass.setVisible(huoshanBlock, useHuoshan, animate)
-            Glass.setVisible(googleBlock, useGoogle, animate)
-        }
-        applyProvider(provider, false)
-
-        // **The voice block is not drawn at all under the hosted backend**, and
-        // not merely disabled. There, [VoiceConfig.voiceProvider] pins 火山 and
-        // [VoiceConfig.load] takes every endpoint and credential from the build
-        // — so every control in this block is read by nothing. A row the user
-        // can edit that changes no behaviour is the small lie this card exists
-        // to avoid, and the honest surface for "what is actually in use" is the
-        // self-check page, which grades the real provider rather than a saved
-        // string.
-        //
-        // **Its flip belongs to the mode picker, not to this build pass.** It
-        // used to be a lone `setVisible` evaluated once here, against the
-        // *saved* mode, so picking 本机 out of CodeFlying left the block hidden
-        // until 保存 rebuilt the card — a control that only appears if you
-        // press the button standing next to it. Same condition; the difference
-        // is that it is asked of the value the user just picked, through
-        // [VoiceConfig.resolveBrainMode], so a build that does not enable
-        // CodeFlying still shows the block its runtime is actually reading.
-        //
-        // One block visible at a time. Simultaneous flips so the card's total
-        // height barely moves — see the old comment, still true.
-        applyMode = { m, animate ->
-            Glass.setVisible(hubBlock, m == VoiceConfig.BRAIN_HUB, animate)
-            Glass.setVisible(cfBlock, m == VoiceConfig.BRAIN_CODEFLYING, animate)
-            Glass.setVisible(localBlock, m == VoiceConfig.BRAIN_LOCAL, animate)
-            // Keyed on the tab the user is looking at, not on what the build
-            // can resolve it to: CodeFlying carries its own voice, and a voice
-            // key row under that tab is a row nothing reads.
-            Glass.setVisible(voiceBlock, m != VoiceConfig.BRAIN_CODEFLYING, animate)
+        applyMode = { selected, animate ->
+            Glass.setVisible(liveBlock, selected == VoiceConfig.BRAIN_GEMINI_LIVE, animate)
+            Glass.setVisible(localBlock, selected == VoiceConfig.BRAIN_LOCAL, animate)
+            Glass.setVisible(hubBlock, selected == VoiceConfig.BRAIN_HUB, animate)
+            Glass.setVisible(voiceBlock, selected != VoiceConfig.BRAIN_GEMINI_LIVE, animate)
         }
         applyMode(mode, false)
-        applyThinking = { th, animate ->
-            Glass.setVisible(effortBlock, th != "disabled", animate)
-        }
+        applyThinking = { selected, animate -> Glass.setVisible(effortBlock, selected != "disabled", animate) }
         applyThinking(thinking, false)
     }
 
@@ -1093,6 +816,24 @@ class SettingsUi(
 
     private fun diagnosticsSection(form: LinearLayout) {
         val panel = group(form, lctx.getString(R.string.settings_section_diagnostics))
+        rowLabel(panel, lctx.getString(R.string.ciel_local_debugging))
+        var debugSelected = saved["ws_server_enabled"] == "on"
+        segmented(panel, "ws_server_enabled", listOf(
+            "off" to lctx.getString(R.string.common_off), "on" to lctx.getString(R.string.common_on),
+        )) { debugSelected = it == "on" }
+        note(panel, lctx.getString(R.string.ciel_local_debugging_note))
+        linkNote(panel, lctx.getString(R.string.ciel_copy_debug_token)) {
+            if (debugSelected) {
+                val clip = android.content.ClipData.newPlainText("Ciel local access token", VoiceConfig.wsServerToken(context))
+                clip.description.extras = android.os.PersistableBundle().apply {
+                    putBoolean("android.content.extra.IS_SENSITIVE", true)
+                }
+                (context.getSystemService(Context.CLIPBOARD_SERVICE) as android.content.ClipboardManager).setPrimaryClip(clip)
+                android.widget.Toast.makeText(context, lctx.getString(R.string.ciel_debug_token_copied), android.widget.Toast.LENGTH_SHORT).show()
+            } else {
+                android.widget.Toast.makeText(context, lctx.getString(R.string.ciel_enable_debug_first), android.widget.Toast.LENGTH_SHORT).show()
+            }
+        }
         rowLabel(panel, lctx.getString(R.string.settings_grounding))
         // 关 first, and not for looks: the leftmost option is what an
         // unrecognised saved value falls back to, and this one writes pictures
@@ -1288,6 +1029,7 @@ class SettingsUi(
 
     private fun notebookSection(form: LinearLayout) {
         val panel = group(form, lctx.getString(R.string.settings_section_notebook))
+        note(panel, lctx.getString(R.string.ciel_notebook_mode_note))
         // On first, matching VoiceConfig.sweepConfig's fail-open reading: this
         // is the feature that makes the device feel like it knows you, and
         // turning it off is a deliberate act.
@@ -1403,6 +1145,7 @@ class SettingsUi(
      */
     private fun driveSection(form: LinearLayout) {
         val panel = group(form, lctx.getString(R.string.settings_section_drive))
+        note(panel, lctx.getString(R.string.ciel_drive_mode_note))
         segmented(panel, "drive", listOf("off" to lctx.getString(R.string.common_off), "on" to lctx.getString(R.string.common_on)))
         note(panel, lctx.getString(R.string.settings_drive_note))
     }
@@ -1681,7 +1424,11 @@ class SettingsUi(
                 secret -> secretType(numeric = false)
                 else -> InputType.TYPE_CLASS_TEXT
             }
-            if (secret) setMasked(true)
+            if (secret) {
+                setMasked(true)
+                isSaveEnabled = false
+                importantForAutofill = View.IMPORTANT_FOR_AUTOFILL_NO_EXCLUDE_DESCENDANTS
+            }
             setText(saved[key].orEmpty())
         }
         fields[key] = et
@@ -1720,7 +1467,7 @@ class SettingsUi(
                     val v = et.text?.toString().orEmpty().trim().ifEmpty { copyValue() }
                     if (v.isNotEmpty()) {
                         val cm = context.getSystemService(Context.CLIPBOARD_SERVICE) as android.content.ClipboardManager
-                        cm.setPrimaryClip(android.content.ClipData.newPlainText("CodeFlying", v))
+                        cm.setPrimaryClip(android.content.ClipData.newPlainText("Ciel credential", v))
                         text = lctx.getString(R.string.common_copied)
                         postDelayed({ text = lctx.getString(R.string.common_copy) }, 1500)
                     }

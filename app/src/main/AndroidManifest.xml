@@ -5,6 +5,10 @@
     <uses-permission android:name="android.permission.SYSTEM_ALERT_WINDOW" />
     <uses-permission android:name="android.permission.INTERNET" />
     <uses-permission android:name="android.permission.RECORD_AUDIO" />
+    <uses-permission android:name="android.permission.MODIFY_AUDIO_SETTINGS" />
+    <uses-permission android:name="android.permission.WRITE_SETTINGS"
+        tools:ignore="ProtectedPermissions" />
+    <uses-permission android:name="com.android.alarm.permission.SET_ALARM" />
     <!-- ConnectivityManager.getNetworkCapabilities needs this (not implied by INTERNET). -->
     <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE" />
     <!-- App list: query-all is required on API 30+ to see other packages. -->
@@ -120,7 +124,7 @@
         android:dataExtractionRules="@xml/data_extraction_rules"
         android:fullBackupContent="@xml/backup_rules"
         android:icon="@mipmap/ic_launcher"
-        android:label="@string/app_name"
+        android:label="${cielAppLabel}"
         android:localeConfig="@xml/locales_config"
         android:roundIcon="@mipmap/ic_launcher_round"
         android:supportsRtl="true"
@@ -206,18 +210,23 @@
              不需要解释,进不去的时候这一页必须自己解释 —— 见
              Theme.Body.Stage.NoPreview,它让前者不闪黑。 -->
         <activity
-            android:name=".ui.SelfCheckActivity"
-            android:autoRemoveFromRecents="true"
-            android:theme="@style/Theme.Body.Stage.NoPreview"
+            android:name=".ui.CielHomeActivity"
+            android:theme="@style/Theme.Ciel.Home"
             android:exported="true"
-            android:launchMode="singleTop"
-            android:windowSoftInputMode="adjustResize"
-            android:configChanges="orientation|screenSize|keyboardHidden">
+            android:windowSoftInputMode="adjustResize">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
         </activity>
+        <activity
+            android:name=".ui.SelfCheckActivity"
+            android:autoRemoveFromRecents="true"
+            android:theme="@style/Theme.Body.Stage.NoPreview"
+            android:exported="false"
+            android:launchMode="singleTop"
+            android:windowSoftInputMode="adjustResize"
+            android:configChanges="orientation|screenSize|keyboardHidden" />
 
         <activity
             android:name=".device.PermissionRequestActivity"

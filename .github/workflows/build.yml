@@ -1,14 +1,3 @@
-# Builds the debug APK on every push and PR.
-#
-# Debug, not release: the release build type has no `signingConfig` and there is
-# no keystore in this repository, so `assembleRelease` would emit an unsigned APK
-# that cannot be installed. Signing needs secrets, and a workflow that fails on a
-# fork for want of secrets the forker cannot add is worse than no workflow.
-#
-# The JDK is pinned to **17** on purpose and the range is narrow: AGP 8.3.1 needs
-# 17 or newer, and the Gradle 8.4 wrapper cannot run on 21 or newer (it rejects
-# the class file version). Bumping this without bumping Gradle breaks the build
-# with an error that does not mention Java.
 name: build
 
 on:
@@ -16,54 +5,145 @@ on:
     branches: [main]
   pull_request:
   workflow_dispatch:
+    inputs:
+      signed_apk_url:
+        description: Optional HTTPS URL of an already signed artifact to smoke test
+        type: string
+      signed_apk_sha256:
+        description: Required SHA-256 when signed_apk_url is supplied
+        type: string
+      package_id:
+        description: Package of that signed artifact
+        type: string
+        default: ai.ciel.companion.preview
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ciel-build-${{ github.ref }}
+  cancel-in-progress: true
 
 jobs:
-  debug-apk:
-    runs-on: ubuntu-latest
+  android:
+    runs-on: ubuntu-22.04
+    timeout-minutes: 35
     steps:
       - uses: actions/checkout@v4
-
       - uses: actions/setup-java@v4
         with:
           distribution: temurin
           java-version: '17'
-
-      - uses: gradle/actions/setup-gradle@v3
-
-      - run: ./gradlew --no-daemon :core:test
-
-      - run: ./gradlew --no-daemon :app:assembleDebug
-
-      # Host-side tests are template-only today, so this is a tripwire for the
-      # day someone writes a real one rather than a meaningful gate now.
-      - run: ./gradlew --no-daemon :app:testDebugUnitTest
-
+      - uses: gradle/actions/setup-gradle@v4
+      - name: Tests, lint and canonical release
+        run: >-
+          ./gradlew --no-daemon --max-workers=2
+          -Dorg.gradle.jvmargs='-Xmx3g -XX:MaxMetaspaceSize=768m -Dfile.encoding=UTF-8'
+          -Pkotlin.compiler.execution.strategy=in-process
+          -PuniversalApk=true -PdefaultLang=en
+          :core:test :app:testDebugUnitTest :app:lintRelease :app:assembleRelease
       - uses: actions/upload-artifact@v4
         with:
-          name: app-debug
-          # One APK per ABI, so the glob replaces what used to be a single
-          # `app-debug.apk`: ML Kit's barhopper .so is ~4 MB and the fat APK
-          # carried four copies of it. See the `splits` block in app/build.gradle.
-          path: app/build/outputs/apk/debug/*.apk
+          name: ciel-unsigned-release
+          path: app/build/outputs/apk/release/*.apk
           if-no-files-found: error
+      - name: Parallel-install preview package
+        run: >-
+          ./gradlew --no-daemon --max-workers=2
+          -Dorg.gradle.jvmargs='-Xmx3g -XX:MaxMetaspaceSize=768m -Dfile.encoding=UTF-8'
+          -Pkotlin.compiler.execution.strategy=in-process
+          -PuniversalApk=true -PdefaultLang=en -PdbgSuffix=.preview :app:assembleRelease
+      - uses: actions/upload-artifact@v4
+        with:
+          name: ciel-unsigned-preview
+          path: app/build/outputs/apk/release/*.apk
+          if-no-files-found: error
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: ciel-source-checks
+          path: |
+            core/build/libs/*.jar
+            core/build/test-results/test/
+            core/build/reports/tests/test/
+            app/build/test-results/testDebugUnitTest/
+            app/build/reports/tests/testDebugUnitTest/
+            app/build/reports/lint-results-release.*
 
-  # assembleRelease is its own job rather than a step above, because it is a
-  # *gate* and not a deliverable: the APK has no signingConfig and cannot be
-  # installed. What it catches is what went unnoticed until now — R8 and
-  # `lintVitalRelease` only run on release, so a missing keep rule, or a
-  # resource the lint check cannot parse, is invisible until someone tries to
-  # ship. That is exactly how a failing `assembleRelease` sat in this repo.
-  # Runs in parallel, so it costs a PR no wall-clock time.
-  release-gate:
-    runs-on: ubuntu-latest
+  android-smoke:
+    needs: android
+    runs-on: ubuntu-22.04
+    timeout-minutes: 25
+    env:
+      SIGNED_APK_URL: ${{ inputs.signed_apk_url }}
+      SIGNED_APK_SHA256: ${{ inputs.signed_apk_sha256 }}
+      REQUESTED_PACKAGE: ${{ inputs.package_id }}
     steps:
       - uses: actions/checkout@v4
-
       - uses: actions/setup-java@v4
         with:
           distribution: temurin
           java-version: '17'
-
-      - uses: gradle/actions/setup-gradle@v3
-
-      - run: ./gradlew --no-daemon :app:assembleRelease
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      - uses: actions/download-artifact@v4
+        if: env.SIGNED_APK_URL == ''
+        with:
+          name: ciel-unsigned-preview
+          path: unsigned-preview
+      - name: Prepare exactly the APK under test
+        shell: python
+        run: |
+          import hashlib, os, pathlib, re, subprocess, urllib.request
+          from urllib.parse import urlparse
+          out = pathlib.Path("smoke-apk.apk")
+          url = os.environ.get("SIGNED_APK_URL", "")
+          package = "ai.ciel.companion.preview"
+          if url:
+              expected = os.environ.get("SIGNED_APK_SHA256", "").lower()
+              package = os.environ.get("REQUESTED_PACKAGE") or package
+              if urlparse(url).scheme != "https" or not re.fullmatch(r"[0-9a-f]{64}", expected):
+                  raise SystemExit("An HTTPS URL and exact SHA-256 are required")
+              if package not in ("ai.ciel.companion", "ai.ciel.companion.preview"):
+                  raise SystemExit("Unexpected Ciel application ID")
+              with urllib.request.urlopen(url, timeout=90) as response:
+                  data = response.read(80 * 1024 * 1024 + 1)
+              if len(data) > 80 * 1024 * 1024 or hashlib.sha256(data).hexdigest() != expected:
+                  raise SystemExit("Artifact size or SHA-256 check failed")
+              out.write_bytes(data)
+          else:
+              # This ephemeral key is only for CI. Production keys stay on the
+              # release host, and this CI-signed package is never distributed.
+              key = pathlib.Path(os.environ["RUNNER_TEMP"]) / "ciel-ci.p12"
+              subprocess.run(["keytool", "-genkeypair", "-noprompt", "-keystore", str(key),
+                  "-storetype", "PKCS12", "-storepass", "ci-validation-only", "-alias", "ci",
+                  "-keyalg", "RSA", "-keysize", "2048", "-validity", "2", "-dname", "CN=Ciel CI"], check=True)
+              sdk = pathlib.Path(os.environ["ANDROID_HOME"])
+              signer = sorted(sdk.glob("build-tools/*/apksigner"))[-1]
+              apk = pathlib.Path("unsigned-preview/app-universal-release-unsigned.apk")
+              subprocess.run([str(signer), "sign", "--ks", str(key), "--ks-key-alias", "ci",
+                  "--ks-pass", "pass:ci-validation-only", "--out", str(out), str(apk)], check=True)
+          with open(os.environ["GITHUB_ENV"], "a") as env:
+              env.write("SMOKE_PACKAGE=" + package + "\n")
+      - name: Verify package before installing
+        run: python3 tools/verify_ciel_apk.py smoke-apk.apk --package "$SMOKE_PACKAGE" --output smoke-package.json
+      - name: Enable the runner's emulator acceleration
+        run: sudo chmod 666 /dev/kvm
+      - name: Exercise the native app on Android 14
+        uses: reactivecircus/android-emulator-runner@v2
+        with:
+          api-level: 34
+          target: google_apis
+          arch: x86_64
+          profile: pixel_2
+          disable-animations: true
+          emulator-options: -no-window -gpu swiftshader_indirect -noaudio -no-boot-anim -no-snapshot -camera-back none -cores 2 -memory 2048
+          script: python3 tools/smoke_ciel_android.py --serial emulator-5554 --apk smoke-apk.apk --package "$SMOKE_PACKAGE" --output smoke-evidence
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: ciel-android-runtime
+          path: |
+            smoke-package.json
+            smoke-evidence/

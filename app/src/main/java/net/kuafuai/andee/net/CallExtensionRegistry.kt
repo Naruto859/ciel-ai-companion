@@ -82,9 +82,10 @@ class CallExtensionRegistry {
         deviceName: String?,
         scene: String?,
     ): WebSocket? {
+        ToolSchemas.requireExtensionTools(tools)
         val previous = current
         current = conn
-        toolsRaw = tools
+        toolsRaw = JSONArray(tools.toString())
         this.deviceName = deviceName?.ifEmpty { null }
         this.sceneText = scene?.ifEmpty { null }
         onChange?.invoke()

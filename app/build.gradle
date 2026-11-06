@@ -130,8 +130,9 @@ android {
         applicationId "ai.ciel.companion"
         minSdk 30
         targetSdk 34
-        versionCode 23
-        versionName "0.11.0"
+        versionCode 24
+        versionName "0.12.0"
+        manifestPlaceholders['cielAppLabel'] = '@string/app_name'
 
         testInstrumentationRunner "androidx.test.runner.AndroidJUnitRunner"
 
@@ -183,6 +184,9 @@ android {
         // and vault. Not for shipping; nothing else reads this property.
         if (project.hasProperty('dbgSuffix')) {
             applicationIdSuffix project.property('dbgSuffix')
+            if (project.property('dbgSuffix').toString() == '.preview') {
+                manifestPlaceholders['cielAppLabel'] = 'Ciel Preview'
+            }
         }
     }
 
@@ -198,16 +202,15 @@ android {
     // times over. x86 (32-bit) is deliberately dropped: no emulator has needed
     // it for years. x86_64 stays so an emulator still installs something.
     //
-    // `universalApk false` on purpose: a fat APK sitting next to the split ones
-    // is a trap — it is the file someone grabs when they are in a hurry, and it
-    // is four times the size. Anything the splits do not cover is a device this
-    // app cannot be provisioned on anyway.
+    // Per-ABI packages remain the default. A release verifier can explicitly
+    // request -PuniversalApk=true to test the exact distributable on an x86_64
+    // emulator while retaining ARM support in that same signed artifact.
     splits {
         abi {
             enable true
             reset()
             include 'arm64-v8a', 'armeabi-v7a', 'x86_64'
-            universalApk false
+            universalApk(project.findProperty('universalApk')?.toString()?.toBoolean() ?: false)
         }
     }
     // Native libs ship deflated rather than page-aligned-and-stored. AGP 8
@@ -279,3 +282,14 @@ tasks.matching { it.name.startsWith('generate') && it.name.endsWith('BuildConfig
     inputs.property('variant.defaultLang', prop('DEFAULT_LANG', ''))
     inputs.property('variant.codeflyingSsl', prop('CODEFLYING_SSL_ENABLED', ''))
 }
+
+// Keep upstream terms and dependency notices inside every personal Ciel build.
+// Generate from the authoritative source files so the packaged copy cannot drift.
+def generateCielNotices = tasks.register('generateCielNotices', Copy) {
+    from rootProject.file('LICENSE')
+    from rootProject.file('THIRD_PARTY_NOTICES.md')
+    from rootProject.file('CIEL_NOTICE.md')
+    into layout.buildDirectory.dir('generated/ciel-notices/licenses')
+}
+android.sourceSets.main.assets.srcDir(layout.buildDirectory.dir('generated/ciel-notices'))
+tasks.named('preBuild').configure { dependsOn(generateCielNotices) }

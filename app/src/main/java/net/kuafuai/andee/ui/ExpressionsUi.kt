@@ -64,8 +64,10 @@ class ExpressionsUi(
 
     fun show() {
         if (root != null) return
+        lookChips.clear()
+        moodChips.clear()
         val p = WindowManager.LayoutParams(
-            cardWidth(), WindowManager.LayoutParams.WRAP_CONTENT,
+            cardWidth(), minOf(dp(790), (Glass.usableSize(context).second * 0.92f).toInt()),
             WindowManager.LayoutParams.TYPE_APPLICATION_OVERLAY,
             WindowManager.LayoutParams.FLAG_NOT_FOCUSABLE,
             PixelFormat.TRANSLUCENT,
@@ -177,7 +179,7 @@ class ExpressionsUi(
             View.MeasureSpec.makeMeasureSpec(cardWidth() - dp(44), View.MeasureSpec.EXACTLY),
             View.MeasureSpec.makeMeasureSpec(0, View.MeasureSpec.UNSPECIFIED),
         )
-        val screenH = wm.currentWindowMetrics.bounds.height()
+        val screenH = Glass.usableSize(context).second
         val gridH = minOf(wrap.measuredHeight, (screenH * 0.34f).toInt())
         card.addView(
             grid,
@@ -202,7 +204,13 @@ class ExpressionsUi(
         // shows what the user already has rather than a different character.
         BallLooks.requestByName(VoiceConfig.ballLook(context))
         refresh()
-        return card
+        return ScrollView(context).apply {
+            isFillViewport = false
+            isVerticalScrollBarEnabled = false
+            background = Glass.card(context, dp(28), frosted)
+            clipToOutline = true
+            addView(card)
+        }
     }
 
     // ---- Behaviour ----

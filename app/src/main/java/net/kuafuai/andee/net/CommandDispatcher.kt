@@ -157,6 +157,28 @@ class CommandDispatcher(
     private val sayAloud: (text: String, listen: Boolean) -> Boolean = { _, _ -> false },
 ) {
     private val ui = Handler(Looper.getMainLooper())
+    private val cancellation = CommandCancellation()
+    private val activeGeneration = ThreadLocal<Long>()
+    private val screenIo = java.util.concurrent.locks.ReentrantLock(true)
+
+    /** Capture before enqueueing a phone command, so Stop invalidates queued work too. */
+    fun cancellationGeneration(): Long = cancellation.generation()
+
+    fun checkGeneration(generation: Long) = cancellation.check(generation)
+
+    private fun checkActiveCommand() {
+        activeGeneration.get()?.let(cancellation::check)
+    }
+
+    private inline fun <T> withScreenIo(block: () -> T): T {
+        screenIo.lockInterruptibly()
+        try {
+            checkActiveCommand()
+            return block()
+        } finally {
+            screenIo.unlock()
+        }
+    }
 
     /** Returns at once; the card goes up on the main thread. */
     private fun showWiki(id: String) {
@@ -179,6 +201,7 @@ class CommandDispatcher(
      * app receiving it.
      */
     fun wireScreen(controller: ScreenController) {
+        controller.commandCheck = ::checkActiveCommand
         // The effect snapshot after a tap is taken inside the gesture passthrough,
         // where the ball is untouchable but still drawn. Hand the screen the same
         // blanking every other capture gets, so there is one copy of how long to
@@ -320,6 +343,30 @@ class CommandDispatcher(
         driving: Boolean = true,
         silent: Boolean = false,
         untrusted: Boolean = false,
+        expectedGeneration: Long = cancellationGeneration(),
+    ): Any? {
+        val previous = activeGeneration.get()
+        activeGeneration.set(expectedGeneration)
+        try {
+            cancellation.check(expectedGeneration)
+            // Debug viewing, local tools and hub tools share one set of overlays
+            // and screen element IDs. Their capture/gesture sequences cannot overlap.
+            return if (method.startsWith("screen.") || method == "device.vault.fill") {
+                withScreenIo { dispatchChecked(method, params, driving, silent, untrusted) }
+            } else {
+                dispatchChecked(method, params, driving, silent, untrusted)
+            }
+        } finally {
+            if (previous == null) activeGeneration.remove() else activeGeneration.set(previous)
+        }
+    }
+
+    private fun dispatchChecked(
+        method: String,
+        params: JSONObject?,
+        driving: Boolean,
+        silent: Boolean,
+        untrusted: Boolean,
     ): Any? {
         // Where the turn came from decides what it may call — see [TurnGuards].
         // Checked before the fold below, so a refused call cannot so much as
@@ -1373,9 +1420,9 @@ class CommandDispatcher(
             // follow need a couple of those seconds.
             "screen.wait" -> {
                 val asked = params?.optDouble("seconds", Double.NaN) ?: Double.NaN
-                require(!asked.isNaN() && asked > 0) { "screen.wait requires positive seconds" }
+                require(asked.isFinite() && asked > 0) { "screen.wait requires finite positive seconds" }
                 val waitMs = (asked * 1000).toLong().coerceAtMost(WAIT_MAX_MS)
-                Thread.sleep(waitMs)
+                cancellation.await(checkNotNull(activeGeneration.get()), waitMs)
                 requireScreen().dumpUiTree(
                     verbose = false,
                     withShot = true,
@@ -2072,6 +2119,7 @@ class CommandDispatcher(
      * they did.
      */
     fun cancelTask() {
+        cancellation.cancel()
         ui.post { setBusy(false) }
     }
 
@@ -2089,13 +2137,14 @@ class CommandDispatcher(
      * The previous tap's marker is the same hazard with worse aim: it is
      * parked on the exact coordinate a repeated tap is about to land on.
      */
-    private inline fun <T> passthroughForGesture(block: () -> T): T {
+    private inline fun <T> passthroughForGesture(block: () -> T): T = withScreenIo {
         window.setTouchable(false)
         ripple.setVisibleForGesture(false)
         marker.setVisibleForGesture(false)
         try {
             Thread.sleep(50)
-            return block()
+            checkActiveCommand()
+            block()
         } finally {
             ripple.setVisibleForGesture(true)
             marker.setVisibleForGesture(true)
@@ -2126,12 +2175,13 @@ class CommandDispatcher(
      * UI the brain is meant to see: it is how a coordinate it guessed comes
      * back as a place on the screen.
      */
-    private inline fun <T> blankedForCapture(block: () -> T): T {
+    private inline fun <T> blankedForCapture(block: () -> T): T = withScreenIo {
         window.setVisibleForCapture(false)
         ripple.setVisibleForCapture(false)
         try {
             Thread.sleep(80)
-            return block()
+            checkActiveCommand()
+            block()
         } finally {
             ripple.setVisibleForCapture(true)
             window.setVisibleForCapture(true)
@@ -2181,8 +2231,8 @@ class CommandDispatcher(
          * this — it has a fallback; see the `screen.screenshot` branch.
          */
         const val SCREEN_UNAVAILABLE =
-            "accessibility is off — Andee can't touch or read the screen without " +
-                "it. It has to be switched on in Settings → Accessibility → Andee."
+            "accessibility is off — Ciel can't touch or read the screen without " +
+                "it. It has to be switched on in Settings → Accessibility → Ciel."
 
         /**
          * Ceiling for `screen.wait`. The hub drops a request at 30s, and the

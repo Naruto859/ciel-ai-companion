@@ -55,6 +55,7 @@ class BodyWsClient(
 ) {
 
     private val running = AtomicBoolean(false)
+    @Volatile private var acceptingRequests = true
     private val scheduler: ScheduledExecutorService =
         Executors.newSingleThreadScheduledExecutor { r ->
             Thread(r, "BodyWsClient-scheduler").apply { isDaemon = true }
@@ -62,9 +63,10 @@ class BodyWsClient(
 
     // Requests can block (dispatchGesture waits ~seconds), so hand them off
     // to a worker so we don't stall the recv thread and miss pings/pongs.
-    private val worker = Executors.newSingleThreadExecutor { r ->
-        Thread(r, "BodyWsClient-worker").apply { isDaemon = true }
-    }
+    private val worker = java.util.concurrent.ThreadPoolExecutor(
+        1, 1, 0L, TimeUnit.MILLISECONDS, java.util.concurrent.ArrayBlockingQueue<Runnable>(64),
+        { r -> Thread(r, "BodyWsClient-worker").apply { isDaemon = true } },
+    )
 
     @Volatile
     private var conn: Inner? = null
@@ -74,7 +76,8 @@ class BodyWsClient(
 
     fun start() {
         if (!running.compareAndSet(false, true)) return
-        Log.i(TAG, "starting hub client → $url  (device=$deviceId '$deviceName')")
+        val host = runCatching { URI(url).host }.getOrNull().orEmpty()
+        Log.i(TAG, "starting hub client → $host  (device=$deviceId '$deviceName')")
         scheduleConnect(0)
     }
 
@@ -82,9 +85,15 @@ class BodyWsClient(
         if (!running.compareAndSet(true, false)) return
         val c = conn
         conn = null
+        if (current === this) current = null
         runCatching { c?.close() }
         scheduler.shutdownNow()
         worker.shutdownNow()
+    }
+
+    /** Stop is enforced here even if the remote hub ignores its cancellation event. */
+    fun cancelRequests() {
+        acceptingRequests = false
     }
 
     // ------------------------------------------------------------------
@@ -93,7 +102,11 @@ class BodyWsClient(
 
     private fun scheduleConnect(delayMs: Long) {
         if (!running.get()) return
-        scheduler.schedule({ if (running.get()) connectOnce() }, delayMs, TimeUnit.MILLISECONDS)
+        try {
+            scheduler.schedule({ if (running.get()) connectOnce() }, delayMs, TimeUnit.MILLISECONDS)
+        } catch (_: java.util.concurrent.RejectedExecutionException) {
+            // stop() can shut down the scheduler between the check and schedule.
+        }
     }
 
     private fun connectOnce() {
@@ -102,12 +115,12 @@ class BodyWsClient(
             conn = c
             c.connect()
         } catch (t: Throwable) {
-            Log.e(TAG, "connect failed: ${t.message}", t)
+            Log.e(TAG, "connect failed: ${t.javaClass.simpleName}")
             onDisconnected()
         }
     }
 
-    private fun onConnected() {
+    private fun onConnected(source: Inner) {
         backoffMs = INITIAL_BACKOFF_MS  // reset backoff on success
         // forHub(), NOT all(): the five `note.*` notebook tools are localOnly.
         // The notebook holds what this person likes, what they promised, and
@@ -117,11 +130,8 @@ class BodyWsClient(
         // visible symptom other than the cloud brain gaining five tools.
         val builtin = ToolSchemas.forHub()
         val extra = registry.tools()
-        // Merge order: built-ins first, extension tools appended. The hub
-        // stores them by name, so order only matters for logs — but keeping
-        // built-ins ahead means a duplicate name from the extension can't hide
-        // one of our own by accident (we don't reject collisions, we just get
-        // to notice them in the tail).
+        // Built-ins first, extension tools appended. Registration rejects
+        // reserved names before an extension can reach this merge.
         val tools = org.json.JSONArray()
         for (i in 0 until builtin.length()) tools.put(builtin.getJSONObject(i))
         for (i in 0 until extra.length()) tools.put(extra.getJSONObject(i))
@@ -133,7 +143,7 @@ class BodyWsClient(
                     .put("device_name", deviceName)
                     .put("tools", tools)
             )
-        runCatching { conn?.send(register.toString()) }
+        runCatching { source.send(register.toString()) }
         Log.i(
             TAG,
             "registered as $deviceId with ${tools.length()} tools " +
@@ -149,18 +159,23 @@ class BodyWsClient(
         scheduleConnect(next)
     }
 
-    private fun handleRequest(req: JSONObject) {
+    private fun handleRequest(source: Inner, req: JSONObject) {
         val id = req.optString("id", "")
+        if (!acceptingRequests) {
+            respondError(source, id, "The user stopped the task. Wait for their next message.")
+            return
+        }
         val toolName = req.optString("method", "")
         val params = req.optJSONObject("params")
         // Two-name translation for built-ins (`tap_screen` → `screen.tap`).
         // Extension tools don't play this game — the schema they registered
         // carries one name, and that same name goes straight to the dispatcher,
         // which will hand it back to the extension over the reverse channel.
-        val method = ToolSchemas.methodOf(toolName)
-            ?: if (registry.hasMethod(toolName)) toolName else null
+        val builtin = ToolSchemas.methodOf(toolName)
+        val method = if (builtin != null) ToolSchemas.hubMethodOf(toolName)
+            else if (registry.hasMethod(toolName)) toolName else null
         if (method == null) {
-            respondError(id, "unknown tool: $toolName")
+            respondError(source, id, "tool is unavailable to the remote hub: $toolName")
             return
         }
         // A request on *this* socket is the brain driving, which is what the
@@ -169,22 +184,33 @@ class BodyWsClient(
         // buttons and the debug client on 9008, which share the same dispatch
         // path and are nobody's task. Usually redundant — `progress` normally
         // arrives first — but a model that opens with a tool call still counts.
-        dispatcher.beginTask()
-        worker.execute {
-            val response = try {
-                val result = dispatcher.dispatch(method, params)
-                JSONObject()
-                    .put("type", "response")
-                    .put("id", id)
-                    .put("result", result ?: JSONObject.NULL)
-            } catch (t: Throwable) {
-                Log.w(TAG, "tool '$toolName' failed: ${t.message}")
-                JSONObject()
-                    .put("type", "response")
-                    .put("id", id)
-                    .put("error", t.message ?: t.javaClass.simpleName)
+        val generation = dispatcher.cancellationGeneration()
+        try {
+            worker.execute {
+                if (!running.get() || !acceptingRequests || conn !== source || !source.isOpen) return@execute
+                val response = try {
+                    val result = CommandCancellation.withSource({
+                        running.get() && acceptingRequests && conn === source && source.isOpen
+                    }) {
+                        dispatcher.checkGeneration(generation)
+                        dispatcher.beginTask()
+                        dispatcher.dispatch(method, params, expectedGeneration = generation)
+                    }
+                    JSONObject()
+                        .put("type", "response")
+                        .put("id", id)
+                        .put("result", result ?: JSONObject.NULL)
+                } catch (t: Throwable) {
+                    Log.w(TAG, "tool '$toolName' failed: ${t.message}")
+                    JSONObject()
+                        .put("type", "response")
+                        .put("id", id)
+                        .put("error", t.message ?: t.javaClass.simpleName)
+                }
+                if (conn === source && source.isOpen) runCatching { source.send(response.toString()) }
             }
-            runCatching { conn?.send(response.toString()) }
+        } catch (_: java.util.concurrent.RejectedExecutionException) {
+            respondError(source, id, "The phone command queue is full or closed; retry after the current action.")
         }
     }
 
@@ -194,6 +220,8 @@ class BodyWsClient(
      * ever sees what happened while it was listening.
      */
     fun sendEvent(kind: String, data: JSONObject) {
+        if (kind == "task.stop") acceptingRequests = false
+        else if (kind == "asr.final") acceptingRequests = true
         val c = conn ?: return
         if (!c.isOpen) return
         val envelope = JSONObject()
@@ -204,12 +232,12 @@ class BodyWsClient(
         runCatching { c.send(envelope.toString()) }
     }
 
-    private fun respondError(id: String, msg: String) {
+    private fun respondError(source: Inner, id: String, msg: String) {
         val response = JSONObject()
             .put("type", "response")
             .put("id", id)
             .put("error", msg)
-        runCatching { conn?.send(response.toString()) }
+        if (conn === source && source.isOpen) runCatching { source.send(response.toString()) }
     }
 
     /**
@@ -219,27 +247,33 @@ class BodyWsClient(
     private inner class Inner(uri: URI) : WebSocketClient(uri) {
 
         override fun onOpen(handshake: ServerHandshake?) {
-            Log.i(TAG, "onOpen ${uri}")
+            if (!running.get() || conn !== this) {
+                close()
+                return
+            }
+            Log.i(TAG, "hub connected to ${uri.host}")
             current = this@BodyWsClient
-            onConnected()
+            onConnected(this)
         }
 
         override fun onMessage(message: String) {
+            if (!running.get() || conn !== this) return
             val msg = runCatching { JSONObject(message) }.getOrNull() ?: return
             when (msg.optString("type")) {
-                "request" -> handleRequest(msg)
+                "request" -> handleRequest(this, msg)
                 // Narration and final answers arrive on the recv thread; both
                 // handlers only touch @Volatile UI state or post to the main
                 // Handler, so there's nothing to hand off to the worker here.
-                "progress" -> msg.optString("content").takeIf { it.isNotBlank() }?.let(onProgress)
-                "message" -> msg.optString("content").takeIf { it.isNotBlank() }?.let(onFinal)
+                "progress" -> if (acceptingRequests) msg.optString("content").takeIf { it.isNotBlank() }?.let(onProgress)
+                "message" -> if (acceptingRequests) msg.optString("content").takeIf { it.isNotBlank() }?.let(onFinal)
                 else -> Log.d(TAG, "ignoring type=${msg.optString("type")}")
             }
         }
 
         override fun onClose(code: Int, reason: String?, remote: Boolean) {
             Log.i(TAG, "onClose code=$code reason=$reason remote=$remote")
-            if (conn === this) conn = null
+            if (conn !== this) return
+            conn = null
             if (current === this@BodyWsClient) current = null
             onDisconnected()
         }

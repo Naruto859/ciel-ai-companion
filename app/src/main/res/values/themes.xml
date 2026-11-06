@@ -1,4 +1,11 @@
 <resources xmlns:tools="http://schemas.android.com/tools">
+    <style name="Theme.Ciel.Home" parent="Theme.Body.Fullscreen">
+        <item name="android:windowBackground">#F6F8F4</item>
+        <item name="android:statusBarColor">#F6F8F4</item>
+        <item name="android:navigationBarColor">#FFFFFF</item>
+        <item name="android:windowLightStatusBar">true</item>
+        <item name="android:windowLightNavigationBar">true</item>
+    </style>
     <!-- Base application theme. -->
     <style name="Theme.Body" parent="Theme.MaterialComponents.DayNight.DarkActionBar">
         <!-- Primary brand color. -->

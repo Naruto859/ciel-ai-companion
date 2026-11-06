@@ -119,6 +119,8 @@ class AudioIO {
     fun startStreaming(
         sampleRate: Int = 16_000,
         chunkMs: Int = 100,
+        voiceCommunication: Boolean = false,
+        onError: (String) -> Unit = {},
         onChunk: (ByteArray) -> Unit,
     ) {
         if (streaming.get() || recording.get()) throw IllegalStateException("audio busy")
@@ -131,7 +133,8 @@ class AudioIO {
 
         @Suppress("MissingPermission")
         val rec = AudioRecord(
-            MediaRecorder.AudioSource.VOICE_RECOGNITION,
+            if (voiceCommunication) MediaRecorder.AudioSource.VOICE_COMMUNICATION
+            else MediaRecorder.AudioSource.VOICE_RECOGNITION,
             sampleRate,
             channelConfig,
             encoding,
@@ -187,6 +190,7 @@ class AudioIO {
                 why = "threw ${t.javaClass.simpleName}: ${t.message} after $chunks chunks"
             } finally {
                 android.util.Log.i(TAG, "streamer ended: $why")
+                if (streaming.get()) onError("Microphone capture stopped unexpectedly ($why)")
             }
         }.also { it.name = "AudioIO-Streamer"; it.isDaemon = true; it.start() }
     }

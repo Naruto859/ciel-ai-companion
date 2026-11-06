@@ -4,7 +4,6 @@ import android.accessibilityservice.AccessibilityService
 import android.accessibilityservice.InputMethod
 import android.os.Build
 import android.os.SystemClock
-import android.util.Log
 import android.view.inputmethod.EditorInfo
 
 /**
@@ -51,13 +50,14 @@ object A11yIme {
      * from [text] means the text was committed and the editor disagrees, which
      * is a real failure and not a missing channel.
      */
-    fun replace(service: AccessibilityService, text: String): String? {
+    fun replace(service: AccessibilityService, text: String, beforeWrite: () -> Unit = {}): String? {
         val conn = awaitConnection(service) ?: return null
-        clear(conn)
-        runCatching { conn.commitText(text, 1, null) }.onFailure {
-            Log.w(TAG, "commitText failed", it)
-            return null
-        }
+        return TextInputAttempt.replace(text, clear = { clear(conn) },
+            commit = { conn.commitText(it, 1, null) }, beforeWrite = beforeWrite,
+            readback = { awaitReadback(conn, text) })
+    }
+
+    private fun awaitReadback(conn: InputMethod.AccessibilityInputConnection, text: String): String? {
         // commitText is a one-way call into the editor's process, so the value
         // is not readable the instant it returns — the same reason the ADB route
         // polls. Short budget: unlike the accessibility tree, this reads the
@@ -81,7 +81,7 @@ object A11yIme {
      * connection or the editor declares no action, so the caller can fall back
      * to `ACTION_IME_ENTER`.
      */
-    fun editorAction(service: AccessibilityService): Boolean {
+    fun editorAction(service: AccessibilityService, beforeWrite: () -> Unit = {}): Boolean {
         val conn = connection(service) ?: return false
         val info: EditorInfo = runCatching { service.inputMethod?.currentInputEditorInfo }
             .getOrNull() ?: return false
@@ -95,6 +95,7 @@ object A11yIme {
         // DONE with this flag and sends only from its button. Firing DONE there
         // reports success and sends nothing.
         if (info.actionId == 0 && info.imeOptions and EditorInfo.IME_FLAG_NO_ENTER_ACTION != 0) return false
+        beforeWrite()
         return runCatching { conn.performEditorAction(action); true }.getOrDefault(false)
     }
 
@@ -155,19 +156,22 @@ object A11yIme {
      * route rather than a guess, because appending to a field the brain believes
      * it cleared is the failure that reads as the model typing twice.
      */
-    private fun clear(conn: InputMethod.AccessibilityInputConnection) {
-        val st = runCatching { conn.getSurroundingText(MAX_READ, MAX_READ, 0) }.getOrNull() ?: return
+    private fun clear(conn: InputMethod.AccessibilityInputConnection): Boolean {
+        val st = conn.getSurroundingText(MAX_READ, MAX_READ, 0)
+            ?: return false
         val txt = st.text?.toString().orEmpty()
-        if (txt.isEmpty()) return
-        val start = st.selectionStart
-        val end = st.selectionEnd
-        runCatching {
-            if (start >= 0 && end >= 0) {
-                conn.deleteSurroundingText(start, txt.length - end)
-            } else {
-                conn.setSelection(st.offset, st.offset + txt.length)
-            }
+        if (txt.isEmpty()) return true
+        val start = minOf(st.selectionStart, st.selectionEnd)
+        val end = maxOf(st.selectionStart, st.selectionEnd)
+        check(st.offset == 0 && start < MAX_READ && txt.length - end < MAX_READ) {
+            "The editor contains more text than can safely be replaced at once. Nothing was replaced."
         }
+        if (start >= 0 && end >= 0 && end <= txt.length) {
+            conn.deleteSurroundingText(start, txt.length - end)
+        } else {
+            conn.setSelection(st.offset, st.offset + txt.length)
+        }
+        return true
     }
 
     /** The editor's current contents, or null when the connection died. */
@@ -176,8 +180,6 @@ object A11yIme {
             ?: return null
         return st.text?.toString().orEmpty()
     }
-
-    private const val TAG = "A11yIme"
 
     /**
      * Both halves of the surrounding-text window. Generous because this is how

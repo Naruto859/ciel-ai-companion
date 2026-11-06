@@ -88,13 +88,16 @@ class DeviceInfoController(private val context: Context) {
     // ---- location ----------------------------------------------------
 
     fun location(timeoutMs: Long = 8000): JSONObject {
-        if (!ensurePermission(Manifest.permission.ACCESS_FINE_LOCATION)) {
+        require(timeoutMs in 1..20_000) { "location timeout_ms must be between 1 and 20000" }
+        val precise = ensurePermission(Manifest.permission.ACCESS_FINE_LOCATION)
+        if (!precise && !ensurePermission(Manifest.permission.ACCESS_COARSE_LOCATION)) {
             return permissionDenied("location",
                 "Ask the user to grant Location to the body app once (Settings → Apps → Permissions), then retry.")
         }
         val lm = context.getSystemService(Context.LOCATION_SERVICE) as LocationManager
         // Prefer the freshest cached fix; fall back to waiting for one.
-        val providers = listOf(LocationManager.GPS_PROVIDER, LocationManager.NETWORK_PROVIDER, LocationManager.PASSIVE_PROVIDER)
+        val providers = if (precise) listOf(LocationManager.GPS_PROVIDER, LocationManager.NETWORK_PROVIDER, LocationManager.PASSIVE_PROVIDER)
+            else listOf(LocationManager.NETWORK_PROVIDER, LocationManager.PASSIVE_PROVIDER)
         var best: Location? = null
         for (p in providers) {
             runCatching { lm.getLastKnownLocation(p) }?.getOrNull()?.let { loc ->
@@ -114,14 +117,18 @@ class DeviceInfoController(private val context: Context) {
                 @Deprecated("required override on old APIs")
                 override fun onStatusChanged(provider: String?, status: Int, extras: Bundle?) {}
             }
-            val requested = providers.any { p ->
+            val requested = providers.map { p ->
                 runCatching {
+                    check(lm.isProviderEnabled(p))
                     lm.requestLocationUpdates(p, 0L, 0f, listener, Looper.getMainLooper())
                 }.isSuccess
-            }
+            }.any { it }
             if (requested) {
-                latch.await(timeoutMs, TimeUnit.MILLISECONDS)
-                providers.forEach { p -> runCatching { lm.removeUpdates(listener) } }
+                try {
+                    latch.await(timeoutMs, TimeUnit.MILLISECONDS)
+                } finally {
+                    runCatching { lm.removeUpdates(listener) }
+                }
                 best = got[0] ?: best
             }
         }
@@ -131,6 +138,7 @@ class DeviceInfoController(private val context: Context) {
             .put("lat", b.latitude)
             .put("lng", b.longitude)
             .put("accuracy_m", b.accuracy.toDouble())
+            .put("precise_permission", precise)
             .put("time", SimpleDateFormat("yyyy-MM-dd HH:mm:ss", Locale.US).format(Date(b.time)))
             .put("age_ms", System.currentTimeMillis() - b.time)
     }
@@ -138,8 +146,9 @@ class DeviceInfoController(private val context: Context) {
     // ---- steps ----------------------------------------------------
 
     fun steps(timeoutMs: Long = 3000): JSONObject {
+        require(timeoutMs in 1..10_000) { "step timeout_ms must be between 1 and 10000" }
         if (!ensurePermission(Manifest.permission.ACTIVITY_RECOGNITION)) {
-            return permissionDenied("activity_recognition",
+            return permissionDenied("steps",
                 "Ask the user to grant 'Physical activity' to the body app once, then retry.")
         }
         val sm = context.getSystemService(Context.SENSOR_SERVICE) as SensorManager
@@ -156,9 +165,14 @@ class DeviceInfoController(private val context: Context) {
             }
             override fun onAccuracyChanged(s: Sensor?, a: Int) {}
         }
-        sm.registerListener(listener, sensor, SensorManager.SENSOR_DELAY_FASTEST)
-        val ok = latch.await(timeoutMs, TimeUnit.MILLISECONDS)
-        if (!ok) sm.unregisterListener(listener)
+        try {
+            if (!sm.registerListener(listener, sensor, SensorManager.SENSOR_DELAY_NORMAL)) {
+                return JSONObject().put("error", "step sensor could not be started")
+            }
+            latch.await(timeoutMs, TimeUnit.MILLISECONDS)
+        } finally {
+            sm.unregisterListener(listener)
+        }
         val v = got[0]
             ?: return JSONObject().put("error", "sensor gave no reading within ${timeoutMs}ms")
         return JSONObject()
@@ -189,7 +203,7 @@ class DeviceInfoController(private val context: Context) {
         context.checkSelfPermission(perm) == PackageManager.PERMISSION_GRANTED
 
     private fun permissionDenied(what: String, guidance: String): JSONObject =
-        JSONObject().put("error", "permission denied: $what").put("hint", guidance)
+        JSONObject().put("error", "permission denied: $what").put("permission_id", what).put("hint", guidance)
 
     private companion object {
         /** Older than this and a cached location is decoration, not data. */

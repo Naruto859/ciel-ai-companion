@@ -1,0 +1,12 @@
+{
+  "model": "models/gemini-3.8-live",
+  "status": "failed",
+  "measurement_scope": "VPS text prompt to first returned audio; no phone microphone or tool execution",
+  "tool_declarations": 95,
+  "phone_tools_executed": 0,
+  "events": [],
+  "socket_open_ms": 2727,
+  "error_type": "ConnectionClosedError",
+  "error": "received 1007 (invalid frame payload data) API key not valid. Please pass a valid API key.; then sent 1007 (invalid frame payload data) API key not valid. Please pass a valid API key.",
+  "total_ms": 2997
+}

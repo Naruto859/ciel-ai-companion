@@ -1,0 +1,7 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+  <string name="dev_perm_feature_brightness">Screen brightness</string>
+  <string name="dev_perm_say_settings">Finish this step on the Android settings screen.</string>
+  <string name="check_detail_version_local">Ciel %1$s · build %2$d</string>
+  <string name="check_detail_live_model_available">%1$s is available. Start a conversation to test Live audio.</string>
+</resources>

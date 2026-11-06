@@ -1,0 +1,23 @@
+{
+  "apk": "/tmp/ciel-apk-check-yl3ale37/ciel-arm64.apk",
+  "sha256": "9167cff45b0c3cfc27fc73e0e61d92f5fc8bd519418d2af1cc7811d1aa454a7c",
+  "bytes": 25639848,
+  "package": "ai.ciel.companion",
+  "version_code": 23,
+  "version_name": "0.11.0",
+  "min_sdk": 30,
+  "native_abis": [
+    "arm64-v8a"
+  ],
+  "launcher": "net.kuafuai.andee.ui.SelfCheckActivity",
+  "certificate_sha256": "2c4da87002768a7b996c8556e683e5be90b5d31e7c35f93869e24fac1135e98c",
+  "signature_verified": true,
+  "zip_alignment_verified": true,
+  "credential_findings": [],
+  "failures": [
+    "APK is debuggable",
+    "Ciel home is not the launcher"
+  ],
+  "packaging_passed": false,
+  "runtime_verified_by_this_script": false
+}

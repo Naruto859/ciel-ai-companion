@@ -250,7 +250,10 @@ class EmotionBallRenderer {
      * change to a handful of lines: the ~50 `LOOK.x` sites below did not have
      * to move, and none of them can accidentally cache a stale look.
      */
-    private val LOOK: BallLook get() = BallLooks.active
+    /** An optional studio preview. Null follows the saved global selection. */
+    @Volatile var previewLook: String? = null
+    private var frameLookIndex = 0
+    private val LOOK: BallLook get() = BallLooks.ALL[frameLookIndex]
 
     /**
      * The meshes whose *dimensions* come from the look, one set per look.
@@ -338,7 +341,7 @@ class EmotionBallRenderer {
     private lateinit var lookMeshes: List<LookMeshes>
 
     /** The current look's meshes. Same latching rules as [LOOK]. */
-    private val meshes: LookMeshes get() = lookMeshes[BallLooks.index]
+    private val meshes: LookMeshes get() = lookMeshes[frameLookIndex]
 
     /**
      * Z the pupil and glint are drawn at, relative to the face plane.
@@ -391,7 +394,7 @@ class EmotionBallRenderer {
     private val mvp = FloatArray(16)
 
     // ---- State ----
-    private val state = EmotionState()
+    private val state = EmotionState { LOOK }
 
     /** Scratch for [drawBody]'s mood tint — per-frame, so never allocated. */
     private val bodyColor = FloatArray(3)
@@ -518,6 +521,9 @@ class EmotionBallRenderer {
         // here rather than letting the getter follow it live is what keeps a
         // frame from being drawn half in one character and half in another —
         // see [BallLooks].
+        val preview = previewLook
+        val frameLook = if (preview == null) BallLooks.requestedLook else BallLooks.byName(preview)
+        frameLookIndex = BallLooks.ALL.indexOf(frameLook).coerceAtLeast(0)
         BallLooks.latch()
 
         if (demoCycle && t >= demoNext) {

@@ -44,6 +44,8 @@ class EmotionBallTextureView @JvmOverloads constructor(
 
     @Volatile
     private var running = false
+    @Volatile private var renderingActive = true
+    @Volatile private var windowVisible = true
 
     init {
         surfaceTextureListener = this
@@ -52,6 +54,21 @@ class EmotionBallTextureView @JvmOverloads constructor(
 
     fun setMood(m: Mood) {
         renderer.mood = m
+    }
+
+    /** Preview a companion without changing the live assistant or its saved preference. */
+    fun setLook(name: String?) {
+        renderer.previewLook = name
+    }
+
+    /** Paused Activity previews should not keep rendering behind another app. */
+    fun setRenderingActive(active: Boolean) {
+        renderingActive = active
+    }
+
+    override fun onWindowVisibilityChanged(visibility: Int) {
+        super.onWindowVisibilityChanged(visibility)
+        windowVisible = visibility == VISIBLE
     }
 
     fun setListening(l: Boolean) {
@@ -157,6 +174,10 @@ class EmotionBallTextureView @JvmOverloads constructor(
         if (!running) return
         h.post {
             if (!running) return@post
+            if (!renderingActive || !windowVisible) {
+                h.postDelayed({ scheduleFrame(h) }, 200)
+                return@post
+            }
             val d = eglDisplay ?: return@post
             val s = eglSurface ?: return@post
             renderer.onDrawFrame()

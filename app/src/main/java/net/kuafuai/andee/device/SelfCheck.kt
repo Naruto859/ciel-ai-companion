@@ -247,7 +247,7 @@ object SelfCheck {
             network(online),
             brain(context),
             backend(context, probe, online),
-            version(context, probe, online),
+            version(),
             microphone(context),
             // The ball being heard, right above the ball hearing: the two are easy to
             // confuse and only one of them was ever checked. See [postNotifications].
@@ -269,21 +269,20 @@ object SelfCheck {
     fun local(context: Context): List<Finding> = run(context, probe = false)
 
     /**
-     * The three rows only a probe can answer — the backend, the version
-     * service, the voice host.
+     * The two rows only a probe can answer: backend access and the voice host.
      *
      * Private because the *set* is the whole of what [mergeLocal] means: a
      * caller that wants this behaviour calls [mergeLocal], and one that wants
      * the raw facts calls [run]. Nothing outside should be matching on these
      * ids by hand.
      */
-    private val PROBED_IDS = setOf("backend", "version", "voice_host")
+    private val PROBED_IDS = setOf("backend", "voice_host")
 
     /**
      * Splice a fresh no-probe pass over the last full one.
      *
-     * [local] does not return the list minus three rows. With `probe = false`
-     * those three come back as "checking…" placeholders — which is exactly what
+     * [local] does not return the list minus the probe rows. With `probe = false`
+     * those two come back as "checking…" placeholders — which is exactly what
      * lets a card paint its first frame instantly and fill in behind it — so
      * handing that list to a card that has *already* answered them would wipe a
      * real reading back to a placeholder, and nothing would come along to fill
@@ -298,16 +297,20 @@ object SelfCheck {
      * ### The one thing it does not fix
      *
      * A device that has gone *offline* since the last full pass keeps the old
-     * network reading on these three rows, because a probe cannot tell "not
+     * network reading on these two rows, because a probe cannot tell "not
      * asked" from "no network" — both land in the same branch of each one. The
      * `network` row is local, so on its own it does turn red and say so, and
      * that is the signal the user acts on. Splitting the two cases inside all
-     * three probes to make these agree is not worth three more branches today.
+     * two probes to make these agree is not worth more branches today.
      */
     fun mergeLocal(fresh: List<Finding>, previous: List<Finding>?): List<Finding> {
         if (previous == null) return fresh
         val known = previous.associateBy { it.id }
-        return fresh.map { f -> if (f.id in PROBED_IDS) known[f.id] ?: f else f }
+        return fresh.map { f ->
+            val locallyChanged = f.detail == R.string.check_detail_skipped_offline ||
+                f.detail == R.string.check_detail_model_no_key
+            if (f.id in PROBED_IDS && !locallyChanged) known[f.id] ?: f else f
+        }
     }
 
     // ---- The checks ----
@@ -357,7 +360,7 @@ object SelfCheck {
         return Finding(
             id = "overlay",
             title = R.string.check_title_overlay,
-            level = if (on) Level.OK else Level.FAIL,
+            level = if (on) Level.OK else if (VoiceConfig.brainConfig(context).isLive) Level.WARN else Level.FAIL,
             detail = if (on) R.string.check_detail_overlay_on else R.string.check_detail_overlay_off,
             fix = if (on) {
                 Fix.Nothing
@@ -456,12 +459,14 @@ object SelfCheck {
                 else R.string.check_detail_skipped_offline,
             )
         }
-        return when (val r = probeBackend(bc.baseUrl, bc.apiKey, bc.model)) {
+        val reach = if (bc.isLive) probeLiveBackend(bc.apiKey, bc.model)
+            else probeBackend(bc.baseUrl, bc.apiKey, bc.model)
+        return when (val r = reach) {
             is Reach.Ok -> Finding(
                 id = "backend",
                 title = R.string.check_title_model,
-                level = Level.OK,
-                detail = R.string.check_detail_model_ok,
+                level = if (bc.isLive) Level.NOTE else Level.OK,
+                detail = if (bc.isLive) R.string.check_detail_live_model_available else R.string.check_detail_model_ok,
                 detailArgs = listOf(bc.model),
             )
 
@@ -493,121 +498,14 @@ object SelfCheck {
         }
     }
 
-    /**
-     * Whether this copy of the app is the one we think you should be running.
-     *
-     * **The only row here that is about the app rather than the device**, and
-     * the only one that talks to a host the *author* owns rather than one the
-     * user configured. It is also the only thing this app ever reports about
-     * itself: the request carries the version number, the phone model, the
-     * brand, the Android release, the UI language and this install's own random
-     * `device_id` — and nothing else. No conversation, no screen content, no
-     * app list, no crash log, no advertising ID, and no `ANDROID_ID`. The
-     * numbers behind those claims are in `docs/permissions.md`, which is the
-     * file to keep in step with this function.
-     *
-     * ### Why the levels are not all WARN
-     *
-     * A vendor checking for its own updates is one bad decision away from
-     * nagware, so the mapping is deliberate:
-     *
-     *  * Answered, and this build is current → [Level.OK].
-     *  * **Answered, and a release strictly newer than this build exists →
-     *    [Level.FAIL]**, forced or not, so the startup card says so once (the
-     *    card's own dedup keeps it from repeating). The user asked for it to be
-     *    impossible to miss. The button goes to CodeFlying's site in the
-     *    interface language ([Upgrade.url]), and the text names GitHub as the
-     *    other place to get it.
-     *  * **A build ahead of the release is current**, whatever the service says:
-     *    `has_update` is believed only when [Upgrade.newer] agrees, so a
-     *    development build is never told to "upgrade" to an older one.
-     *  * **Anything undetermined is [Level.NOTE]**: no network, today's quota
-     *    spent, connection refused, a 500, a domain that does not resolve. A
-     *    statistics endpoint being down is never the user's problem, and
-     *    letting it paint this card red would make it one. This row is also
-     *    the reason [Level.NOTE] rows must stay out of the startup card.
-     *
-     * Every one of those states still names the build the user is holding, even
-     * the ones where nothing could be checked, because this row is the only
-     * place the app can answer "what version am I on?" — there is no
-     * version number anywhere in Settings.
-     *
-     * **The address is a constant, deliberately.** [VERSION_API_BASE] is written
-     * into this file and cannot be changed without editing the source and
-     * rebuilding: there is no setting, no build property and no `local.properties`
-     * key behind it. That is the point — a check that a user can silently
-     * misconfigure is a check that silently stops working, and this one is meant
-     * to be either on for everyone or off for everyone. The cost is that the
-     * repository has no build-time switch to turn reporting off; the honest
-     * description of that is in `docs/permissions.md`, which is the file to keep
-     * in step with this function.
-     */
-    private fun version(context: Context, probe: Boolean, online: Boolean): Finding {
-        if (!probe || !online) {
-            return Finding(
-                id = "version",
-                title = R.string.check_title_version,
-                level = Level.NOTE,
-                // The offline case gets its own string rather than sharing
-                // `check_detail_skipped_offline` with the model and voice rows:
-                // those two are only ever *skipped*, while this row is the one
-                // place a user can read back which build they are holding, and
-                // a blank network is exactly when they might want to.
-                detail = if (online) R.string.check_detail_checking
-                else R.string.check_detail_version_offline,
-                detailArgs = if (online) emptyList() else listOf(BuildConfig.VERSION_NAME),
-            )
-        }
-        val deviceId = VoiceConfig.hubConfig(context).deviceId
-        return when (val v = probeVersion(
-            VERSION_API_BASE, BuildConfig.VERSION_NAME, deviceId,
-            // True only when CodeFlying is the backend in force AND a key is set for it. The field keeps its name,
-            // `codeflying`; what it now says is "this install really can use CodeFlying".
-            VoiceConfig.brainMode(context) == VoiceConfig.BRAIN_CODEFLYING &&
-                VoiceConfig.codeFlyingKey(context).isNotBlank(),
-        )) {
-            is Verdict.Current -> Finding(
-                id = "version",
-                title = R.string.check_title_version,
-                level = Level.OK,
-                detail = R.string.check_detail_version_current,
-                detailArgs = listOf(BuildConfig.VERSION_NAME),
-            )
-
-            is Verdict.Update -> Finding(
-                id = "version",
-                title = R.string.check_title_version,
-                // Behind is red, forced or not: the user asked for it to be impossible to miss, and the text
-                // says where to get the new one. (It used to be a grey note — "the old one still works".)
-                level = Level.FAIL,
-                detail = if (v.forced) R.string.check_detail_version_forced
-                else R.string.check_detail_version_stale,
-                // %1$s is always the release we want you on and %2$s is always
-                // the build you are holding, in both strings -- the two rows are
-                // one word apart and swapping the order in one of them would be
-                // a silent lie about which version is which.
-                detailArgs = listOf(v.latest, BuildConfig.VERSION_NAME),
-                // CodeFlying's site in the interface language; the text names GitHub as the other way.
-                fix = Fix.Link(net.kuafuai.andee.config.Upgrade.url(VoiceConfig.uiLanguage(context))),
-            )
-
-            is Verdict.QuotaSpent -> Finding(
-                id = "version",
-                title = R.string.check_title_version,
-                level = Level.NOTE,
-                detail = R.string.check_detail_version_quota,
-                detailArgs = listOf(BuildConfig.VERSION_NAME),
-            )
-
-            is Verdict.Unreachable -> Finding(
-                id = "version",
-                title = R.string.check_title_version,
-                level = Level.NOTE,
-                detail = R.string.check_detail_version_unreachable,
-                detailArgs = listOf(v.detail, BuildConfig.VERSION_NAME),
-            )
-        }
-    }
+    /** Ciel has its own package/signing identity; upstream Andee releases cannot update it. */
+    private fun version(): Finding = Finding(
+        id = "version",
+        title = R.string.check_title_version,
+        level = Level.NOTE,
+        detail = R.string.check_detail_version_local,
+        detailArgs = listOf(BuildConfig.VERSION_NAME, BuildConfig.VERSION_CODE),
+    )
 
     /**
      * The notification listener, which has the one failure mode in this app the
@@ -912,6 +810,16 @@ object SelfCheck {
      */
     private fun voiceKey(context: Context): Finding {
         val cfg = VoiceConfig.load(context)
+        if (VoiceConfig.brainConfig(context).isLive) {
+            val has = VoiceConfig.googleApiKey(context).isNotBlank()
+            return Finding(
+                id = "voice_key",
+                title = R.string.check_title_voice_key,
+                level = if (has) Level.OK else Level.WARN,
+                detail = if (has) R.string.check_detail_voice_key_ok else R.string.check_detail_voice_key_missing,
+                fix = if (has) Fix.Nothing else Fix.OurSettings,
+            )
+        }
         // The checklist grades "can this device hear and speak". A system
         // engine needs no key to speak, but both cloud providers do — and the
         // two sides are now chosen independently, so each has to be checked
@@ -957,7 +865,7 @@ object SelfCheck {
      * it, synthesis posts to it.
      */
     private fun voiceReach(context: Context, probe: Boolean, online: Boolean): Finding {
-        val host = if (VoiceConfig.voiceProvider(context) == VoiceConfig.VOICE_GOOGLE) {
+        val host = if (VoiceConfig.brainConfig(context).isLive || VoiceConfig.voiceProvider(context) == VoiceConfig.VOICE_GOOGLE) {
             VOICE_HOST_GOOGLE
         } else {
             VOICE_HOST
@@ -1229,6 +1137,36 @@ object SelfCheck {
 
     private enum class Kind { URL, KEY, BALANCE, MODEL, OTHER }
 
+    /** AI Studio model metadata uses x-goog-api-key, not an OpenAI bearer token or Vertex project. */
+    private fun probeLiveBackend(apiKey: String, model: String): Reach {
+        val name = model.removePrefix("models/")
+        if (!name.matches(Regex("[A-Za-z0-9._-]+"))) return Reach.Bad(Kind.OTHER, "Enter a Gemini Live model name.")
+        val url = "https://generativelanguage.googleapis.com/v1beta/models".toHttpUrlOrNull()!!
+            .newBuilder().addPathSegment(name).build()
+        val http = OkHttpClient.Builder()
+            .connectTimeout(PROBE_CONNECT_S, TimeUnit.SECONDS)
+            .readTimeout(PROBE_READ_S, TimeUnit.SECONDS)
+            .callTimeout(PROBE_READ_S, TimeUnit.SECONDS)
+            .build()
+        return try {
+            http.newCall(Request.Builder().url(url).header("x-goog-api-key", apiKey).get().build())
+                .execute().use { response ->
+                    val body = runCatching { JSONObject(response.body?.string().orEmpty()) }.getOrNull()
+                    when {
+                        response.isSuccessful && body?.optString("name").orEmpty().isNotBlank() -> Reach.Ok
+                        response.code == 401 || response.code == 403 -> Reach.Bad(Kind.KEY, "Google rejected access (HTTP ${response.code}).")
+                        response.code == 429 -> Reach.Throttled
+                        response.code == 400 && body?.optJSONObject("error")?.optString("message")
+                            .orEmpty().contains("API key", ignoreCase = true) -> Reach.Bad(Kind.KEY, "Google rejected this API key.")
+                        response.code == 404 -> Reach.Bad(Kind.OTHER, "This Gemini model is unavailable for this key. Check the Live model in Settings.")
+                        else -> Reach.Bad(Kind.OTHER, "Google model check returned HTTP ${response.code}; Live audio is not verified.")
+                    }
+                }
+        } catch (_: IOException) {
+            Reach.Bad(Kind.URL, "Could not reach the Gemini API. Check the connection and try again.")
+        }
+    }
+
     /**
      * Ask the backend who it is, without paying for an answer.
      *
@@ -1332,94 +1270,6 @@ object SelfCheck {
         }
     }
 
-    private sealed interface Verdict {
-        /** Reached, answered, and this build is the current one. */
-        object Current : Verdict
-
-        /** Reached and answered: there is a newer release than this build. */
-        data class Update(val latest: String, val forced: Boolean) : Verdict
-
-        /** Reached, but today's allowance is spent. A normal state, not a fault. */
-        object QuotaSpent : Verdict
-
-        /** Could not be determined. Never a fault for the user to act on. */
-        data class Unreachable(val detail: String) : Verdict
-    }
-
-    /**
-     * One GET against the version service — the only outbound call in this app
-     * that is not addressed to a host the user configured.
-     *
-     * Bounded by [VERSION_CALL_MS] through `callTimeout` rather than by the read
-     * timeout [probeBackend] uses, because this call is the least important of
-     * the three probes. `callTimeout` is a ceiling on the whole call — connect,
-     * retries and body — so this row can never add more than its own budget to
-     * the wall-clock of a black-holed network.
-     *
-     * The URL is built through [toHttpUrlOrNull] rather than by string
-     * concatenation because `Build.MODEL` is not URL-safe on the devices this
-     * ships to: it carries spaces and brackets ("SM-T970", and a trailing
-     * "(wifi)" on some clones). Hand-joined, those go out raw and the service
-     * records a truncated model name.
-     */
-    private fun probeVersion(base: String, current: String, deviceId: String, codeFlying: Boolean): Verdict {
-        val url = base.toHttpUrlOrNull()
-            ?.newBuilder()
-            ?.addPathSegments("api/version")
-            ?.addQueryParameter("current", current)
-            ?.addQueryParameter("platform", "android")
-            ?.addQueryParameter("model", Build.MODEL)
-            ?.addQueryParameter("brand", Build.BRAND)
-            ?.addQueryParameter("os_version", "Android ${Build.VERSION.RELEASE} (API ${Build.VERSION.SDK_INT})")
-            ?.addQueryParameter("device_id", deviceId)
-            ?.addQueryParameter("app_package", BuildConfig.APPLICATION_ID)
-            // "1" only if CodeFlying is the backend in force and a key is configured for it, else "0". Only
-            // that on/off fact is sent, never the key or the address.
-            ?.addQueryParameter("codeflying", if (codeFlying) "1" else "0")
-            ?.addQueryParameter("lang", Locale.getDefault().toLanguageTag())
-            ?.build()
-            ?: return Verdict.Unreachable("bad address: $base")
-
-        val http = OkHttpClient.Builder()
-            .connectTimeout(PROBE_CONNECT_S, TimeUnit.SECONDS)
-            .readTimeout(PROBE_READ_S, TimeUnit.SECONDS)
-            .callTimeout(VERSION_CALL_MS, TimeUnit.MILLISECONDS)
-            .build()
-
-        return try {
-            http.newCall(Request.Builder().url(url).get().build()).execute().use { resp ->
-                // The allowance is ten per address per day and 重新检查 spends
-                // one per tap, so a user can exhaust their own quota just by
-                // poking at this page. The service answers 429 with `code: 4290`
-                // to mean "already checked enough today" — read as such, and
-                // never as an error.
-                if (resp.code == 429) return Verdict.QuotaSpent
-
-                val json = runCatching { JSONObject(resp.body?.string().orEmpty()) }.getOrNull()
-                    ?: return Verdict.Unreachable("HTTP ${resp.code}")
-                if (json.optInt("code", -1) != 0) {
-                    return Verdict.Unreachable("HTTP ${resp.code} code=${json.optInt("code")}")
-                }
-                val data = json.optJSONObject("data")
-                    ?: return Verdict.Unreachable("HTTP ${resp.code}: no data")
-                if (!data.optBoolean("has_update", false)) return Verdict.Current
-                // Ahead of (or level with) the release is not behind, whatever the service says.
-                if (!net.kuafuai.andee.config.Upgrade.newer(data.optString("latest_version"), current)) return Verdict.Current
-
-                Verdict.Update(
-                    latest = data.optString("latest_version").ifEmpty { "?" },
-                    forced = data.optBoolean("force_update", false),
-                )
-            }
-        } catch (e: Exception) {
-            // IOException is the expected one (DNS, refused, timeout). Anything
-            // else here is still "we could not talk to this address", which is
-            // the same sentence as far as the user is concerned.
-            Verdict.Unreachable(e.message ?: e.javaClass.simpleName)
-        }
-    }
-
-    /** @return null when the connection opened, else why it did not. */
     private fun tcpProbe(host: String, port: Int): String? = try {
         Socket().use { s -> s.connect(InetSocketAddress(host, port), PROBE_CONNECT_MS) }
         null
@@ -1482,39 +1332,6 @@ object SelfCheck {
     private const val PROBE_CONNECT_MS = 6000
     private const val PROBE_READ_S = 20L
 
-    /**
-     * Where the version check asks. Hardcoded on purpose — see [version]'s KDoc
-     * for why this one is not a setting.
-     *
-     * HTTPS, so there is nothing to declare in `network_security_config.xml`: that
-     * file exists to punch holes for cleartext HTTP, and a hole for a host we no
-     * longer call is a hole that only makes the app more permissive. If this ever
-     * goes back to a plain-HTTP address, the host has to be added there or every
-     * call dies as `CLEARTEXT communication ... not permitted`.
-     *
-     * Was `https://andee.kuafuai.net`, which named a mainland host whose domain
-     * had to be ICP-filed before TLS would reach it at all — an unfiled domain
-     * there is answered with a 403 block page, which reads here as 查不到. The
-     * address behind this one is outside the mainland, so that particular trap
-     * is behind us.
-     *
-     * A domain still has to resolve **and** serve 443, though, and a fresh
-     * record does not propagate everywhere at once. Measured on the day of the
-     * move: `1.1.1.1` still answered NXDOMAIN while `223.5.5.5` already had the
-     * address, so a device on the wrong resolver reports Unreachable for as long
-     * as that lasts. That is the intended failure, not a bug in the check.
-     */
-    private const val VERSION_API_BASE = "https://api.heyandee.com"
-
-    /**
-     * The whole-call ceiling on the version probe, in milliseconds.
-     *
-     * Deliberately *not* 20 s like the read timeout beside it: this is the third
-     * probe in [run], the user is not waiting on it, and the deployed service
-     * answers a LAN-adjacent request in tens of milliseconds. Eight seconds is
-     * generous for a healthy call and still bounds what a dead one can cost.
-     */
-    private const val VERSION_CALL_MS = 8000L
     private const val MODEL_SAMPLE = 8
     private const val DISK_WARN_MB = 500L
     private const val DISK_FAIL_MB = 100L

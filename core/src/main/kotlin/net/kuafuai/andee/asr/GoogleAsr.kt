@@ -166,7 +166,7 @@ class GoogleAsr(
         Log.d(TAG, "start model=${modelPath()} lang=${config.googleLanguage.ifBlank { "(auto)" }}")
         io.execute {
             runCatching { connect() }.onFailure {
-                Log.e(TAG, "connect failed", it)
+                Log.e(TAG, "connect failed: ${net.kuafuai.andee.voice.GoogleApiCredentials.redact(it.message.orEmpty(), config.googleApiKey)}")
                 fail(it.message ?: "ASR connect failed")
             }
         }
@@ -243,7 +243,7 @@ class GoogleAsr(
         }
 
         val endpointUrl = liveEndpointUrl()
-        Log.i(TAG, "connecting to $endpointUrl with model ${modelPath()}")
+        Log.i(TAG, "connecting to ${net.kuafuai.andee.voice.GoogleApiCredentials.redact(endpointUrl, config.googleApiKey)} with model ${modelPath()}")
 
         val socket = http.newWebSocket(
             Request.Builder().url(endpointUrl).build(),
@@ -274,7 +274,7 @@ class GoogleAsr(
                         lastError = msg
                         fail(msg)
                     } else if (!closed && !emitted.get()) {
-                        Log.w(TAG, "socket closed early code=$code reason=$reason")
+                        Log.w(TAG, "socket closed early code=$code reason=${net.kuafuai.andee.voice.GoogleApiCredentials.redact(reason, config.googleApiKey)}")
                         fail("ASR socket closed ($code)")
                     }
                 }
@@ -305,7 +305,7 @@ class GoogleAsr(
 
         val d = runCatching { JSONObject(raw) }.getOrNull()
         if (d == null) {
-            Log.w(TAG, "unparseable frame: ${raw.take(200)}")
+            Log.w(TAG, "unparseable ASR frame (${raw.length} characters)")
             return
         }
 
@@ -533,8 +533,9 @@ class GoogleAsr(
     /** Idempotent: a failure that is already reported is not reported twice. */
     private fun fail(msg: String) {
         if (!reported.compareAndSet(false, true)) return
-        Log.w(TAG, "failed: $msg")
-        if (!closed) listener.onError(msg)
+        val safe = net.kuafuai.andee.voice.GoogleApiCredentials.redact(msg, config.googleApiKey)
+        Log.w(TAG, "failed: $safe")
+        if (!closed) listener.onError(safe)
         done.countDown()
     }
 
@@ -593,9 +594,7 @@ class GoogleAsr(
     }
 
     private fun appendKey(rawUrl: String): String {
-        if (config.googleApiKey.isBlank() || rawUrl.contains("key=")) return rawUrl
-        val sep = if (rawUrl.contains('?')) '&' else '?'
-        return "$rawUrl${sep}key=${config.googleApiKey}"
+        return net.kuafuai.andee.voice.GoogleApiCredentials.appendKey(rawUrl, config.googleApiKey)
     }
 
     private fun setupMessage(): String {

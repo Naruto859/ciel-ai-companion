@@ -17,7 +17,7 @@ import kotlin.random.Random
  * matrices. Anything that needs to lerp toward a target lives here, not in the
  * renderer.
  */
-class EmotionState {
+class EmotionState(private val currentLook: () -> BallLook = { BallLooks.active }) {
 
     /**
      * The look being drawn, re-read every access.
@@ -29,7 +29,7 @@ class EmotionState {
      * the only values that would lag are the resting positions below, and they
      * are overwritten on the first frame after the change.
      */
-    private val LOOK: BallLook get() = BallLooks.active
+    private val LOOK: BallLook get() = currentLook()
 
     // ---- Face + color, lerped toward FACE[mood] ----
     val nowColor = FloatArray(3).also { FACE[Mood.CALM]!!.color.copyInto(it) }

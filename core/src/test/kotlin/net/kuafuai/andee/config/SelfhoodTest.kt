@@ -136,8 +136,11 @@ class SelfhoodTest {
         val line = me.indexForPrompt(ownerName = "老陈")
         assertTrue(line, line.startsWith("Your name: 安迪"))
         assertTrue(line, line.contains("Call them: 老陈."))
-        me.setName("Andee")                                   // being called what I am is no name at all
+        me.setName("Ciel")                                    // default identity needs no override
         assertNull(me.name())
+        me.setName("Andee")                                   // an explicit owner choice remains theirs
+        assertEquals("Andee", me.name())
+        assertTrue(me.indexForPrompt().startsWith("Your name: Andee"))
     }
 
     @Test fun theStagesCareIsSeededOnceAndAWriteKeepsItCurrent() {

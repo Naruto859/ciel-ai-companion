@@ -67,12 +67,14 @@ class DeviceActionsController(private val context: Context) {
     fun volume(level: Int?, mute: Boolean?): JSONObject {
         val am = context.getSystemService(Context.AUDIO_SERVICE) as AudioManager
         val max = am.getStreamMaxVolume(AudioManager.STREAM_MUSIC)
+        if (level != null) {
+            require(level in 0..max) { "volume level must be between 0 and $max" }
+            am.setStreamVolume(AudioManager.STREAM_MUSIC, level, 0)
+        }
         if (mute == true) {
             am.adjustStreamVolume(AudioManager.STREAM_MUSIC, AudioManager.ADJUST_MUTE, 0)
         } else if (mute == false) {
             am.adjustStreamVolume(AudioManager.STREAM_MUSIC, AudioManager.ADJUST_UNMUTE, 0)
-        } else if (level != null) {
-            am.setStreamVolume(AudioManager.STREAM_MUSIC, level.coerceIn(0, max), 0)
         }
         return JSONObject()
             .put("volume", am.getStreamVolume(AudioManager.STREAM_MUSIC))
@@ -85,13 +87,15 @@ class DeviceActionsController(private val context: Context) {
     fun brightness(v: Int?): JSONObject {
         val cr = context.contentResolver
         if (v != null) {
+            require(v in 1..255) { "brightness must be between 1 and 255" }
+            if (!Settings.System.canWrite(context)) return JSONObject().put("error", "Changing brightness needs special access.")
+                .put("permission_id", "brightness")
+                .put("hint", "Request permission id brightness, then let the user enable Modify system settings.")
             // Manual mode first, or the write is decoration on auto screens.
-            runCatching {
-                Settings.System.putInt(cr, Settings.System.SCREEN_BRIGHTNESS_MODE, Settings.System.SCREEN_BRIGHTNESS_MODE_MANUAL)
-            }
             val ok = runCatching {
-                Settings.System.putInt(cr, Settings.System.SCREEN_BRIGHTNESS, v.coerceIn(1, 255))
-            }.isSuccess
+                Settings.System.putInt(cr, Settings.System.SCREEN_BRIGHTNESS_MODE, Settings.System.SCREEN_BRIGHTNESS_MODE_MANUAL) &&
+                    Settings.System.putInt(cr, Settings.System.SCREEN_BRIGHTNESS, v)
+            }.getOrDefault(false)
             if (!ok) return JSONObject().put("error", "write failed — needs WRITE_SETTINGS grant (Settings → Special app access)")
         }
         return JSONObject().put("brightness", Settings.System.getInt(cr, Settings.System.SCREEN_BRIGHTNESS, -1))
@@ -117,6 +121,7 @@ class DeviceActionsController(private val context: Context) {
     // ---- alarm ----------------------------------------------------
 
     fun setAlarm(hour: Int, minute: Int, message: String?): JSONObject {
+        DeviceCommandInputs.alarm(hour, minute)
         val i = Intent(AlarmClock.ACTION_SET_ALARM).apply {
             putExtra(AlarmClock.EXTRA_HOUR, hour)
             putExtra(AlarmClock.EXTRA_MINUTES, minute)
@@ -126,7 +131,8 @@ class DeviceActionsController(private val context: Context) {
         }
         return runCatching { context.startActivity(i) }
             .fold(
-                { JSONObject().put("alarm_set", "%02d:%02d".format(hour, minute)).put("message", message ?: "") },
+                { JSONObject().put("alarm_requested", "%02d:%02d".format(hour, minute)).put("message", message ?: "")
+                    .put("note", "The clock app received the request. Check its alarm list before claiming the alarm is set.") },
                 { JSONObject().put("error", "no clock app accepted the request: ${it.message}") },
             )
     }
@@ -164,9 +170,12 @@ class DeviceActionsController(private val context: Context) {
                 }
                 override fun onAccuracyChanged(s: Sensor?, a: Int) {}
             }
-            sm.registerListener(l, sensor, SensorManager.SENSOR_DELAY_FASTEST)
-            val ok = latch.await(timeoutMs, TimeUnit.MILLISECONDS)
-            if (!ok) sm.unregisterListener(l)
+            require(timeoutMs in 1..10_000) { "sensor timeout_ms must be between 1 and 10000" }
+            val ok = try {
+                sm.registerListener(l, sensor, SensorManager.SENSOR_DELAY_NORMAL) && latch.await(timeoutMs, TimeUnit.MILLISECONDS)
+            } finally {
+                sm.unregisterListener(l)
+            }
             out.put(key, if (ok && got[0] != null) transform(got[0]!!) else "no reading")
         }
 

@@ -5,6 +5,8 @@ import android.content.pm.PackageManager
 import android.os.Bundle
 import java.util.concurrent.CountDownLatch
 import java.util.concurrent.TimeUnit
+import java.util.UUID
+import java.util.concurrent.ConcurrentHashMap
 
 /**
  * Translucent trampoline that hosts the runtime-permission dialogs. The app
@@ -36,7 +38,8 @@ class PermissionRequestActivity : AppCompatActivity() {
         requestCode: Int, permissions: Array<out String>, grantResults: IntArray,
     ) {
         super.onRequestPermissionsResult(requestCode, permissions, grantResults)
-        settle(verdict(permissions, grantResults))
+        if (requestCode != 4242) return
+        settle(intent.getStringExtra("request_id"), verdict(permissions, grantResults))
         finish()
     }
 
@@ -64,32 +67,40 @@ class PermissionRequestActivity : AppCompatActivity() {
         internal const val DENIED = "denied"
         internal const val NO_DIALOG = "no_dialog"
 
-        @Volatile private var latch: CountDownLatch? = null
-        @Volatile private var outcome: String? = null
+        private class Pending {
+            val latch = CountDownLatch(1)
+            @Volatile var outcome: String? = null
+        }
+        private val requests = ConcurrentHashMap<String, Pending>()
 
         /**
          * Clear the previous answer and open a fresh waiting point. Call this
          * BEFORE startActivity: the dialog can decide inside a millisecond,
          * and an answer that lands before the latch exists is lost.
          */
-        internal fun arm() {
-            outcome = null
-            latch = CountDownLatch(1)
-        }
+        internal fun arm(): String = UUID.randomUUID().toString().also { requests[it] = Pending() }
+
+        internal fun discard(id: String) { requests.remove(id) }
 
         /**
          * The verdict, or null if none came within [ms] — meaning the dialog
          * is still up waiting for a human. Null is a fact, not a failure: it
          * is what tells the caller nobody has answered yet.
          */
-        internal fun await(ms: Long): String? {
-            latch?.await(ms, TimeUnit.MILLISECONDS)
-            return outcome
+        internal fun await(id: String, ms: Long): String? {
+            val pending = requests[id] ?: return null
+            return try {
+                pending.latch.await(ms, TimeUnit.MILLISECONDS)
+                pending.outcome
+            } finally {
+                requests.remove(id, pending)
+            }
         }
 
-        private fun settle(verdict: String) {
-            outcome = verdict
-            latch?.countDown()
+        internal fun settle(id: String?, verdict: String) {
+            val pending = id?.let(requests::get) ?: return
+            pending.outcome = verdict
+            pending.latch.countDown()
         }
     }
 }

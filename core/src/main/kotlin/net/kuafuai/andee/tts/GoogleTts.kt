@@ -113,8 +113,9 @@ class GoogleTts(
             // the log every time the user interrupts the assistant, and send
             // the owner looking for a fault in a turn that worked.
             if (cancelled) return@onFailure
-            Log.e(TAG, "synth failed", it)
-            listener.onError(it.message ?: "tts failed")
+            val safe = net.kuafuai.andee.voice.GoogleApiCredentials.redact(it.message ?: "tts failed", config.googleApiKey)
+            Log.e(TAG, "synth failed: $safe")
+            listener.onError(safe)
         } }
     }
 
@@ -194,9 +195,7 @@ class GoogleTts(
     }
 
     private fun appendKey(rawUrl: String): String {
-        if (config.googleApiKey.isBlank() || rawUrl.contains("key=")) return rawUrl
-        val sep = if (rawUrl.contains('?')) '&' else '?'
-        return "$rawUrl${sep}key=${config.googleApiKey}"
+        return net.kuafuai.andee.voice.GoogleApiCredentials.appendKey(rawUrl, config.googleApiKey)
     }
 
     /**
@@ -303,7 +302,7 @@ class GoogleTts(
                 val obj = runCatching { JSONObject(raw) }.getOrNull() ?: return
                 val error = obj.optJSONObject("error")
                 if (error != null) {
-                    val msg = error.optString("message").ifBlank { raw.take(200) }
+                    val msg = net.kuafuai.andee.voice.GoogleApiCredentials.redact(error.optString("message").ifBlank { "Service error" }, config.googleApiKey)
                     Log.e(TAG, "TTS Live WS error: $msg")
                     listener.onError("Gemini Live TTS: $msg")
                     latch.countDown()
@@ -329,9 +328,10 @@ class GoogleTts(
             }
 
             override fun onFailure(webSocket: WebSocket, t: Throwable, response: Response?) {
-                Log.e(TAG, "TTS Live WS failed: ${t.message}")
+                val safe = net.kuafuai.andee.voice.GoogleApiCredentials.redact(t.message ?: "TTS Live WS failed", config.googleApiKey)
+                Log.e(TAG, "TTS Live WS failed: $safe")
                 if (!cancelled) {
-                    listener.onError(t.message ?: "TTS Live WS failed")
+                    listener.onError(safe)
                 }
                 latch.countDown()
             }
@@ -378,7 +378,7 @@ class GoogleTts(
                         if (cancelled) break
                         if (!firstChunkLogged && line.isNotBlank()) {
                             firstChunkLogged = true
-                            Log.i(TAG, "first line of response: ${line.take(800)}")
+                            Log.i(TAG, "first TTS response line received")
                         }
                         if (!line.startsWith("data:")) continue
                         val payload = line.substring(5).trim()
@@ -386,7 +386,7 @@ class GoogleTts(
 
                         val chunk = runCatching { JSONObject(payload) }.getOrNull()
                         if (chunk == null) {
-                            Log.w(TAG, "unparseable chunk: ${payload.take(200)}")
+                            Log.w(TAG, "unparseable TTS chunk (${payload.length} characters)")
                             continue
                         }
                         for (pcm in audioOf(chunk)) {
